@@ -1,0 +1,80 @@
+body {
+    background-color: #f0e8ca;
+}
+
+#typing-container {
+    text-align: center;
+    margin-top: 45vh;
+    font-family: 'Ubuntu', Courier, monospace;
+    font-size: 24px;
+    max-width: 70%;           /* Reduced width to encourage wrapping */
+    padding-left: 15%;
+    padding-right: 15%;
+    display: inline-flex;     /* Changed to inline-flex */
+    flex-wrap: wrap;          /* Enable wrapping */
+    justify-content: center;
+    gap: 0;                   /* Remove gap between characters */
+}
+
+.char {
+    display: inline-block;
+}
+
+/* Add this new class to group characters of the same word */
+.word {
+    display: inline-flex;
+    margin: 0 0.3em;         /* Add space between words */
+    white-space: nowrap;     /* Prevent word from breaking */
+}
+
+#word-settings {
+    background-color: #ecdda5;
+    width: 80%;
+    margin-top: 0;
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px;
+    text-align: center;
+    font-family: 'Ubuntu', Courier, monospace; 
+}
+
+#word-settings:hover {
+    cursor: pointer;
+}
+
+.key {
+    padding: 5px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    background-color: #ecdeaa;
+    color: #000000;
+    font-size: 16px;
+    font-family: 'Ubuntu', Courier, monospace;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-bottom: 5px;
+}
+
+#keyboard {
+    margin-top: 75px;
+}
+
+#space-bar {
+    width: 120px;
+    text-align: center;
+}
+
+.matched {
+    color: greenyellow;
+}
+
+.unmatched {
+    color: red;
+}
