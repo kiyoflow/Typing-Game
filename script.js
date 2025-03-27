@@ -31,8 +31,8 @@ function getRandomWords(count) {
 // Define typingContainer as a global variable
 let typingContainer;
 
-function displayRandomWords() {
-    const randomWords = getRandomWords(25);
+function displayRandomWords(count = 25) {
+    const randomWords = getRandomWords(count);
     typingContainer = document.getElementById("typing-container");
 
     let i = 0;
@@ -135,20 +135,34 @@ let userTyped = '';
 document.addEventListener('keydown', function(event) {
     if (event.key.length === 1) {
         userTyped += event.key;
-        updateTypedWords();
+        
     }
     else if (event.key === 'Backspace') {
         userTyped = userTyped.slice(0, -1);
-        updateTypedWords();
+        
     }
     else if (event.key === ' ') {
         userTyped += ' ';
-        updateTypedWords();
+        
     }
 })
 
-function updateTypedWords() {
-    const typedWordsDiv = document.getElementById('typedWords');
-    typedWordsDiv.textContent = userTyped;
-}
+
+
+
+
+window.onload = function() {
+    displayRandomWords(25);  // Show initial 25 words
+    
+    // Set up word count selection listeners after DOM is loaded
+    document.querySelectorAll('.word-count').forEach(element => {
+        element.addEventListener('click', function() {
+            const wordCount = parseInt(this.dataset.count);
+            displayRandomWords(wordCount);
+            keysPressed = 0;  // Reset counter when changing words
+        });
+    });
+};
+
+// Remove the standalone querySelectorAll code from here
 
