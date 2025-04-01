@@ -38,20 +38,18 @@ function displayRandomWords(count = 25) {
     let i = 0;
     let wrappedText2 = '';
     randomWords.forEach(function(word, index) {
-        console.log(word);
         wrappedText2 += `<div class="word">`;
         word.split('').forEach(function(char, index) {
+            if (i === 0) wrappedText2 += '<span class="cursor"></span>';
             wrappedText2 += `<span id="char-${i}" class="char">${char}</span>`;
             i++;
         });
-        // Add a space span after each word except the last one
         if (index < randomWords.length - 1) {
             wrappedText2 += `<span id="char-${i}" class="char space"> </span>`;
             i++;
         }
         wrappedText2 += `</div>`;
     });
-
     
     typingContainer.innerHTML = wrappedText2;
 }
@@ -63,28 +61,42 @@ document.addEventListener('keydown', function(event) {
     console.log('Key pressed:', event.key);
     
     if (event.key === 'Backspace') {
-        deleteLetter();
+        if (keysPressed > 0) {
+            keysPressed--;
+            const prevSpan = typingContainer.querySelector(`#char-${keysPressed}`);
+            if (prevSpan) {
+                prevSpan.classList.remove("matched", "unmatched");
+                const cursor = typingContainer.querySelector('.cursor');
+                if (cursor && prevSpan.parentNode) {
+                    prevSpan.parentNode.insertBefore(cursor, prevSpan);
+                }
+            }
+        }
         return;
     }
     
-    // Get the current letter each time a key is pressed
     const currentSpan = typingContainer.querySelector(`#char-${keysPressed}`);
     const currentLetter = currentSpan.textContent;
     
     console.log('Current letter:', currentLetter);
     
-    // Check if the key pressed matches the current letter
     if (event.key === currentLetter) {
         console.log('Correct key pressed!');
         currentSpan.classList.add("matched");
-        colorKey('green', event.key)
+        colorKey('green', event.key);
     } else {
         console.log('Incorrect key pressed!');
-        currentSpan.classList.add("unmatched")
-        colorKey('red', event.key)
+        currentSpan.classList.add("unmatched");
+        colorKey('red', event.key);
     }
 
     keysPressed++;
+    
+    const nextSpan = typingContainer.querySelector(`#char-${keysPressed}`);
+    const cursor = typingContainer.querySelector('.cursor');
+    if (nextSpan && cursor && nextSpan.parentNode) {
+        nextSpan.parentNode.insertBefore(cursor, nextSpan);
+    }
 });
 
 document.addEventListener('keyup', function(event) {
@@ -110,12 +122,6 @@ function colorKey(color, keyId) {
 
 }   
 
-function colorLetter(color){
-    // Get the text content
-    
-    // Simply update the innerHTML with the first letter wrapped in a colored span
-    typingContainer.innerHTML = `<span style="color: ${color};">${text[0]}</span>${text.substring(1)}`;
-}
 
 //backspace function
 function deleteLetter() {

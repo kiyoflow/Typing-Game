@@ -7,12 +7,13 @@ body {
     margin-top: 45vh;
     font-family: 'Ubuntu', Courier, monospace;
     font-size: 24px;
-    max-width: 70%;           /* Reduced width to encourage wrapping */
-    padding-left: 15%;
-    padding-right: 15%;
-    display: inline-flex;     /* Changed to inline-flex */
+    max-width: 80%;           /* Increased width for better display */
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;            /* Changed to flex */
     flex-wrap: wrap;          /* Enable wrapping */
-    justify-content: center;
+    justify-content: center;  /* Center horizontally */
+    align-items: center;      /* Center vertically */
     gap: 0;                   /* Remove gap between characters */
 }
 
@@ -69,6 +70,22 @@ body {
 #space-bar {
     width: 120px;
     text-align: center;
+}
+
+.cursor {
+    position: relative;
+    display: inline-block;
+    width: 2px;
+    height: 24px;
+    background-color: #000;
+    animation: blink 1s infinite;
+    margin-right: -2px;
+    vertical-align: middle;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
 }
 
 .matched {
