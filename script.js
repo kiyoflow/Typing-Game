@@ -1,3 +1,4 @@
+// Word list for random word generation
 const words = [
     "apple", "banana", "desk", "car", "chair", "tree", "phone", "book", "pen", "light",
     "rain", "shoes", "house", "cat", "dog", "bird", "fish", "jump", "run", "sleep",
@@ -19,6 +20,7 @@ const words = [
 ]
 
 
+// Function to get random words from the word list
 function getRandomWords(count) {
     const selectedWords = [];
     for (let i = 0; i < count; i++) {
@@ -28,9 +30,12 @@ function getRandomWords(count) {
     return selectedWords;
 }
 
-// Define typingContainer as a global variable
+// Global variables
 let typingContainer;
+let keysPressed = 0;
+let userTyped = '';
 
+// Function to display random words in the typing container
 function displayRandomWords(count = 25) {
     const randomWords = getRandomWords(count);
     typingContainer = document.getElementById("typing-container");
@@ -54,9 +59,7 @@ function displayRandomWords(count = 25) {
     typingContainer.innerHTML = wrappedText2;
 }
 
-window.onload = displayRandomWords;
-
-let keysPressed = 0;
+// Event listener for typing and backspace handling
 document.addEventListener('keydown', function(event) {
     console.log('Key pressed:', event.key);
     
@@ -104,6 +107,7 @@ document.addEventListener('keyup', function(event) {
     colorKey('#ecdeaa', event.key)
 });
 
+// Function to manage keyboard key colors
 function colorKey(color, keyId) {
     // Special handling for spacebar
     if (keyId === ' ') {
@@ -123,7 +127,7 @@ function colorKey(color, keyId) {
 }   
 
 
-//backspace function
+// Function to handle letter deletion
 function deleteLetter() {
     if (keysPressed > 0) {
         const previousSpan = typingContainer.querySelector(`#char-${keysPressed - 1}`);
@@ -134,9 +138,7 @@ function deleteLetter() {
     }
 }
 
-//typing
-
-let userTyped = '';
+// Event listener for tracking user input
 
 document.addEventListener('keydown', function(event) {
     if (event.key.length === 1) {
@@ -157,6 +159,7 @@ document.addEventListener('keydown', function(event) {
 
 
 
+// Initialize game and set up word count selection
 window.onload = function() {
     displayRandomWords(25);  // Show initial 25 words
     
