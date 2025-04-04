@@ -55,6 +55,10 @@ function displayRandomWords(count = 25) {
         }
         wrappedText2 += `</div>`;
     });
+
+    wrappedText2 += `<div class = "word">`;
+    wrappedText2 += `<span id ="char-${i}"></span>`
+    wrappedText2 += `</div>`;
     
     typingContainer.innerHTML = wrappedText2;
 }
@@ -94,6 +98,7 @@ document.addEventListener('keydown', function(event) {
     }
 
     keysPressed++;
+    
     
     const nextSpan = typingContainer.querySelector(`#char-${keysPressed}`);
     const cursor = typingContainer.querySelector('.cursor');
@@ -174,4 +179,3 @@ window.onload = function() {
 };
 
 // Remove the standalone querySelectorAll code from here
-
