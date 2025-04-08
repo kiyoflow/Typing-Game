@@ -34,6 +34,9 @@ function getRandomWords(count) {
 let typingContainer;
 let keysPressed = 0;
 let userTyped = '';
+let typingTime = 0;
+let typingSpeed = null;
+let accuracy = null;
 
 // Function to display random words in the typing container
 function displayRandomWords(count = 25) {
