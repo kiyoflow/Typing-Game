@@ -37,6 +37,13 @@ let userTyped = '';
 let typingTime = 0;
 let typingSpeed = null;
 let accuracy = null;
+let startTime = null;
+let timerInterval = null;
+let isTyping = false;
+let correctWords = 0;
+let correctChars = 0;
+let totalChars;
+let testComplete = false; // Flag to track if the test is complete
 
 // Function to display random words in the typing container
 function displayRandomWords(count = 25) {
@@ -56,20 +63,79 @@ function displayRandomWords(count = 25) {
             wrappedText2 += `<span id="char-${i}" class="char space"> </span>`;
             i++;
         }
+        else{
+            wrappedText2 += `<span id="char-${i}" class="char"></span>`;
+            i++;
+        }
         wrappedText2 += `</div>`;
     });
 
-    wrappedText2 += `<div class = "word">`;
+   /*  wrappedText2 += `<div class = "word">`;
     wrappedText2 += `<span id ="char-${i}"></span>`
-    wrappedText2 += `</div>`;
+    wrappedText2 += `</div>`; */
     
     typingContainer.innerHTML = wrappedText2;
+    totalChars = i;
 }
+
+// function that starts the test
+function startTest() {
+    // Reset variables
+    keysPressed = 0;
+    userTyped = '';
+    typingTime = 0;
+    startTime = null;
+    isTyping = false;
+    correctChars = 0;
+    correctWords = 0;
+    totalChars = 0;
+    testComplete = false; // Reset the test complete flag
+    
+
+    
+    // Reset any existing styling
+    document.querySelectorAll('.matched, .unmatched').forEach(element => {
+        element.classList.remove('matched', 'unmatched');
+    });
+    
+    // Reset cursor position
+    const cursor = typingContainer.querySelector('.cursor');
+    const firstChar = typingContainer.querySelector('#char-0');
+    if (cursor && firstChar && firstChar.parentNode) {
+        firstChar.parentNode.insertBefore(cursor, firstChar);
+    }
+    
+}
+// end of test function
+function endTest(){
+
+    const endTime = new Date();
+
+
+    /* typingTime = endTime - startTime;
+    typingSpeed = Math.floor(( correctWords/ typingTime) * 60000);
+    accuracy = Math.floor((correctChars / totalChars) * 100); */
+    
+    console.log("End test ran successfully!!!!!!!!!!!")
+    
+    // Set the test complete flag to prevent further key presses
+    testComplete = true;
+}
+
+
 
 // Event listener for typing and backspace handling
 document.addEventListener('keydown', function(event) {
-    console.log('Key pressed:', event.key);
+    //console.log('Key pressed:', event.key);
+    if (testComplete) {
+        //event.preventDefault();
+        return;
+    }
+    // If the test is complete, don't process any key presses
     
+    
+    isTyping = true;
+
     if (event.key === 'Backspace') {
         if (keysPressed > 0) {
             keysPressed--;
@@ -88,14 +154,14 @@ document.addEventListener('keydown', function(event) {
     const currentSpan = typingContainer.querySelector(`#char-${keysPressed}`);
     const currentLetter = currentSpan.textContent;
     
-    console.log('Current letter:', currentLetter);
+    //console.log('Current letter:', currentLetter);
     
     if (event.key === currentLetter) {
-        console.log('Correct key pressed!');
+        //console.log('Correct key pressed!');
         currentSpan.classList.add("matched");
         colorKey('green', event.key);
     } else {
-        console.log('Incorrect key pressed!');
+        //console.log('Incorrect key pressed!');
         currentSpan.classList.add("unmatched");
         colorKey('red', event.key);
     }
@@ -111,9 +177,43 @@ document.addEventListener('keydown', function(event) {
 });
 
 document.addEventListener('keyup', function(event) {
-    console.log('Key lifted:', event.key);
+    //console.log('Key lifted:', event.key);
+    
+    // If the test is complete, don't process any key lifts except for color reset
+    if (testComplete) {
+        return;
+    }
+    
     colorKey('#ecdeaa', event.key)
+
+    if (keysPressed === totalChars) {
+        const wordElements = typingContainer.querySelectorAll('.word');
+        const lastWord = wordElements[wordElements.length - 1];
+        const lastWordLetters = lastWord.querySelectorAll('.char');
+        
+        let allMatched = true;
+        lastWordLetters.forEach(letter => {
+            if (!letter.classList.contains('matched')) {
+                allMatched = false;
+            }
+        });
+        
+        if (allMatched) {
+            
+            endTest();
+            console.log('Test ended! All letters in last word matched.');
+        }
+    }
+    else if (keysPressed > totalChars){
+        
+        endTest();
+        console.log('Test ended!');
+    }
+
+
 });
+
+
 
 // Function to manage keyboard key colors
 function colorKey(color, keyId) {
@@ -149,6 +249,11 @@ function deleteLetter() {
 // Event listener for tracking user input
 
 document.addEventListener('keydown', function(event) {
+    // If the test is complete, don't track any more input
+    if (testComplete) {
+        return;
+    }
+    
     if (event.key.length === 1) {
         userTyped += event.key;
         
