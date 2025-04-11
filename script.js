@@ -108,13 +108,18 @@ function startTest() {
 }
 // end of test function
 function endTest(){
-
     const endTime = new Date();
 
-
-    /* typingTime = endTime - startTime;
+    typingTime = endTime - startTime;
     typingSpeed = Math.floor(( correctWords/ typingTime) * 60000);
-    accuracy = Math.floor((correctChars / totalChars) * 100); */
+    accuracy = Math.floor((correctChars / totalChars) * 100);     
+    
+    // Reset all keyboard key colors
+    document.querySelectorAll('[id]').forEach(element => {
+        if (element.style.backgroundColor) {
+            element.style.backgroundColor = '#ecdeaa';
+        }
+    });
     
     console.log("End test ran successfully!!!!!!!!!!!")
     
@@ -128,7 +133,7 @@ function endTest(){
 document.addEventListener('keydown', function(event) {
     //console.log('Key pressed:', event.key);
     if (testComplete) {
-        //event.preventDefault();
+        event.preventDefault();
         return;
     }
     // If the test is complete, don't process any key presses
@@ -186,28 +191,26 @@ document.addEventListener('keyup', function(event) {
     
     colorKey('#ecdeaa', event.key)
 
-    if (keysPressed === totalChars) {
-        const wordElements = typingContainer.querySelectorAll('.word');
-        const lastWord = wordElements[wordElements.length - 1];
-        const lastWordLetters = lastWord.querySelectorAll('.char');
+    // Only check for test completion when we've typed all characters
+    if (keysPressed >= totalChars) {
+        // Get all words
+        const words = typingContainer.querySelectorAll('.word');
+        const lastWord = words[words.length - 1];
         
-        let allMatched = true;
-        lastWordLetters.forEach(letter => {
-            if (!letter.classList.contains('matched')) {
-                allMatched = false;
+        // Check if all characters in the last word are matched
+        const lastWordChars = lastWord.querySelectorAll('.char:not(:empty)');
+        let lastWordMatched = true;
+        
+        lastWordChars.forEach(char => {
+            if (!char.classList.contains('matched')) {
+                lastWordMatched = false;
             }
         });
         
-        if (allMatched) {
-            
+        if (lastWordMatched) {
             endTest();
-            console.log('Test ended! All letters in last word matched.');
+            console.log('Test ended successfully - last word matched!');
         }
-    }
-    else if (keysPressed > totalChars){
-        
-        endTest();
-        console.log('Test ended!');
     }
 
 
@@ -281,7 +284,7 @@ window.onload = function() {
         element.addEventListener('click', function() {
             const wordCount = parseInt(this.dataset.count);
             displayRandomWords(wordCount);
-            keysPressed = 0;  // Reset counter when changing words
+            startTest();  // Call startTest to properly reset all variables
         });
     });
 };
