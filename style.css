@@ -17,9 +17,26 @@ body {
     gap: 0;                   /* Remove gap between characters */
 }
 
-#results-screen{
+#results-screen {
     font-family: 'Ubuntu', Courier, monospace;
     display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ecdda5;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+#results-screen .stats {
+    margin-top: 15px;
+}
+
+#results-screen .highlight {
+    font-weight: bold;
+    color: #2c3e50;
 }
 
 

@@ -125,6 +125,22 @@ function endTest(){
     
     // Set the test complete flag to prevent further key presses
     testComplete = true;
+
+    document.getElementById('typing-container').style.display = 'none';
+
+    const resultsScreen = document.getElementById('results-screen');
+    const keyboard = document.getElementById('keyboard');
+    keyboard.style.display = 'none';
+    resultsScreen.style.display = 'block';
+
+    // Display WPM and accuracy
+    resultsScreen.innerHTML = `
+        <h2>Results</h2>
+        <div class="stats">
+            <p>Words Per Minute: <span class="highlight">${typingSpeed}</span></p>
+            <p>Accuracy: <span class="highlight">${accuracy}%</span></p>
+        </div>
+    `;
 }
 
 
@@ -165,6 +181,7 @@ document.addEventListener('keydown', function(event) {
         //console.log('Correct key pressed!');
         currentSpan.classList.add("matched");
         colorKey('green', event.key);
+        correctChars++; // Increment correctChars for accurate typing
     } else {
         //console.log('Incorrect key pressed!');
         currentSpan.classList.add("unmatched");
@@ -191,10 +208,27 @@ document.addEventListener('keyup', function(event) {
     
     colorKey('#ecdeaa', event.key)
 
+    // Check word completion and update correctWords count
+    const words = typingContainer.querySelectorAll('.word');
+    correctWords = 0;
+    
+    words.forEach(word => {
+        const chars = word.querySelectorAll('.char:not(:empty)');
+        let wordMatched = true;
+        
+        chars.forEach(char => {
+            if (!char.classList.contains('matched')) {
+                wordMatched = false;
+            }
+        });
+        
+        if (wordMatched) {
+            correctWords++;
+        }
+    });
+
     // Only check for test completion when we've typed all characters
     if (keysPressed >= totalChars) {
-        // Get all words
-        const words = typingContainer.querySelectorAll('.word');
         const lastWord = words[words.length - 1];
         
         // Check if all characters in the last word are matched
@@ -255,6 +289,11 @@ document.addEventListener('keydown', function(event) {
     // If the test is complete, don't track any more input
     if (testComplete) {
         return;
+    }
+    
+    // Initialize startTime on first keypress
+    if (!startTime) {
+        startTime = new Date();
     }
     
     if (event.key.length === 1) {
