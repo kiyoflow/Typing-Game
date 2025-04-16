@@ -42,7 +42,7 @@ let timerInterval = null;
 let isTyping = false;
 let correctWords = 0;
 let correctChars = 0;
-let totalChars;
+let totalChars = 0;
 let testComplete = false; // Flag to track if the test is complete
 
 // Function to display random words in the typing container
@@ -75,6 +75,7 @@ function displayRandomWords(count = 25) {
     wrappedText2 += `</div>`; */
     
     typingContainer.innerHTML = wrappedText2;
+    console.log(i)
     totalChars = i;
 }
 
@@ -90,20 +91,7 @@ function startTest() {
     correctWords = 0;
     totalChars = 0;
     testComplete = false; // Reset the test complete flag
-    
 
-    
-    // Reset any existing styling
-    document.querySelectorAll('.matched, .unmatched').forEach(element => {
-        element.classList.remove('matched', 'unmatched');
-    });
-    
-    // Reset cursor position
-    const cursor = typingContainer.querySelector('.cursor');
-    const firstChar = typingContainer.querySelector('#char-0');
-    if (cursor && firstChar && firstChar.parentNode) {
-        firstChar.parentNode.insertBefore(cursor, firstChar);
-    }
     
 }
 // end of test function
@@ -112,6 +100,9 @@ function endTest(){
 
     typingTime = endTime - startTime;
     typingSpeed = Math.floor(( correctWords/ typingTime) * 60000);
+    console.log(correctChars)
+    console.log(totalChars)
+
     accuracy = Math.floor((correctChars / totalChars) * 100);     
     
     // Reset all keyboard key colors
@@ -153,7 +144,22 @@ document.addEventListener('keydown', function(event) {
         return;
     }
     // If the test is complete, don't process any key presses
+    if (!startTime) {
+        startTime = new Date();
+    }
     
+    if (event.key.length === 1) {
+        userTyped += event.key;
+        
+    }
+    else if (event.key === 'Backspace') {
+        userTyped = userTyped.slice(0, -1);
+        
+    }
+    else if (event.key === ' ') {
+        userTyped += ' ';
+        
+    }
     
     isTyping = true;
 
@@ -227,7 +233,7 @@ document.addEventListener('keyup', function(event) {
         }
     });
 
-    // Only check for test completion when we've typed all characters
+    // Only check for test completion when we've typed all characters of last word
     if (keysPressed >= totalChars) {
         const lastWord = words[words.length - 1];
         
@@ -283,35 +289,6 @@ function deleteLetter() {
     }
 }
 
-// Event listener for tracking user input
-
-document.addEventListener('keydown', function(event) {
-    // If the test is complete, don't track any more input
-    if (testComplete) {
-        return;
-    }
-    
-    // Initialize startTime on first keypress
-    if (!startTime) {
-        startTime = new Date();
-    }
-    
-    if (event.key.length === 1) {
-        userTyped += event.key;
-        
-    }
-    else if (event.key === 'Backspace') {
-        userTyped = userTyped.slice(0, -1);
-        
-    }
-    else if (event.key === ' ') {
-        userTyped += ' ';
-        
-    }
-})
-
-
-
 
 
 // Initialize game and set up word count selection
@@ -322,8 +299,17 @@ window.onload = function() {
     document.querySelectorAll('.word-count').forEach(element => {
         element.addEventListener('click', function() {
             const wordCount = parseInt(this.dataset.count);
+            const resultsScreen = document.getElementById('results-screen');
+            const keyboard = document.getElementById('keyboard');
+            const typingContainer = document.getElementById('typing-container');
+
+            // Hide the results screen and show the typing container
+            typingContainer.style.display = 'block';
+            keyboard.style.display = 'block';
+            resultsScreen.style.display = 'none';
+            startTest();
             displayRandomWords(wordCount);
-            startTest();  // Call startTest to properly reset all variables
+              // Call startTest to properly reset all variables
         });
     });
 };
