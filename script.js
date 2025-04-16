@@ -19,6 +19,21 @@ const words = [
     "framework", "debug", "compiler", "encryption", "database", "repository", "version", "objectivity"
 ]
 
+function menu(){
+    const menuContent = document.getElementById('menu-content');
+    const typingContainer = document.getElementById('typing-container');
+    const keyboard = document.getElementById('keyboard');
+    const wordSettings = document.getElementById('word-settings');
+    
+    menuContent.style.display = 'block';
+    wordSettings.style.display = 'none';
+    typingContainer.style.display = 'none';
+    keyboard.style.display = 'none';
+    
+
+}
+
+
 
 // Function to get random words from the word list
 function getRandomWords(count) {
@@ -58,7 +73,7 @@ function displayRandomWords(count = 25) {
             if (i === 0) wrappedText2 += '<span class="cursor"></span>';
             wrappedText2 += `<span id="char-${i}" class="char">${char}</span>`;
             i++;
-        });
+    });;
         if (index < randomWords.length - 1) {
             wrappedText2 += `<span id="char-${i}" class="char space"> </span>`;
             i++;
@@ -103,7 +118,7 @@ function endTest(){
     console.log(correctChars)
     console.log(totalChars)
 
-    accuracy = Math.floor((correctChars / totalChars) * 100);     
+    accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);     
     
     // Reset all keyboard key colors
     document.querySelectorAll('[id]').forEach(element => {
@@ -226,18 +241,18 @@ document.addEventListener('keyup', function(event) {
             if (!char.classList.contains('matched')) {
                 wordMatched = false;
             }
-        });
+    });;
         
         if (wordMatched) {
             correctWords++;
         }
     });
 
-    // Only check for test completion when we've typed all characters of last word
-    if (keysPressed >= totalChars) {
+    // Check if we've reached the last character before the empty span
+    if (keysPressed === totalChars - 1) {
         const lastWord = words[words.length - 1];
         
-        // Check if all characters in the last word are matched
+        // Check if all non-empty characters in the last word are matched
         const lastWordChars = lastWord.querySelectorAll('.char:not(:empty)');
         let lastWordMatched = true;
         
@@ -245,15 +260,13 @@ document.addEventListener('keyup', function(event) {
             if (!char.classList.contains('matched')) {
                 lastWordMatched = false;
             }
-        });
+    });;
         
         if (lastWordMatched) {
             endTest();
             console.log('Test ended successfully - last word matched!');
         }
     }
-
-
 });
 
 
@@ -293,7 +306,20 @@ function deleteLetter() {
 
 // Initialize game and set up word count selection
 window.onload = function() {
-    displayRandomWords(25);  // Show initial 25 words
+    menu();
+
+    document.querySelector('#practice').addEventListener('click', function() {
+        const wordSettings = document.getElementById('word-settings');
+        const typingContainer = document.getElementById('typing-container');
+        const keyboard = document.getElementById('keyboard');
+        const menuContent = document.getElementById('menu-content');
+        displayRandomWords(25);
+
+        menuContent.style.display = 'none';
+        wordSettings.style.display = 'block';
+        typingContainer.style.display = 'block';
+        keyboard.style.display = 'block';
+    })
     
     // Set up word count selection listeners after DOM is loaded
     document.querySelectorAll('.word-count').forEach(element => {
@@ -310,7 +336,7 @@ window.onload = function() {
             startTest();
             displayRandomWords(wordCount);
               // Call startTest to properly reset all variables
-        });
+    });;
     });
 };
 
