@@ -217,6 +217,23 @@ document.addEventListener('keydown', function(event) {
     if (nextSpan && cursor && nextSpan.parentNode) {
         nextSpan.parentNode.insertBefore(cursor, nextSpan);
     }
+
+    // Scroll handling: Keep the cursor visible
+    if (cursor) {
+        const containerRect = typingContainer.getBoundingClientRect();
+        const cursorRect = cursor.getBoundingClientRect();
+
+        // Check if the cursor is below the visible area of the container
+        if (cursorRect.bottom + 70 > containerRect.bottom) {
+            // Scroll down to bring the cursor into view
+            typingContainer.scrollTop += cursorRect.bottom + 70 - containerRect.bottom + 10; // Add a small buffer (e.g., 10px)
+        }
+        // Optional: Check if the cursor moved above the visible area (e.g., due to backspace near the top)
+        else if (cursorRect.top < containerRect.top) {
+            // Scroll up to bring the cursor into view
+            typingContainer.scrollTop -= containerRect.top - cursorRect.top + 10; // Add a small buffer
+        }
+    }
 });
 
 document.addEventListener('keyup', function(event) {

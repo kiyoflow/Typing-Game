@@ -13,7 +13,7 @@ body {
     left: 0;
 }
 
-.modes{
+#practice, #quick-play {
     background-color: #f0e8ca;
     font-family: 'Ubuntu', Courier, monospace;
     font-size: 50px;
@@ -25,11 +25,18 @@ body {
     border-radius: 10px;
     cursor: pointer;
     margin: 0 auto;
-    margin-top: 100px;
     display: block;
 }
 
-.modes:hover {
+#practice {
+    margin-top: 100px;
+}
+
+#quick-play {
+    margin-top: 50px;
+}
+
+#practice:hover, #quick-play:hover {
     background-color: #ecdda5;
     transition: background-color 0.3s ease;
     transition: scale 0.3s ease;
@@ -37,18 +44,40 @@ body {
 }
 
 #typing-container {
-    text-align: center;
-    margin-top: 40vh;
+    text-align: left;
     font-family: 'Ubuntu', Courier, monospace;
     font-size: 24px;
-    max-width: 80%;           /* Increased width for better display */
-    margin-left: auto;
-    margin-right: auto;
-    display: flex;            /* Changed to flex */
-    flex-wrap: wrap;          /* Enable wrapping */
-    justify-content: center;  /* Center horizontally */
-    align-items: center;      /* Center vertically */
-    gap: 0;                   /* Remove gap between characters */
+    width: 800px;
+    position: fixed;
+    top: 30vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: baseline;
+    gap: 0.4em;
+    min-height: 95px;
+    max-height: 95px;
+    overflow: auto; /* Changed from visible clip to enable scrolling */
+    padding: 20px;
+    line-height: 1.5;
+
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Hide scrollbar for IE, Edge and Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.word {
+    display: inline-flex;
+    white-space: nowrap;
+    align-items: baseline;
+    height: 36px;
 }
 
 #results-screen {
@@ -121,11 +150,16 @@ body {
 }
 
 #keyboard {
-    margin-top: 75px;
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 800px;
 }
 
-#space-bar {
-    width: 120px;
+#space {
+    width: 300px;
     text-align: center;
 }
 
@@ -137,7 +171,8 @@ body {
     background-color: #000;
     animation: blink 1s infinite;
     margin-right: -2px;
-    vertical-align: middle;
+    margin-bottom: -20px;
+    vertical-align: bottom;
 }
 
 @keyframes blink {
