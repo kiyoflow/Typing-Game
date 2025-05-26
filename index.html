@@ -13,8 +13,18 @@
     <div id="menu">
         <div id="menu-content">
             <button id="practice" class="modes">PRACTICE</button>
-            <button id="quick-play" class="modes">QUICKPLAY</button>
+            <button id="pvp" class="modes">PVP</button>
     </div>
+
+    <div id="queueMenu">
+        <button id="queueBtn">Queue Into Match</button>
+    </div>
+
+    <div id="match">
+        <div id="playerTypingArea" class="typingArea"></div>
+        <div id="oppTypingArea" class="typingArea"></div>
+    </div>
+    
 
 
     <div id="app">
@@ -75,7 +85,7 @@
 
     </div>
     
-
+    <script src="/socket.io/socket.io.js"></script> <!-- Add Socket.IO client library -->
     <script src="script.js"></script>
 </body>
 </html>

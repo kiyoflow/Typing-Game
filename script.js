@@ -149,10 +149,82 @@ function endTest(){
     `;
 }
 
+const pvpButton = document.getElementById('pvp');
+const queueMenu = document.getElementById('queueMenu');
+const menuContent = document.getElementById('menu-content');
 
+// Initialize Socket.IO connection
+const socket = io();
+
+socket.on('username assigned', (username) => {
+    console.log('Assigned username:', username);
+});
+
+socket.on('queueJoined', () => {
+    console.log('Successfully joined the queue');
+});
+
+socket.on('matchFound', (data) => {
+    console.log('Match found!');
+    console.log('Your opponent is:', data.opponent);
+    const queueMenu = document.getElementById('queueMenu');
+    const match = document.getElementById('match');
+    const playerTypingArea = document.getElementById('playerTypingArea');
+    const oppTypingArea = document.getElementById('oppTypingArea');
+    
+    if (match) {
+        // Hide the queue menu and show the match container
+        queueMenu.style.display = 'none';
+        match.style.display = 'block';
+        
+        // Initialize the player's typing area
+        startTest();
+        displayRandomWords(25);
+        const typingContainer = document.getElementById('typing-container');
+        playerTypingArea.appendChild(typingContainer);
+        typingContainer.style.display = 'block';
+
+        // Send initial words to opponent
+        socket.emit('words', playerTypingArea.innerHTML);
+    }
+});
+
+// Handle received words from opponent
+socket.on('wordsReceived', (data) => {
+    const oppTypingArea = document.getElementById('oppTypingArea');
+    if (oppTypingArea) {
+        oppTypingArea.innerHTML = data;
+    }
+});
+
+
+pvpButton.addEventListener('click', function() {
+    menuContent.style.opacity = '0';
+    menuContent.style.transform = 'scale(0.8)';
+    setTimeout(() => {
+        menuContent.style.display = 'none';
+        queueMenu.innerHTML = '<button class="queue-button">Find Match</button>';
+        queueMenu.classList.add('active');
+        
+        // Add click event listener to the queue button
+        const queueButton = queueMenu.querySelector('.queue-button');
+        queueButton.addEventListener('click', function() {
+            this.style.animation = 'textChange 0.5s ease';
+            setTimeout(() => {
+                this.textContent = 'Finding Match...';
+                // Emit queue event to server
+                socket.emit('queueMatch');
+            }, 250);
+        });
+    }, 300);
+});
 
 // Event listener for typing and backspace handling
 document.addEventListener('keydown', function(event) {
+    if (event.key === ' ') {
+        event.preventDefault(); // Prevent space bar from scrolling
+    }
+    
     //console.log('Key pressed:', event.key);
     if (testComplete) {
         event.preventDefault();
@@ -209,6 +281,12 @@ document.addEventListener('keydown', function(event) {
         colorKey('red', event.key);
     }
 
+    // Send current typing progress to opponent
+    const playerTypingArea = document.getElementById('playerTypingArea');
+    if (playerTypingArea) {
+        socket.emit('words', playerTypingArea.innerHTML);
+    }
+
     keysPressed++;
     
     
@@ -218,8 +296,8 @@ document.addEventListener('keydown', function(event) {
         nextSpan.parentNode.insertBefore(cursor, nextSpan);
     }
 
-    // Scroll handling: Keep the cursor visible
-    if (cursor) {
+    // Scroll handling: Keep the cursor visible, but prevent scrolling on spacebar
+    if (cursor && event.key !== ' ') {
         const containerRect = typingContainer.getBoundingClientRect();
         const cursorRect = cursor.getBoundingClientRect();
 
@@ -319,7 +397,12 @@ function deleteLetter() {
     }
 }
 
+// idk what to call this
+const queueBtn = document.getElementById('queueBtn');
 
+queueBtn.addEventListener('click', function() {
+    Socket.emit('queueMatch', )
+})
 
 // Initialize game and set up word count selection
 window.onload = function() {

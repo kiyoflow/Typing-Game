@@ -11,9 +11,12 @@ body {
     position: fixed;
     top: 0;
     left: 0;
+    opacity: 1;
+    transform: scale(1);
+    transition: all 0.3s ease-in-out;
 }
 
-#practice, #quick-play {
+#practice, #pvp{
     background-color: #f0e8ca;
     font-family: 'Ubuntu', Courier, monospace;
     font-size: 50px;
@@ -21,37 +24,94 @@ body {
     width: 400px;
     padding-top: 35px;
     padding-bottom: 35px;
-    border: 1px solid #2c3e50;
-    border-radius: 10px;
+    border: 2px solid #2c3e50;
+    border-radius: 15px;
     cursor: pointer;
     margin: 0 auto;
     display: block;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
 }
 
 #practice {
     margin-top: 100px;
 }
 
-#quick-play {
+#pvp {
     margin-top: 50px;
 }
 
-#practice:hover, #quick-play:hover {
-    background-color: #ecdda5;
-    transition: background-color 0.3s ease;
-    transition: scale 0.3s ease;
-    scale: 1.05;
+#practice:hover, #pvp:hover {
+    transform: translateY(-10px) scale(1.1);
+    box-shadow: 0 15px 30px rgba(44, 62, 80, 0.3),
+                0 0 30px rgba(236, 221, 165, 0.6);
+    background-color: #e5d590;
 }
 
-#typing-container {
+#queueMenu {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#queueMenu.active {
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.queue-button {
+    font-family: 'Ubuntu', Courier, monospace;
+    font-size: 40px;
+    padding: 20px 40px;
+    background-color: #ecdda5;
+    border: 2px solid #2c3e50;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
+}
+
+.queue-button:hover {
+    transform: translateY(-10px) scale(1.1);
+    box-shadow: 0 15px 30px rgba(44, 62, 80, 0.3),
+                0 0 30px rgba(236, 221, 165, 0.6);
+    background-color: #e5d590;
+}
+
+#match {
+    display: none;
+    width: 100%;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.typingArea {
+    width: 50%;
+    height: 100%;
+    float: left;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #f0e8ca;
+    overflow-y: auto;
+    position: relative;
+}
+
+#typing-container, #opp-typing-container {
     text-align: left;
     font-family: 'Ubuntu', Courier, monospace;
     font-size: 24px;
-    width: 800px;
-    position: fixed;
-    top: 30vh;
-    left: 50%;
-    transform: translateX(-50%);
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    opacity: 1;
+    transition: all 0.3s ease-in-out;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
@@ -59,7 +119,7 @@ body {
     gap: 0.4em;
     min-height: 95px;
     max-height: 95px;
-    overflow: auto; /* Changed from visible clip to enable scrolling */
+    overflow: hidden; /* Prevent scrolling */
     padding: 20px;
     line-height: 1.5;
 
@@ -121,7 +181,9 @@ body {
     position: absolute;
     top: 15%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+    transition: all 0.3s ease-in-out;
     padding: 10px;
     text-align: center;
     font-family: 'Ubuntu', Courier, monospace; 
@@ -129,6 +191,55 @@ body {
 
 #word-settings:hover {
     cursor: pointer;
+}
+
+.queue-button {
+    padding: 25px 50px;
+    font-size: 24px;
+    background-color: #ecdda5;
+    border: 2px solid #2c3e50;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
+}
+
+.queue-button:hover {
+    transform: translateY(-10px) scale(1.1);
+    box-shadow: 0 15px 30px rgba(44, 62, 80, 0.3),
+                0 0 30px rgba(236, 221, 165, 0.6);
+    background-color: #e5d590;
+}
+
+#match {
+    display: none;
+}
+
+.typingArea {
+    width: 50%;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #f0e8ca;
+}
+
+#playerTypingArea {
+    left: 0;
+    border-right: 2px solid #2c3e50;
+}
+
+#oppTypingArea {
+    right: 0;
+}
+
+@keyframes textChange {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
 .key {
