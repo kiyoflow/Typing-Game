@@ -1,5 +1,8 @@
 body {
     background-color: #f0e8ca;
+    margin: 0;
+    padding: 0;
+    font-family: 'Ubuntu', Courier, monospace;
 }
 
 #menu-content{
@@ -14,6 +17,8 @@ body {
     opacity: 1;
     transform: scale(1);
     transition: all 0.3s ease-in-out;
+    flex-direction: column;
+    gap: 30px;
 }
 
 #practice, #pvp{
@@ -22,23 +27,12 @@ body {
     font-size: 50px;
     text-align: center;
     width: 400px;
-    padding-top: 35px;
-    padding-bottom: 35px;
+    padding: 35px;
     border: 2px solid #2c3e50;
     border-radius: 15px;
     cursor: pointer;
-    margin: 0 auto;
-    display: block;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
-}
-
-#practice {
-    margin-top: 100px;
-}
-
-#pvp {
-    margin-top: 50px;
 }
 
 #practice:hover, #pvp:hover {
@@ -90,167 +84,213 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-}
-
-.typingArea {
-    width: 50%;
-    height: 100%;
-    float: left;
-    padding: 20px;
-    box-sizing: border-box;
     background-color: #f0e8ca;
-    overflow-y: auto;
-    position: relative;
-}
-
-#typing-container, #opp-typing-container {
-    text-align: left;
-    font-family: 'Ubuntu', Courier, monospace;
-    font-size: 24px;
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    opacity: 1;
-    transition: all 0.3s ease-in-out;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: baseline;
-    gap: 0.4em;
-    min-height: 95px;
-    max-height: 95px;
-    overflow: hidden; /* Prevent scrolling */
-    padding: 20px;
-    line-height: 1.5;
-
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    &::-webkit-scrollbar {
-        display: none;
-    }
-
-    /* Hide scrollbar for IE, Edge and Firefox */
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-}
-
-.word {
-    display: inline-flex;
-    white-space: nowrap;
-    align-items: baseline;
-    height: 36px;
-}
-
-#results-screen {
-    font-family: 'Ubuntu', Courier, monospace;
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #ecdda5;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-}
-
-#results-screen .stats {
-    margin-top: 15px;
-}
-
-#results-screen .highlight {
-    font-weight: bold;
-    color: #2c3e50;
-}
-
-
-.char {
-    display: inline-block;
-}
-
-/* Add this new class to group characters of the same word */
-.word {
-    display: inline-flex;
-    margin: 0 0.3em;         /* Add space between words */
-    white-space: nowrap;     /* Prevent word from breaking */
-}
-
-#word-settings {
-    background-color: #ecdda5;
-    width: 80%;
-    margin-top: 0;
-    position: absolute;
-    top: 15%;
-    left: 50%;
-    transform: translateX(-50%) scale(1);
-    opacity: 1;
-    transition: all 0.3s ease-in-out;
-    padding: 10px;
-    text-align: center;
-    font-family: 'Ubuntu', Courier, monospace; 
-}
-
-#word-settings:hover {
-    cursor: pointer;
-}
-
-.queue-button {
-    padding: 25px 50px;
-    font-size: 24px;
-    background-color: #ecdda5;
-    border: 2px solid #2c3e50;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
-}
-
-.queue-button:hover {
-    transform: translateY(-10px) scale(1.1);
-    box-shadow: 0 15px 30px rgba(44, 62, 80, 0.3),
-                0 0 30px rgba(236, 221, 165, 0.6);
-    background-color: #e5d590;
-}
-
-#match {
-    display: none;
 }
 
 .typingArea {
     width: 50%;
     height: 100vh;
-    position: fixed;
-    top: 0;
+    float: left;
+    padding: 15px;
+    box-sizing: border-box;
+    position: relative;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    box-sizing: border-box;
-    background-color: #f0e8ca;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 50px;
 }
 
 #playerTypingArea {
-    left: 0;
-    border-right: 2px solid #2c3e50;
+    border-right: 2px solid rgba(0, 0, 0, 0.1);
 }
 
 #oppTypingArea {
-    right: 0;
+    border-left: 2px solid rgba(0, 0, 0, 0.1);
 }
 
-@keyframes textChange {
-    0% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1); }
-}
-
-.key {
-    padding: 5px;
-    margin: 5px;
-    border: none;
-    border-radius: 5px;
-    background-color: #ecdeaa;
-    color: #000000;
-    font-size: 16px;
+.pvp-typing-container {
+    text-align: left;
     font-family: 'Ubuntu', Courier, monospace;
+    font-size: 24px;
+    width: 90%;
+    height: 180px;
+    overflow: hidden;
+    padding: 30px;
+    line-height: 1.8;
+    box-sizing: border-box;
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    border: 2px solid rgba(44, 62, 80, 0.1);
+    margin: 10px 0;
+}
+
+.pvp-typing-container::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+
+
+.typing-area-label {
+    font-family: 'Ubuntu', Courier, monospace;
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    text-align: center;
+    background-color: rgba(236, 221, 165, 0.8);
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(44, 62, 80, 0.2);
+}
+
+.pvp-keyboard {
+    transform: scale(0.7);
+    position: static;
+    margin-top: 15px;
+    width: auto;
+    padding: 15px;
+    background-color: rgba(236, 221, 165, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(44, 62, 80, 0.1);
+}
+
+#app {
+    display: none;
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#typing-container {
+    text-align: left;
+    font-family: 'Ubuntu', Courier, monospace;
+    font-size: 24px;
+    width: 100%;
+    max-width: 1000px;
+    margin: 80px auto 120px auto;
+    opacity: 1;
+    transition: all 0.3s ease-in-out;
+    height: 150px;
+    overflow: hidden;
+    padding: 30px;
+    line-height: 1.8;
+    box-sizing: border-box;
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    border: 2px solid rgba(44, 62, 80, 0.1);
+}
+
+#typing-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#typing-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+#typing-container::-webkit-scrollbar-thumb {
+    background: rgba(44, 62, 80, 0.3);
+    border-radius: 4px;
+}
+
+#typing-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(44, 62, 80, 0.5);
+}
+
+.word {
+    display: inline-flex;
+    margin: 0 0.4em 0.2em 0;
+    white-space: nowrap;
+    align-items: baseline;
+    height: 36px;
+}
+
+.char {
+    display: inline-block;
+    position: relative;
+}
+
+#results-screen {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    padding: 40px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    min-width: 400px;
+    border: 2px solid rgba(44, 62, 80, 0.1);
+}
+
+#results-screen h2 {
+    margin-top: 0;
+    color: #333;
+    font-family: 'Ubuntu', Courier, monospace;
+    font-size: 32px;
+}
+
+#results-screen .stats {
+    margin-top: 20px;
+}
+
+#results-screen .highlight {
+    color: #007bff;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+#word-settings {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    color: #333;
+    display: none;
+    z-index: 50;
+    background-color: rgba(231, 211, 188, 0.9);
+    padding: 15px 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(44, 62, 80, 0.1);
+    font-family: 'Ubuntu', Courier, monospace;
+}
+
+#word-settings .word-count {
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all 0.2s ease;
+}
+
+#word-settings .word-count:hover {
+    background-color: rgba(44, 62, 80, 0.1);
+}
+
+#keyboard {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    padding: 20px;
+    background-color: rgba(236, 221, 165, 0.8);
+    border-radius: 15px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    border: 2px solid rgba(44, 62, 80, 0.1);
 }
 
 .row {
@@ -258,32 +298,42 @@ body {
     flex-direction: row;
     justify-content: center;
     margin-bottom: 5px;
+    gap: 5px;
 }
 
-#keyboard {
-    position: fixed;
-    bottom: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 800px;
+.key {
+    padding: 10px 15px;
+    border: 2px solid #2c3e50;
+    border-radius: 8px;
+    background-color: #ecdeaa;
+    color: #000000;
+    font-size: 16px;
+    font-family: 'Ubuntu', Courier, monospace;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    min-width: 35px;
+    text-align: center;
+}
+
+.key:hover {
+    background-color: #e5d590;
+    transform: translateY(-2px);
 }
 
 #space {
-    width: 300px;
-    text-align: center;
+    min-width: 200px;
 }
 
 .cursor {
     position: relative;
     display: inline-block;
     width: 2px;
-    height: 24px;
-    background-color: #000;
+    height: 28px;
+    background-color: #2c3e50;
     animation: blink 1s infinite;
     margin-right: -2px;
-    margin-bottom: -20px;
-    vertical-align: bottom;
+    vertical-align: text-bottom;
 }
 
 @keyframes blink {
@@ -292,9 +342,19 @@ body {
 }
 
 .matched {
-    color: greenyellow;
+    color: #27ae60;
+    background-color: rgba(39, 174, 96, 0.1);
+    border-radius: 3px;
 }
 
 .unmatched {
-    color: red;
+    color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.1);
+    border-radius: 3px;
+}
+
+@keyframes textChange {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
 }

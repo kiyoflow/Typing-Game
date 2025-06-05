@@ -5,15 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typing Game</title>
     <link rel="stylesheet" href="style.css">
-    
 </head>
 <body>
-
-
     <div id="menu">
         <div id="menu-content">
             <button id="practice" class="modes">PRACTICE</button>
             <button id="pvp" class="modes">PVP</button>
+        </div>
     </div>
 
     <div id="queueMenu">
@@ -21,16 +19,19 @@
     </div>
 
     <div id="match">
-        <div id="playerTypingArea" class="typingArea"></div>
-        <div id="oppTypingArea" class="typingArea"></div>
+        <div id="playerTypingArea" class="typingArea">
+            <div class="typing-area-label">You</div>
+            <div id="player-typing-container" class="pvp-typing-container"></div>
+            <div id="player-keyboard-container"></div>
+        </div>
+        <div id="oppTypingArea" class="typingArea">
+            <div class="typing-area-label">Opponent</div>
+            <div id="opp-typing-container" class="pvp-typing-container"></div>
+            <div id="opp-keyboard-container"></div>
+        </div>
     </div>
-    
-
 
     <div id="app">
-
-        <div id="typedWords"></div>
-
         <div id="word-settings">
             <span class="word-count" data-count="2">2 words</span> |
             <span class="word-count" data-count="10">10 words</span> |
@@ -40,6 +41,7 @@
 
         <div id="typing-container">
         </div>
+
         <div id="results-screen">
             <h2>Results</h2>
         </div>
@@ -81,11 +83,9 @@
                 <div class="key" id="space">Space</div>
             </div>
         </div>
-
-
     </div>
     
-    <script src="/socket.io/socket.io.js"></script> <!-- Add Socket.IO client library -->
+    <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

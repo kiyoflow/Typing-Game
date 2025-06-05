@@ -24,16 +24,18 @@ function menu(){
     const typingContainer = document.getElementById('typing-container');
     const keyboard = document.getElementById('keyboard');
     const wordSettings = document.getElementById('word-settings');
+    const app = document.getElementById('app');
+    const match = document.getElementById('match');
+    const resultsScreen = document.getElementById('results-screen');
     
-    menuContent.style.display = 'block';
+    menuContent.style.display = 'flex';
+    app.style.display = 'none';
+    match.style.display = 'none';
     wordSettings.style.display = 'none';
     typingContainer.style.display = 'none';
     keyboard.style.display = 'none';
-    
-
+    resultsScreen.style.display = 'none';
 }
-
-
 
 // Function to get random words from the word list
 function getRandomWords(count) {
@@ -69,28 +71,23 @@ function displayRandomWords(count = 25) {
     let wrappedText2 = '';
     randomWords.forEach(function(word, index) {
         wrappedText2 += `<div class="word">`;
-        word.split('').forEach(function(char, index) {
+        word.split('').forEach(function(char, charIndex) {
             if (i === 0) wrappedText2 += '<span class="cursor"></span>';
             wrappedText2 += `<span id="char-${i}" class="char">${char}</span>`;
             i++;
-    });;
+        });
         if (index < randomWords.length - 1) {
             wrappedText2 += `<span id="char-${i}" class="char space"> </span>`;
             i++;
-        }
-        else{
+        } else {
             wrappedText2 += `<span id="char-${i}" class="char"></span>`;
             i++;
         }
         wrappedText2 += `</div>`;
     });
-
-   /*  wrappedText2 += `<div class = "word">`;
-    wrappedText2 += `<span id ="char-${i}"></span>`
-    wrappedText2 += `</div>`; */
     
     typingContainer.innerHTML = wrappedText2;
-    console.log(i)
+    console.log('Total characters:', i);
     totalChars = i;
 }
 
@@ -106,36 +103,34 @@ function startTest() {
     correctWords = 0;
     totalChars = 0;
     testComplete = false; // Reset the test complete flag
-
-    
 }
+
 // end of test function
 function endTest(){
     const endTime = new Date();
 
     typingTime = endTime - startTime;
-    typingSpeed = Math.floor(( correctWords/ typingTime) * 60000);
-    console.log(correctChars)
-    console.log(totalChars)
+    typingSpeed = Math.floor((correctWords / typingTime) * 60000);
+    console.log('Correct chars:', correctChars);
+    console.log('Total chars:', totalChars);
 
     accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);     
     
     // Reset all keyboard key colors
-    document.querySelectorAll('[id]').forEach(element => {
-        if (element.style.backgroundColor) {
-            element.style.backgroundColor = '#ecdeaa';
-        }
+    document.querySelectorAll('.key').forEach(key => {
+        key.style.backgroundColor = '#ecdeaa';
     });
     
-    console.log("End test ran successfully!!!!!!!!!!!")
+    console.log("End test ran successfully!");
     
     // Set the test complete flag to prevent further key presses
     testComplete = true;
 
-    document.getElementById('typing-container').style.display = 'none';
-
+    const typingContainer = document.getElementById('typing-container');
     const resultsScreen = document.getElementById('results-screen');
     const keyboard = document.getElementById('keyboard');
+    
+    typingContainer.style.display = 'none';
     keyboard.style.display = 'none';
     resultsScreen.style.display = 'block';
 
@@ -146,12 +141,22 @@ function endTest(){
             <p>Words Per Minute: <span class="highlight">${typingSpeed}</span></p>
             <p>Accuracy: <span class="highlight">${accuracy}%</span></p>
         </div>
+        <button onclick="restartTest()" style="margin-top: 20px; padding: 10px 20px; font-size: 16px; background-color: #ecdda5; border: 2px solid #2c3e50; border-radius: 8px; cursor: pointer; font-family: 'Ubuntu', Courier, monospace;">Try Again</button>
     `;
 }
 
-const pvpButton = document.getElementById('pvp');
-const queueMenu = document.getElementById('queueMenu');
-const menuContent = document.getElementById('menu-content');
+function restartTest() {
+    const resultsScreen = document.getElementById('results-screen');
+    const typingContainer = document.getElementById('typing-container');
+    const keyboard = document.getElementById('keyboard');
+    
+    resultsScreen.style.display = 'none';
+    typingContainer.style.display = 'block';
+    keyboard.style.display = 'block';
+    
+    startTest();
+    displayRandomWords(25);
+}
 
 // Initialize Socket.IO connection
 const socket = io();
@@ -169,34 +174,75 @@ socket.on('matchFound', (data) => {
     console.log('Your opponent is:', data.opponent);
     const queueMenu = document.getElementById('queueMenu');
     const match = document.getElementById('match');
-    const playerTypingArea = document.getElementById('playerTypingArea');
-    const oppTypingArea = document.getElementById('oppTypingArea');
+    const playerContainer = document.getElementById('player-typing-container');
+    const oppLabel = document.querySelector('#oppTypingArea .typing-area-label');
     
     if (match) {
         // Hide the queue menu and show the match container
         queueMenu.style.display = 'none';
         match.style.display = 'block';
         
-        // Initialize the player's typing area
+        // Update opponent label with their name
+        if (oppLabel) {
+            oppLabel.textContent = data.opponent;
+        }
+        
+        // Hide practice mode elements
+        document.getElementById('keyboard').style.display = 'none';
+        
+        // Show PvP keyboards
+        document.getElementById('player-keyboard').style.display = 'block';
+        document.getElementById('opp-keyboard').style.display = 'block';
+        
+        // Initialize the player's typing test
         startTest();
         displayRandomWords(25);
-        const typingContainer = document.getElementById('typing-container');
-        playerTypingArea.appendChild(typingContainer);
-        typingContainer.style.display = 'block';
+        
+        // Move the generated content to the player's PvP container
+        const mainTypingContainer = document.getElementById('typing-container');
+        playerContainer.innerHTML = mainTypingContainer.innerHTML;
+        
+        // Update the global reference for typing logic
+        typingContainer = playerContainer;
 
         // Send initial words to opponent
-        socket.emit('words', playerTypingArea.innerHTML);
+        socket.emit('words', playerContainer.innerHTML);
     }
 });
 
 // Handle received words from opponent
 socket.on('wordsReceived', (data) => {
-    const oppTypingArea = document.getElementById('oppTypingArea');
-    if (oppTypingArea) {
-        oppTypingArea.innerHTML = data;
+    const oppContainer = document.getElementById('opp-typing-container');
+    if (oppContainer) {
+        oppContainer.innerHTML = data;
+        const oppCursor = oppContainer.querySelector('.cursor');
+        
+        if (oppCursor) {
+            const containerRect = oppContainer.getBoundingClientRect();
+            const oppCursorRect = oppCursor.getBoundingClientRect();
+            const padding = 40;
+
+            // Get current transform value
+            const currentTransform = oppContainer.style.transform || 'translateY(0px)';
+            const currentY = parseFloat(currentTransform.match(/-?\d+\.?\d*/)?.[0] || 0);
+
+            // Check if the cursor is below the visible area of the container
+            if (oppCursorRect.bottom + padding > containerRect.bottom) {
+                const scrollAmount = oppCursorRect.bottom + padding - containerRect.bottom + 10;
+                oppContainer.style.transform = `translateY(${currentY - scrollAmount}px)`;
+            }
+            // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
+            else if (oppCursorRect.top < containerRect.top + 10) {
+                const scrollAmount = (containerRect.top + 10) - oppCursorRect.top + 10;
+                oppContainer.style.transform = `translateY(${currentY + scrollAmount}px)`;
+            }
+        }
     }
 });
 
+const pvpButton = document.getElementById('pvp');
+const queueMenu = document.getElementById('queueMenu');
+const menuContent = document.getElementById('menu-content');
 
 pvpButton.addEventListener('click', function() {
     menuContent.style.opacity = '0';
@@ -225,11 +271,15 @@ document.addEventListener('keydown', function(event) {
         event.preventDefault(); // Prevent space bar from scrolling
     }
     
-    //console.log('Key pressed:', event.key);
     if (testComplete) {
         event.preventDefault();
         return;
     }
+    
+    if (!typingContainer || typingContainer.style.display === 'none') {
+        return; // Don't process keys if not in typing mode
+    }
+    
     // If the test is complete, don't process any key presses
     if (!startTime) {
         startTime = new Date();
@@ -237,15 +287,12 @@ document.addEventListener('keydown', function(event) {
     
     if (event.key.length === 1) {
         userTyped += event.key;
-        
     }
     else if (event.key === 'Backspace') {
         userTyped = userTyped.slice(0, -1);
-        
     }
     else if (event.key === ' ') {
         userTyped += ' ';
-        
     }
     
     isTyping = true;
@@ -266,29 +313,20 @@ document.addEventListener('keydown', function(event) {
     }
     
     const currentSpan = typingContainer.querySelector(`#char-${keysPressed}`);
+    if (!currentSpan) return;
+    
     const currentLetter = currentSpan.textContent;
     
-    //console.log('Current letter:', currentLetter);
-    
     if (event.key === currentLetter) {
-        //console.log('Correct key pressed!');
         currentSpan.classList.add("matched");
         colorKey('green', event.key);
         correctChars++; // Increment correctChars for accurate typing
     } else {
-        //console.log('Incorrect key pressed!');
         currentSpan.classList.add("unmatched");
         colorKey('red', event.key);
     }
 
-    // Send current typing progress to opponent
-    const playerTypingArea = document.getElementById('playerTypingArea');
-    if (playerTypingArea) {
-        socket.emit('words', playerTypingArea.innerHTML);
-    }
-
     keysPressed++;
-    
     
     const nextSpan = typingContainer.querySelector(`#char-${keysPressed}`);
     const cursor = typingContainer.querySelector('.cursor');
@@ -296,33 +334,46 @@ document.addEventListener('keydown', function(event) {
         nextSpan.parentNode.insertBefore(cursor, nextSpan);
     }
 
-    // Scroll handling: Keep the cursor visible, but prevent scrolling on spacebar
-    if (cursor && event.key !== ' ') {
+    // Send current typing progress to opponent (only in PvP mode)
+    const playerContainer = document.getElementById('player-typing-container');
+    if (playerContainer && typingContainer === playerContainer) {
+        socket.emit('words', playerContainer.innerHTML);
+    }
+
+    // Scroll handling: Keep the cursor visible using transform
+    if (cursor) {
         const containerRect = typingContainer.getBoundingClientRect();
         const cursorRect = cursor.getBoundingClientRect();
+        const padding = 40;
+
+        // Get current transform value
+        const currentTransform = typingContainer.style.transform || 'translateY(0px)';
+        const currentY = parseFloat(currentTransform.match(/-?\d+\.?\d*/)?.[0] || 0);
 
         // Check if the cursor is below the visible area of the container
-        if (cursorRect.bottom + 70 > containerRect.bottom) {
-            // Scroll down to bring the cursor into view
-            typingContainer.scrollTop += cursorRect.bottom + 70 - containerRect.bottom + 10; // Add a small buffer (e.g., 10px)
+        if (cursorRect.bottom + padding > containerRect.bottom) {
+            const scrollAmount = cursorRect.bottom + padding - containerRect.bottom + 20;
+            typingContainer.style.transform = `translateY(${currentY - scrollAmount}px)`;
         }
-        // Optional: Check if the cursor moved above the visible area (e.g., due to backspace near the top)
-        else if (cursorRect.top < containerRect.top) {
-            // Scroll up to bring the cursor into view
-            typingContainer.scrollTop -= containerRect.top - cursorRect.top + 10; // Add a small buffer
+        // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
+        else if (cursorRect.top < containerRect.top + 20) {
+            const scrollAmount = (containerRect.top + 20) - cursorRect.top + 20;
+            typingContainer.style.transform = `translateY(${currentY + scrollAmount}px)`;
         }
     }
 });
 
 document.addEventListener('keyup', function(event) {
-    //console.log('Key lifted:', event.key);
-    
     // If the test is complete, don't process any key lifts except for color reset
     if (testComplete) {
         return;
     }
     
-    colorKey('#ecdeaa', event.key)
+    if (!typingContainer || typingContainer.style.display === 'none') {
+        return; // Don't process keys if not in typing mode
+    }
+    
+    colorKey('#ecdeaa', event.key);
 
     // Check word completion and update correctWords count
     const words = typingContainer.querySelectorAll('.word');
@@ -336,9 +387,9 @@ document.addEventListener('keyup', function(event) {
             if (!char.classList.contains('matched')) {
                 wordMatched = false;
             }
-    });;
+        });
         
-        if (wordMatched) {
+        if (wordMatched && chars.length > 0) {
             correctWords++;
         }
     });
@@ -355,71 +406,123 @@ document.addEventListener('keyup', function(event) {
             if (!char.classList.contains('matched')) {
                 lastWordMatched = false;
             }
-    });;
+        });
         
-        if (lastWordMatched) {
+        if (lastWordMatched && lastWordChars.length > 0) {
             endTest();
             console.log('Test ended successfully - last word matched!');
         }
     }
 });
 
-
-
 // Function to manage keyboard key colors
 function colorKey(color, keyId) {
+    // Determine which keyboard to target based on current mode
+    const playerContainer = document.getElementById('player-typing-container');
+    const isPvPMode = playerContainer && typingContainer === playerContainer;
+    
     // Special handling for spacebar
     if (keyId === ' ') {
-        const spacebarElement = document.getElementById('space');
-        if (spacebarElement) {
-            spacebarElement.style.backgroundColor = color;
+        if (isPvPMode) {
+            const playerSpacebar = document.querySelector('#player-keyboard #space');
+            if (playerSpacebar) {
+                playerSpacebar.style.backgroundColor = color;
+            }
+        } else {
+            const spacebarElement = document.getElementById('space');
+            if (spacebarElement) {
+                spacebarElement.style.backgroundColor = color;
+            }
         }
         return;
     }
     
-    const keybutton = document.getElementById(keyId.toUpperCase())
-    if (keybutton) {
-        keybutton.style.backgroundColor = color;
-    }
-
-
-}   
-
-
-// Function to handle letter deletion
-function deleteLetter() {
-    if (keysPressed > 0) {
-        const previousSpan = typingContainer.querySelector(`#char-${keysPressed - 1}`);
-        if (previousSpan && previousSpan.classList.contains("unmatched")) {
-            previousSpan.classList.remove("unmatched");
-            keysPressed--;
+    // Handle regular keys
+    if (isPvPMode) {
+        const playerKey = document.querySelector(`#player-keyboard #${keyId.toUpperCase()}`);
+        if (playerKey) {
+            playerKey.style.backgroundColor = color;
+        }
+    } else {
+        const keybutton = document.getElementById(keyId.toUpperCase());
+        if (keybutton) {
+            keybutton.style.backgroundColor = color;
         }
     }
+}   
+
+// Function to setup PvP keyboards by cloning the main keyboard
+function setupPvPKeyboards() {
+    const originalKeyboard = document.getElementById('keyboard');
+    
+    // Clone and setup player keyboard
+    const playerKeyboard = originalKeyboard.cloneNode(true);
+    playerKeyboard.id = 'player-keyboard';
+    playerKeyboard.className = 'keyboard pvp-keyboard';
+    playerKeyboard.style.display = 'none';
+    document.getElementById('player-keyboard-container').appendChild(playerKeyboard);
+    
+    // Clone and setup opponent keyboard
+    const oppKeyboard = originalKeyboard.cloneNode(true);
+    oppKeyboard.id = 'opp-keyboard';
+    oppKeyboard.className = 'keyboard pvp-keyboard';
+    oppKeyboard.style.display = 'none';
+    document.getElementById('opp-keyboard-container').appendChild(oppKeyboard);
 }
 
-// idk what to call this
-const queueBtn = document.getElementById('queueBtn');
-
-queueBtn.addEventListener('click', function() {
-    Socket.emit('queueMatch', )
-})
+// Prevent manual scrolling on typing containers
+function preventManualScrolling() {
+    const containers = ['typing-container', 'player-typing-container', 'opp-typing-container'];
+    
+    containers.forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (container) {
+            // Prevent wheel scrolling
+            container.addEventListener('wheel', function(e) {
+                e.preventDefault();
+            }, { passive: false });
+            
+            // Prevent touch scrolling
+            container.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+            }, { passive: false });
+        }
+    });
+}
 
 // Initialize game and set up word count selection
 window.onload = function() {
     menu();
+    
+    // Setup PvP keyboards
+    setupPvPKeyboards();
+    
+    // Prevent manual scrolling
+    preventManualScrolling();
 
+    // Practice mode button handler
     document.querySelector('#practice').addEventListener('click', function() {
         const wordSettings = document.getElementById('word-settings');
         const typingContainer = document.getElementById('typing-container');
         const keyboard = document.getElementById('keyboard');
         const menuContent = document.getElementById('menu-content');
-        displayRandomWords(25);
-
+        const app = document.getElementById('app');
+        
+        // Hide menu and show app
         menuContent.style.display = 'none';
+        app.style.display = 'block';
         wordSettings.style.display = 'block';
         typingContainer.style.display = 'block';
         keyboard.style.display = 'block';
-    })
+        
+        // Hide PvP keyboards
+        document.getElementById('player-keyboard').style.display = 'none';
+        document.getElementById('opp-keyboard').style.display = 'none';
+        
+        // Initialize the typing test
+        startTest();
+        displayRandomWords(25);
+    });
     
     // Set up word count selection listeners after DOM is loaded
     document.querySelectorAll('.word-count').forEach(element => {
@@ -433,11 +536,10 @@ window.onload = function() {
             typingContainer.style.display = 'block';
             keyboard.style.display = 'block';
             resultsScreen.style.display = 'none';
+            
+            // Reset and start new test
             startTest();
             displayRandomWords(wordCount);
-              // Call startTest to properly reset all variables
-    });;
+        });
     });
 };
-
-// Remove the standalone querySelectorAll code from here
