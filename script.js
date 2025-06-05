@@ -27,8 +27,12 @@ function menu(){
     const app = document.getElementById('app');
     const match = document.getElementById('match');
     const resultsScreen = document.getElementById('results-screen');
+    const pvpButton = document.getElementById('pvp');
+    const practiceButton = document.getElementById('practice');
     
     menuContent.style.display = 'flex';
+    pvpButton.style.display = 'block';
+    practiceButton.style.display = 'block';
     app.style.display = 'none';
     match.style.display = 'none';
     wordSettings.style.display = 'none';
@@ -158,6 +162,63 @@ function restartTest() {
     displayRandomWords(25);
 }
 
+// PvP-specific end race function
+function endPvPRace() {
+    const endTime = new Date();
+
+    typingTime = endTime - startTime;
+    typingSpeed = Math.floor((correctWords / typingTime) * 60000);
+    accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);
+
+    console.log("PvP race ended! WPM:", typingSpeed, "Accuracy:", accuracy);
+
+    // Reset all keyboard key colors
+    document.querySelectorAll('.key').forEach(key => {
+        key.style.backgroundColor = '#ecdeaa';
+    });
+
+    // Set the test complete flag to prevent further key presses
+    testComplete = true;
+
+    // Show results in player typing area only (keep opponent area visible)
+    const playerTypingArea = document.getElementById('playerTypingArea');
+    
+    // Replace player's typing area with results
+    playerTypingArea.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; font-family: 'Ubuntu', Courier, monospace;">
+            <h2 style="color: #2c3e50; margin-bottom: 30px;">Race Complete!</h2>
+            <div class="stats" style="margin-bottom: 30px;">
+                <p style="font-size: 24px; margin: 10px 0;">Your WPM: <span style="color: #007bff; font-weight: bold; font-size: 1.2em;">${typingSpeed}</span></p>
+                <p style="font-size: 24px; margin: 10px 0;">Your Accuracy: <span style="color: #007bff; font-weight: bold; font-size: 1.2em;">${accuracy}%</span></p>
+            </div>
+            <button onclick="backToMenu()" style="margin-top: 20px; padding: 15px 25px; font-size: 18px; background-color: #ecdda5; border: 2px solid #2c3e50; border-radius: 8px; cursor: pointer; font-family: 'Ubuntu', Courier, monospace; transition: all 0.2s ease;">Back to Menu</button>
+        </div>
+    `;
+}
+
+function backToMenu() {
+    const resultsScreen = document.getElementById('results-screen');
+    const match = document.getElementById('match');
+    const queueMenu = document.getElementById('queueMenu');
+    
+    // Hide all PvP-related elements
+    resultsScreen.style.display = 'none';
+    resultsScreen.style.position = '';
+    resultsScreen.style.zIndex = '';
+    match.style.display = 'none';
+    
+    // Hide queue menu and reset its state
+    if (queueMenu) {
+        queueMenu.style.display = 'none';
+        queueMenu.classList.remove('active');
+    }
+    
+    // Reset test state
+    testComplete = false;
+    
+    menu(); // Go back to main menu
+}
+
 // Initialize Socket.IO connection
 const socket = io();
 
@@ -220,24 +281,23 @@ socket.on('wordsReceived', (data) => {
         if (oppCursor) {
             const containerRect = oppContainer.getBoundingClientRect();
             const oppCursorRect = oppCursor.getBoundingClientRect();
-            const padding = 40;
-
-            // Get current transform value
-            const currentTransform = oppContainer.style.transform || 'translateY(0px)';
-            const currentY = parseFloat(currentTransform.match(/-?\d+\.?\d*/)?.[0] || 0);
 
             // Check if the cursor is below the visible area of the container
-            if (oppCursorRect.bottom + padding > containerRect.bottom) {
-                const scrollAmount = oppCursorRect.bottom + padding - containerRect.bottom + 10;
-                oppContainer.style.transform = `translateY(${currentY - scrollAmount}px)`;
+            if (oppCursorRect.bottom + 40 > containerRect.bottom) {
+                // Scroll down to bring the cursor into view
+                oppContainer.scrollTop += oppCursorRect.bottom + 40 - containerRect.bottom + 10;
             }
             // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
             else if (oppCursorRect.top < containerRect.top + 10) {
-                const scrollAmount = (containerRect.top + 10) - oppCursorRect.top + 10;
-                oppContainer.style.transform = `translateY(${currentY + scrollAmount}px)`;
+                // Scroll up to bring the cursor into view
+                oppContainer.scrollTop -= containerRect.top + 10 - oppCursorRect.top + 10;
             }
         }
     }
+});
+
+socket.on('playerFinished', () => {
+    
 });
 
 const pvpButton = document.getElementById('pvp');
@@ -340,25 +400,20 @@ document.addEventListener('keydown', function(event) {
         socket.emit('words', playerContainer.innerHTML);
     }
 
-    // Scroll handling: Keep the cursor visible using transform
+    // Scroll handling: Keep the cursor visible
     if (cursor) {
         const containerRect = typingContainer.getBoundingClientRect();
         const cursorRect = cursor.getBoundingClientRect();
-        const padding = 40;
-
-        // Get current transform value
-        const currentTransform = typingContainer.style.transform || 'translateY(0px)';
-        const currentY = parseFloat(currentTransform.match(/-?\d+\.?\d*/)?.[0] || 0);
 
         // Check if the cursor is below the visible area of the container
-        if (cursorRect.bottom + padding > containerRect.bottom) {
-            const scrollAmount = cursorRect.bottom + padding - containerRect.bottom + 20;
-            typingContainer.style.transform = `translateY(${currentY - scrollAmount}px)`;
+        if (cursorRect.bottom + 40 > containerRect.bottom) {
+            // Scroll down to bring the cursor into view
+            typingContainer.scrollTop += cursorRect.bottom + 40 - containerRect.bottom + 20;
         }
         // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
         else if (cursorRect.top < containerRect.top + 20) {
-            const scrollAmount = (containerRect.top + 20) - cursorRect.top + 20;
-            typingContainer.style.transform = `translateY(${currentY + scrollAmount}px)`;
+            // Scroll up to bring the cursor into view
+            typingContainer.scrollTop -= containerRect.top + 20 - cursorRect.top + 20;
         }
     }
 });
@@ -409,8 +464,17 @@ document.addEventListener('keyup', function(event) {
         });
         
         if (lastWordMatched && lastWordChars.length > 0) {
-            endTest();
-            console.log('Test ended successfully - last word matched!');
+            // Check if we're in PvP mode
+            const playerContainer = document.getElementById('player-typing-container');
+            const isPvPMode = playerContainer && typingContainer === playerContainer;
+            
+            if (isPvPMode) {
+                endPvPRace();
+                console.log('PvP race ended successfully - last word matched!');
+            } else {
+                endTest();
+                console.log('Practice test ended successfully - last word matched!');
+            }
         }
     }
 });
@@ -437,14 +501,20 @@ function colorKey(color, keyId) {
         return;
     }
     
+    // Only handle letter keys (A-Z)
+    const upperKey = keyId.toUpperCase();
+    if (!/^[A-Z]$/.test(upperKey)) {
+        return; // Skip special characters and numbers
+    }
+    
     // Handle regular keys
     if (isPvPMode) {
-        const playerKey = document.querySelector(`#player-keyboard #${keyId.toUpperCase()}`);
+        const playerKey = document.querySelector(`#player-keyboard #${upperKey}`);
         if (playerKey) {
             playerKey.style.backgroundColor = color;
         }
     } else {
-        const keybutton = document.getElementById(keyId.toUpperCase());
+        const keybutton = document.getElementById(upperKey);
         if (keybutton) {
             keybutton.style.backgroundColor = color;
         }

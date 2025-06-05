@@ -48,7 +48,10 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('wordsReceived', data);
   });
 
-
+  socket.on('playerFinished', (socket) => {
+    socket.to(socket.id).emit('playerFinished');
+    
+  })
 
 
   socket.on('disconnect', () => {
