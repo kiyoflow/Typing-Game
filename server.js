@@ -17,6 +17,7 @@ app.get('/', (req, res) => {
 
 let playerQueue = [];
 let users = {};
+let matches = {}; // Track active matches and their rooms
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -37,25 +38,64 @@ io.on('connection', (socket) => {
       const player1 = playerQueue.shift();
       const player2 = playerQueue.shift();
       
+      // Create a unique room for this match
+      const roomId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Store match information
+      matches[roomId] = {
+        player1: player1,
+        player2: player2,
+        createdAt: new Date()
+      };
+      
+      // Join both players to the room
+      io.sockets.sockets.get(player1)?.join(roomId);
+      io.sockets.sockets.get(player2)?.join(roomId);
+      
+      // Store room ID in socket data
+      if (io.sockets.sockets.get(player1)) {
+        io.sockets.sockets.get(player1).roomId = roomId;
+      }
+      if (io.sockets.sockets.get(player2)) {
+        io.sockets.sockets.get(player2).roomId = roomId;
+      }
+      
+      console.log(`Created room ${roomId} for players ${users[player1]} and ${users[player2]}`);
+      
       // Notify both players
-      io.to(player1).emit('matchFound', { opponent: users[player2] });
-      io.to(player2).emit('matchFound', { opponent: users[player1] });
+      io.to(player1).emit('matchFound', { opponent: users[player2], roomId: roomId });
+      io.to(player2).emit('matchFound', { opponent: users[player1], roomId: roomId });
     }
   });
 
   socket.on('words', (data) => {
-    // Broadcast the words to all clients except the sender
-    socket.broadcast.emit('wordsReceived', data);
+    // Only broadcast to players in the same room
+    if (socket.roomId) {
+      socket.to(socket.roomId).emit('wordsReceived', data);
+    }
   });
 
-  socket.on('playerFinished', (socket) => {
-    socket.to(socket.id).emit('playerFinished');
-    
-  })
 
 
   socket.on('disconnect', () => {
     console.log('A user disconnected:', socket.id);
+    
+    // Clean up match if player was in a room
+    if (socket.roomId) {
+      const roomId = socket.roomId;
+      const match = matches[roomId];
+      
+      if (match) {
+        console.log(`Player ${users[socket.id]} disconnected from room ${roomId}`);
+        
+        // Notify the other player that their opponent disconnected
+        socket.to(roomId).emit('opponentDisconnected');
+        
+        // Clean up the match
+        delete matches[roomId];
+      }
+    }
+    
     // Remove the user from the player queue and users list
     delete users[socket.id];
     playerQueue = playerQueue.filter((id) => id !== socket.id);

@@ -5,6 +5,10 @@ body {
     font-family: 'Ubuntu', Courier, monospace;
 }
 
+#menu {
+    display: none;
+}
+
 #menu-content{
     display: flex;
     justify-content: center;
@@ -31,14 +35,14 @@ body {
     border: 2px solid #2c3e50;
     border-radius: 15px;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.2s ease;
     box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
+    will-change: transform, box-shadow, background-color;
 }
 
 #practice:hover, #pvp:hover {
-    transform: translateY(-10px) scale(1.1);
-    box-shadow: 0 15px 30px rgba(44, 62, 80, 0.3),
-                0 0 30px rgba(236, 221, 165, 0.6);
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 10px 20px rgba(44, 62, 80, 0.3);
     background-color: #e5d590;
 }
 
@@ -324,7 +328,7 @@ body {
     font-size: 16px;
     font-family: 'Ubuntu', Courier, monospace;
     font-weight: bold;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease;
     cursor: pointer;
     min-width: 35px;
     text-align: center;

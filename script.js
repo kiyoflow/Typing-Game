@@ -20,6 +20,7 @@ const words = [
 ]
 
 function menu(){
+    const menu = document.getElementById('menu');
     const menuContent = document.getElementById('menu-content');
     const typingContainer = document.getElementById('typing-container');
     const keyboard = document.getElementById('keyboard');
@@ -30,7 +31,10 @@ function menu(){
     const pvpButton = document.getElementById('pvp');
     const practiceButton = document.getElementById('practice');
     
+    menu.style.display = 'block';
     menuContent.style.display = 'flex';
+    menuContent.style.opacity = '1';
+    menuContent.style.transform = 'scale(1)';
     pvpButton.style.display = 'block';
     practiceButton.style.display = 'block';
     app.style.display = 'none';
@@ -118,7 +122,8 @@ function endTest(){
     console.log('Correct chars:', correctChars);
     console.log('Total chars:', totalChars);
 
-    accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);     
+    accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);
+    accuracy = Math.min(accuracy, 100); // Cap accuracy at 100%     
     
     // Reset all keyboard key colors
     document.querySelectorAll('.key').forEach(key => {
@@ -169,6 +174,7 @@ function endPvPRace() {
     typingTime = endTime - startTime;
     typingSpeed = Math.floor((correctWords / typingTime) * 60000);
     accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);
+    accuracy = Math.min(accuracy, 100); // Cap accuracy at 100%
 
     console.log("PvP race ended! WPM:", typingSpeed, "Accuracy:", accuracy);
 
@@ -233,6 +239,7 @@ socket.on('queueJoined', () => {
 socket.on('matchFound', (data) => {
     console.log('Match found!');
     console.log('Your opponent is:', data.opponent);
+    console.log('Room ID:', data.roomId);
     const queueMenu = document.getElementById('queueMenu');
     const match = document.getElementById('match');
     const playerContainer = document.getElementById('player-typing-container');
@@ -296,8 +303,25 @@ socket.on('wordsReceived', (data) => {
     }
 });
 
-socket.on('playerFinished', () => {
+
+
+socket.on('opponentDisconnected', () => {
+    console.log('Opponent disconnected');
     
+    // Show a message to the user
+    const match = document.getElementById('match');
+    if (match) {
+        match.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; font-family: 'Ubuntu', Courier, monospace;">
+                <h2 style="color: #2c3e50; margin-bottom: 20px;">Opponent Disconnected</h2>
+                <p style="font-size: 18px; margin-bottom: 30px; color: #7f8c8d;">Your opponent has left the match.</p>
+                <button onclick="backToMenu()" style="padding: 15px 25px; font-size: 18px; background-color: #ecdda5; border: 2px solid #2c3e50; border-radius: 8px; cursor: pointer; font-family: 'Ubuntu', Courier, monospace; transition: all 0.2s ease;">Back to Menu</button>
+            </div>
+        `;
+    }
+    
+    // Stop the test
+    testComplete = true;
 });
 
 const pvpButton = document.getElementById('pvp');
@@ -305,12 +329,17 @@ const queueMenu = document.getElementById('queueMenu');
 const menuContent = document.getElementById('menu-content');
 
 pvpButton.addEventListener('click', function() {
+    const menu = document.getElementById('menu');
     menuContent.style.opacity = '0';
     menuContent.style.transform = 'scale(0.8)';
     setTimeout(() => {
+        menu.style.display = 'none';
         menuContent.style.display = 'none';
         queueMenu.innerHTML = '<button class="queue-button">Find Match</button>';
         queueMenu.classList.add('active');
+        queueMenu.style.display = 'block';
+        queueMenu.style.opacity = '1';
+        queueMenu.style.transform = 'translate(-50%, -50%) scale(1)';
         
         // Add click event listener to the queue button
         const queueButton = queueMenu.querySelector('.queue-button');
@@ -470,10 +499,8 @@ document.addEventListener('keyup', function(event) {
             
             if (isPvPMode) {
                 endPvPRace();
-                console.log('PvP race ended successfully - last word matched!');
             } else {
                 endTest();
-                console.log('Practice test ended successfully - last word matched!');
             }
         }
     }
@@ -493,7 +520,7 @@ function colorKey(color, keyId) {
                 playerSpacebar.style.backgroundColor = color;
             }
         } else {
-            const spacebarElement = document.getElementById('space');
+            const spacebarElement = document.querySelector('#keyboard #space');
             if (spacebarElement) {
                 spacebarElement.style.backgroundColor = color;
             }
@@ -514,9 +541,9 @@ function colorKey(color, keyId) {
             playerKey.style.backgroundColor = color;
         }
     } else {
-        const keybutton = document.getElementById(upperKey);
+        const keybutton = document.querySelector(`#keyboard #${upperKey}`);
         if (keybutton) {
-            keybutton.style.backgroundColor = color;
+            keybutton.style.setProperty('background-color', color, 'important');
         }
     }
 }   
@@ -572,6 +599,7 @@ window.onload = function() {
 
     // Practice mode button handler
     document.querySelector('#practice').addEventListener('click', function() {
+        const menu = document.getElementById('menu');
         const wordSettings = document.getElementById('word-settings');
         const typingContainer = document.getElementById('typing-container');
         const keyboard = document.getElementById('keyboard');
@@ -579,6 +607,7 @@ window.onload = function() {
         const app = document.getElementById('app');
         
         // Hide menu and show app
+        menu.style.display = 'none';
         menuContent.style.display = 'none';
         app.style.display = 'block';
         wordSettings.style.display = 'block';
@@ -586,8 +615,10 @@ window.onload = function() {
         keyboard.style.display = 'block';
         
         // Hide PvP keyboards
-        document.getElementById('player-keyboard').style.display = 'none';
-        document.getElementById('opp-keyboard').style.display = 'none';
+        const playerKeyboard = document.getElementById('player-keyboard');
+        const oppKeyboard = document.getElementById('opp-keyboard');
+        if (playerKeyboard) playerKeyboard.style.display = 'none';
+        if (oppKeyboard) oppKeyboard.style.display = 'none';
         
         // Initialize the typing test
         startTest();
