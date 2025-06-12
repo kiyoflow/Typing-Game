@@ -241,6 +241,9 @@ function backToMenu() {
                 <div id="opp-keyboard-container"></div>
             </div>
         `;
+        
+        // Re-setup keyboards after resetting HTML
+        setupPvPKeyboards();
     }
     
     // Reset test state
@@ -251,6 +254,64 @@ function backToMenu() {
 
 // Initialize Socket.IO connection
 const socket = io();
+
+// Function to setup socket event listeners
+function setupSocketEvents() {
+    // Handle received words from opponent
+    socket.on('wordsReceived', (data) => {
+        // Only process if we're actually in a PvP match
+        const match = document.getElementById('match');
+        if (!match || match.style.display === 'none') {
+            return;
+        }
+        
+        const oppContainer = document.getElementById('opp-typing-container');
+        if (oppContainer) {
+            oppContainer.innerHTML = data;
+            const oppCursor = oppContainer.querySelector('.cursor');
+            
+            if (oppCursor) {
+                const containerRect = oppContainer.getBoundingClientRect();
+                const oppCursorRect = oppCursor.getBoundingClientRect();
+
+                // Check if the cursor is below the visible area of the container
+                if (oppCursorRect.bottom + 40 > containerRect.bottom) {
+                    // Scroll down to bring the cursor into view
+                    oppContainer.scrollTop += oppCursorRect.bottom + 40 - containerRect.bottom + 10;
+                }
+                // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
+                else if (oppCursorRect.top < containerRect.top + 10) {
+                    // Scroll up to bring the cursor into view
+                    oppContainer.scrollTop -= containerRect.top + 10 - oppCursorRect.top + 10;
+                }
+            }
+        }
+    });
+
+    socket.on('opponentDisconnected', () => {
+        console.log('Opponent disconnected');
+        
+        // Only process if we're actually in a PvP match
+        const match = document.getElementById('match');
+        if (!match || match.style.display === 'none') {
+            return;
+        }
+        
+        // Show a message to the user
+        if (match) {
+            match.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; font-family: 'Ubuntu', Courier, monospace;">
+                    <h2 style="color: #2c3e50; margin-bottom: 20px;">Opponent Disconnected</h2>
+                    <p style="font-size: 18px; margin-bottom: 30px; color: #7f8c8d;">Your opponent has left the match.</p>
+                    <button onclick="backToMenu()" style="padding: 15px 25px; font-size: 18px; background-color: #ecdda5; border: 2px solid #2c3e50; border-radius: 8px; cursor: pointer; font-family: 'Ubuntu', Courier, monospace; transition: all 0.2s ease;">Back to Menu</button>
+                </div>
+            `;
+        }
+        
+        // Stop the test
+        testComplete = true;
+    });
+}
 
 socket.on('username assigned', (username) => {
     console.log('Assigned username:', username);
@@ -268,6 +329,9 @@ socket.on('matchFound', (data) => {
     const match = document.getElementById('match');
     const playerContainer = document.getElementById('player-typing-container');
     const oppLabel = document.querySelector('#oppTypingArea .typing-area-label');
+    
+    // Setup socket events for this match
+    setupSocketEvents();
     
     if (match) {
         // Hide the queue menu and show the match container
@@ -313,61 +377,6 @@ socket.on('matchFound', (data) => {
             socket.emit('words', playerContainer.innerHTML);
         }
     }
-});
-
-// Handle received words from opponent
-socket.on('wordsReceived', (data) => {
-    // Only process if we're actually in a PvP match
-    const match = document.getElementById('match');
-    if (!match || match.style.display === 'none') {
-        return;
-    }
-    
-    const oppContainer = document.getElementById('opp-typing-container');
-    if (oppContainer) {
-        oppContainer.innerHTML = data;
-        const oppCursor = oppContainer.querySelector('.cursor');
-        
-        if (oppCursor) {
-            const containerRect = oppContainer.getBoundingClientRect();
-            const oppCursorRect = oppCursor.getBoundingClientRect();
-
-            // Check if the cursor is below the visible area of the container
-            if (oppCursorRect.bottom + 40 > containerRect.bottom) {
-                // Scroll down to bring the cursor into view
-                oppContainer.scrollTop += oppCursorRect.bottom + 40 - containerRect.bottom + 10;
-            }
-            // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
-            else if (oppCursorRect.top < containerRect.top + 10) {
-                // Scroll up to bring the cursor into view
-                oppContainer.scrollTop -= containerRect.top + 10 - oppCursorRect.top + 10;
-            }
-        }
-    }
-});
-
-socket.on('opponentDisconnected', () => {
-    console.log('Opponent disconnected');
-    
-    // Only process if we're actually in a PvP match
-    const match = document.getElementById('match');
-    if (!match || match.style.display === 'none') {
-        return;
-    }
-    
-    // Show a message to the user
-    if (match) {
-        match.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; font-family: 'Ubuntu', Courier, monospace;">
-                <h2 style="color: #2c3e50; margin-bottom: 20px;">Opponent Disconnected</h2>
-                <p style="font-size: 18px; margin-bottom: 30px; color: #7f8c8d;">Your opponent has left the match.</p>
-                <button onclick="backToMenu()" style="padding: 15px 25px; font-size: 18px; background-color: #ecdda5; border: 2px solid #2c3e50; border-radius: 8px; cursor: pointer; font-family: 'Ubuntu', Courier, monospace; transition: all 0.2s ease;">Back to Menu</button>
-            </div>
-        `;
-    }
-    
-    // Stop the test
-    testComplete = true;
 });
 
 const pvpButton = document.getElementById('pvp');
@@ -645,7 +654,7 @@ function preventManualScrolling() {
 window.onload = function() {
     menu();
     
-    // Setup PvP keyboards only (containers already exist in HTML)
+    // Setup PvP keyboards (containers already exist in HTML)
     setupPvPKeyboards();
     
     // Prevent manual scrolling
