@@ -143,6 +143,10 @@ function endTest(){
     keyboard.style.display = 'none';
     resultsScreen.style.display = 'block';
 
+    socket.off('wordsReceived');
+    socket.off('opponentDisconnected');
+
+
     // Display WPM and accuracy
     resultsScreen.innerHTML = `
         <h2>Results</h2>
@@ -219,6 +223,26 @@ function backToMenu() {
         queueMenu.classList.remove('active');
     }
     
+    // Clean up socket events to prevent conflicts
+    socket.off('wordsReceived');
+    socket.off('opponentDisconnected');
+    
+    // Reset match container HTML (in case opponentDisconnected destroyed it)
+    if (match) {
+        match.innerHTML = `
+            <div id="playerTypingArea" class="typingArea">
+                <div class="typing-area-label">You</div>
+                <div id="player-typing-container" class="pvp-typing-container"></div>
+                <div id="player-keyboard-container"></div>
+            </div>
+            <div id="oppTypingArea" class="typingArea">
+                <div class="typing-area-label">Opponent</div>
+                <div id="opp-typing-container" class="pvp-typing-container"></div>
+                <div id="opp-keyboard-container"></div>
+            </div>
+        `;
+    }
+    
     // Reset test state
     testComplete = false;
     
@@ -256,11 +280,20 @@ socket.on('matchFound', (data) => {
         }
         
         // Hide practice mode elements
-        document.getElementById('keyboard').style.display = 'none';
+        const practiceKeyboard = document.getElementById('keyboard');
+        if (practiceKeyboard) {
+            practiceKeyboard.style.display = 'none';
+        }
         
         // Show PvP keyboards
-        document.getElementById('player-keyboard').style.display = 'block';
-        document.getElementById('opp-keyboard').style.display = 'block';
+        const playerKeyboard = document.getElementById('player-keyboard');
+        const oppKeyboard = document.getElementById('opp-keyboard');
+        if (playerKeyboard) {
+            playerKeyboard.style.display = 'block';
+        }
+        if (oppKeyboard) {
+            oppKeyboard.style.display = 'block';
+        }
         
         // Initialize the player's typing test
         startTest();
@@ -268,18 +301,28 @@ socket.on('matchFound', (data) => {
         
         // Move the generated content to the player's PvP container
         const mainTypingContainer = document.getElementById('typing-container');
-        playerContainer.innerHTML = mainTypingContainer.innerHTML;
-        
-        // Update the global reference for typing logic
-        typingContainer = playerContainer;
+        if (playerContainer && mainTypingContainer) {
+            playerContainer.innerHTML = mainTypingContainer.innerHTML;
+            
+            // Update the global reference for typing logic
+            typingContainer = playerContainer;
+        }
 
         // Send initial words to opponent
-        socket.emit('words', playerContainer.innerHTML);
+        if (playerContainer) {
+            socket.emit('words', playerContainer.innerHTML);
+        }
     }
 });
 
 // Handle received words from opponent
 socket.on('wordsReceived', (data) => {
+    // Only process if we're actually in a PvP match
+    const match = document.getElementById('match');
+    if (!match || match.style.display === 'none') {
+        return;
+    }
+    
     const oppContainer = document.getElementById('opp-typing-container');
     if (oppContainer) {
         oppContainer.innerHTML = data;
@@ -303,13 +346,16 @@ socket.on('wordsReceived', (data) => {
     }
 });
 
-
-
 socket.on('opponentDisconnected', () => {
     console.log('Opponent disconnected');
     
-    // Show a message to the user
+    // Only process if we're actually in a PvP match
     const match = document.getElementById('match');
+    if (!match || match.style.display === 'none') {
+        return;
+    }
+    
+    // Show a message to the user
     if (match) {
         match.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; font-family: 'Ubuntu', Courier, monospace;">
@@ -551,21 +597,29 @@ function colorKey(color, keyId) {
 // Function to setup PvP keyboards by cloning the main keyboard
 function setupPvPKeyboards() {
     const originalKeyboard = document.getElementById('keyboard');
+    if (!originalKeyboard) return;
+    
+    const playerKeyboardContainer = document.getElementById('player-keyboard-container');
+    const oppKeyboardContainer = document.getElementById('opp-keyboard-container');
+    
+    if (!playerKeyboardContainer || !oppKeyboardContainer) return;
     
     // Clone and setup player keyboard
     const playerKeyboard = originalKeyboard.cloneNode(true);
     playerKeyboard.id = 'player-keyboard';
     playerKeyboard.className = 'keyboard pvp-keyboard';
     playerKeyboard.style.display = 'none';
-    document.getElementById('player-keyboard-container').appendChild(playerKeyboard);
+    playerKeyboardContainer.appendChild(playerKeyboard);
     
     // Clone and setup opponent keyboard
     const oppKeyboard = originalKeyboard.cloneNode(true);
     oppKeyboard.id = 'opp-keyboard';
     oppKeyboard.className = 'keyboard pvp-keyboard';
     oppKeyboard.style.display = 'none';
-    document.getElementById('opp-keyboard-container').appendChild(oppKeyboard);
+    oppKeyboardContainer.appendChild(oppKeyboard);
 }
+
+
 
 // Prevent manual scrolling on typing containers
 function preventManualScrolling() {
@@ -591,7 +645,7 @@ function preventManualScrolling() {
 window.onload = function() {
     menu();
     
-    // Setup PvP keyboards
+    // Setup PvP keyboards only (containers already exist in HTML)
     setupPvPKeyboards();
     
     // Prevent manual scrolling
