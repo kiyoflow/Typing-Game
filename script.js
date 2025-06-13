@@ -255,8 +255,8 @@ function backToMenu() {
 // Initialize Socket.IO connection
 const socket = io();
 
-// Function to setup socket event listeners
-function setupSocketEvents() {
+// Function to setup PvP-specific socket event listeners
+function setupPvPSocketEvents() {
     // Handle received words from opponent
     socket.on('wordsReceived', (data) => {
         // Only process if we're actually in a PvP match
@@ -331,7 +331,7 @@ socket.on('matchFound', (data) => {
     const oppLabel = document.querySelector('#oppTypingArea .typing-area-label');
     
     // Setup socket events for this match
-    setupSocketEvents();
+    setupPvPSocketEvents();
     
     if (match) {
         // Hide the queue menu and show the match container
