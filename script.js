@@ -398,15 +398,26 @@ pvpButton.addEventListener('click', function() {
         
         // Add click event listener to the queue button
         const queueButton = queueMenu.querySelector('.queue-button');
+        
         queueButton.addEventListener('click', function() {
             this.style.animation = 'textChange 0.5s ease';
             setTimeout(() => {
                 this.textContent = 'Finding Match...';
+                this.disabled = true;  // Disable the button
                 // Emit queue event to server
                 socket.emit('queueMatch');
             }, 250);
         });
     }, 300);
+});
+
+// Add handler for alreadyInQueue event
+socket.on('alreadyInQueue', () => {
+    const queueButton = document.querySelector('.queue-button');
+    if (queueButton) {
+        queueButton.textContent = 'Finding Match...';
+        queueButton.disabled = true;
+    }
 });
 
 // Event listener for typing and backspace handling

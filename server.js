@@ -28,6 +28,13 @@ io.on('connection', (socket) => {
 
   // Handle queue requests
   socket.on('queueMatch', () => {
+    // Check if player is already in queue
+    if (playerQueue.includes(socket.id)) {
+      console.log(`${users[socket.id]} is already in queue`);
+      socket.emit('alreadyInQueue');
+      return;
+    }
+    
     console.log(`${users[socket.id]} joined the queue`);
     playerQueue.push(socket.id);
     socket.emit('queueJoined');
@@ -74,8 +81,6 @@ io.on('connection', (socket) => {
       socket.to(socket.roomId).emit('wordsReceived', data);
     }
   });
-
-
 
   socket.on('disconnect', () => {
     console.log('A user disconnected:', socket.id);
