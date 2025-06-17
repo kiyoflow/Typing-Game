@@ -142,7 +142,7 @@ function endTest(){
     typingContainer.style.display = 'none';
     keyboard.style.display = 'none';
     resultsScreen.style.display = 'block';
-
+    
     socket.off('wordsReceived');
     socket.off('opponentDisconnected');
 

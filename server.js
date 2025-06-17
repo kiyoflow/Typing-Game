@@ -1,6 +1,12 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
+const path = require('path');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const session = require('express-session');
+const axios = require('axios');
 
 const app = express();
 const server = http.createServer(app);
@@ -8,11 +14,86 @@ const io = socketIo(server);
 
 const PORT = process.env.PORT || 3000;
 
-// Serve static files from root directory
-app.use(express.static(__dirname));
+// Session configuration
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false
+}));
+
+// Passport configuration
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+    done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+    done(null, user);
+});
+
+// Google OAuth Strategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/google/callback"
+},
+function(accessToken, refreshToken, profile, done) {
+    // Here you would typically save the user to your database
+    return done(null, profile);
+}));
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Auth routes
+app.get('/auth/google',
+    passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+app.get('/auth/google/callback', 
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    function(req, res) {
+        res.redirect('/');
+    }
+);
+
+app.get('/auth/logout', (req, res) => {
+    req.logout(() => {
+        res.redirect('/');
+    });
+});
+
+// Check auth status
+app.get('/auth/status', (req, res) => {
+    res.json({ 
+        authenticated: req.isAuthenticated(),
+        user: req.user
+    });
+});
+
+// Proxy route for Google profile images
+app.get('/proxy-image', async (req, res) => {
+    const imageUrl = req.query.url;
+    if (!imageUrl) {
+        return res.status(400).send('No image URL provided');
+    }
+
+    try {
+        const response = await axios.get(imageUrl, {
+            responseType: 'arraybuffer'
+        });
+        res.set('Content-Type', response.headers['content-type']);
+        res.send(response.data);
+    } catch (error) {
+        console.error('Error proxying image:', error);
+        res.status(500).send('Error loading image');
+    }
 });
 
 let playerQueue = [];
