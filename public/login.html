@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Typing Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0e8ca;
+            margin: 0;
+            padding: 0;
+            font-family: 'Ubuntu Mono', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(44, 62, 80, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(44, 62, 80, 0.05) 0%, transparent 50%);
+        }
+
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            padding: 40px 50px;
+            background-color: #ecdda5;
+            border: 3px solid #2c3e50;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(44, 62, 80, 0.15);
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .login-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin: 0;
+            font-weight: bold;
+            letter-spacing: -1px;
+        }
+
+        .login-subtitle {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin: 0;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+
+        .login-button {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px 32px;
+            background-color: #f0e8ca;
+            border: 3px solid #2c3e50;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Ubuntu Mono', Courier, monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            min-width: 280px;
+            white-space: nowrap;
+        }
+
+        .login-button:hover {
+            background-color: #2c3e50;
+            color: #f0e8ca;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(44, 62, 80, 0.25);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .google-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIyLjU2IDEyLjI1QzIyLjU2IDExLjQ3IDIyLjQ5IDEwLjcyIDIyLjM2IDEwSDEyVjE0LjI2SDE3LjkyQzE3LjY2IDE1LjYzIDE2Ljg4IDE2Ljc4IDE1LjcxIDE3LjU3VjIwLjMzSDE5LjI2QzIxLjM0IDE4LjQyIDIyLjU2IDE1LjYgMjIuNTYgMTIuMjVaIiBmaWxsPSIjNDI4NUY0Ii8+CjxwYXRoIGQ9Ik0xMiAyM0M5LjQ4IDIzIDcuMjYgMjIuMDggNS42NCAyMC4zM0w5LjE5IDE3LjU3QzEwLjA5IDE4LjEzIDExLjIgMTguNDMgMTIgMTguNDNDMTMuODQgMTguNDMgMTUuNDIgMTcuNTIgMTYuMDQgMTYuMTNIMTkuNzJDMTguMDggMTkuNDkgMTUuMjUgMjMgMTIgMjNaIiBmaWxsPSIjMzRBODUzIi8+CjxwYXRoIGQ9Ik01LjY0IDIwLjMzQzQuMiAxOC42OCAzIDEzLjY0IDMgMTJTNC4yIDUuMzIgNS42NCAzLjY3TDkuMTkgNi40M0M4LjU1IDcuODIgOC4yMiA5LjM0IDguMjIgMTJTOC41NSAxNi4xOCA5LjE5IDE3LjU3TDUuNjQgMjAuMzNaIiBmaWxsPSIjRkJCQzA0Ii8+CjxwYXRoIGQ9Ik0xMiA1LjU3QzEzLjU1IDUuNTcgMTQuOTYgNi4xIDE2LjA2IDcuMTZMMTkuMzggMy44NUMxNy40NSAyLjA5IDE0LjkzIDEgMTIgMUM4Ljc1IDEgNS45MiA0LjUxIDQuMjggNy44MUw4LjA2IDEwLjU3QzguNjYgOS4yIDEwLjI2IDUuNTcgMTIgNS41N1oiIGZpbGw9IiNFQTQzMzUiLz4KPC9zdmc+Cg==') no-repeat center;
+            background-size: 20px 20px;
+            vertical-align: middle;
+        }
+
+        .typing-animation {
+            font-size: 0.9rem;
+            color: #2c3e50;
+            opacity: 0.6;
+            margin-top: 20px;
+        }
+
+        .typing-animation::after {
+            content: '|';
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Hide user info since it's never shown on login page anyway */
+        #user-info {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1 class="login-title">Typing Game</h1>
+        <p class="login-subtitle">Test your typing speed and compete<br>with other players in real-time!</p>
+        
+        <button id="login-button" class="login-button" onclick="login()">
+            <span class="google-icon"></span>
+            Continue with Google
+        </button>
+        
+        <div class="typing-animation">Ready to start typing...</div>
+        
+        <!-- Hidden user info (never shown on login page) -->
+        <div id="user-info" style="display: none;">
+            <div class="user-info">
+                <img id="user-avatar" src="" alt="Profile">
+                <span id="user-name"></span>
+            </div>
+            <button class="login-button" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        function login() {
+            window.location.href = '/auth/google';
+        }
+
+        function logout() {
+            window.location.href = '/auth/logout';
+        }
+
+        fetch('/auth/status')
+            .then(res => res.json())
+            .then(data => {
+                const userInfo = document.getElementById('user-info');
+                const loginButton = document.getElementById('login-button');
+                
+                if (data.authenticated) {
+                    // If already authenticated, redirect to main page
+                    window.location.href = '/';
+                } else {
+                    userInfo.style.display = 'none';
+                    loginButton.style.display = 'block';
+                }
+            });
+    </script>
+</body>
+</html>

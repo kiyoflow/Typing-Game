@@ -313,10 +313,6 @@ function setupPvPSocketEvents() {
     });
 }
 
-socket.on('username assigned', (username) => {
-    console.log('Assigned username:', username);
-});
-
 socket.on('queueJoined', () => {
     console.log('Successfully joined the queue');
 });
@@ -717,4 +713,18 @@ window.onload = function() {
             displayRandomWords(wordCount);
         });
     });
+    
+    // Send userData immediately
+    fetch('/auth/status')
+        .then(res => res.json())
+        .then(data => {
+            console.log('Auth check result:', data);
+            if (data.authenticated && data.user) {
+                console.log('Sending userData for:', data.user.displayName);
+                socket.emit('userData', data.user);
+            } else {
+                console.log('Not authenticated or no user data');
+            }
+        })
+        .catch(err => console.error('Auth status error:', err));
 };

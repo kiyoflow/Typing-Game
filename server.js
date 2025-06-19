@@ -44,11 +44,20 @@ function(accessToken, refreshToken, profile, done) {
     return done(null, profile);
 }));
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
-
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    if (req.isAuthenticated()) {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    } else {
+        res.redirect('/login');
+    }
+});
+
+app.get('/login', (req, res) => {
+    if (req.isAuthenticated()) {
+        res.redirect('/');
+    } else {
+        res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    }
 });
 
 // Auth routes
@@ -96,27 +105,32 @@ app.get('/proxy-image', async (req, res) => {
     }
 });
 
+// Serve static files from public directory (moved after routes to prevent bypassing route handlers)
+app.use(express.static(path.join(__dirname, 'public')));
+
 let playerQueue = [];
 let users = {};
 let matches = {}; // Track active matches and their rooms
 
 io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
-
-  // Assign a username (simple example, could be improved)
-  users[socket.id] = `User_${socket.id.substring(0, 4)}`;
-  socket.emit('username assigned', users[socket.id]);
+  socket.on('userData', (userData) => {
+    users[socket.id] = userData;
+    console.log(`${userData.displayName} connected`);
+  });
 
   // Handle queue requests
   socket.on('queueMatch', () => {
+    const user = users[socket.id];
+    const username = user ? user.displayName : socket.id;
+    
     // Check if player is already in queue
     if (playerQueue.includes(socket.id)) {
-      console.log(`${users[socket.id]} is already in queue`);
+      console.log(`${username} is already in queue`);
       socket.emit('alreadyInQueue');
       return;
     }
     
-    console.log(`${users[socket.id]} joined the queue`);
+    console.log(`${username} joined the queue`);
     playerQueue.push(socket.id);
     socket.emit('queueJoined');
 
@@ -125,6 +139,9 @@ io.on('connection', (socket) => {
       console.log('Match found!');
       const player1 = playerQueue.shift();
       const player2 = playerQueue.shift();
+      
+      const player1Name = users[player1] ? users[player1].displayName : player1;
+      const player2Name = users[player2] ? users[player2].displayName : player2;
       
       // Create a unique room for this match
       const roomId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -148,11 +165,11 @@ io.on('connection', (socket) => {
         io.sockets.sockets.get(player2).roomId = roomId;
       }
       
-      console.log(`Created room ${roomId} for players ${users[player1]} and ${users[player2]}`);
+      console.log(`Created room ${roomId} for players ${player1Name} and ${player2Name}`);
       
       // Notify both players
-      io.to(player1).emit('matchFound', { opponent: users[player2], roomId: roomId });
-      io.to(player2).emit('matchFound', { opponent: users[player1], roomId: roomId });
+      io.to(player1).emit('matchFound', { opponent: player2Name, roomId: roomId });
+      io.to(player2).emit('matchFound', { opponent: player1Name, roomId: roomId });
     }
   });
 
@@ -164,7 +181,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('A user disconnected:', socket.id);
+    const user = users[socket.id];
+    const username = user ? user.displayName : socket.id;
+    console.log('A user disconnected:', username);
     
     // Clean up match if player was in a room
     if (socket.roomId) {
@@ -172,7 +191,7 @@ io.on('connection', (socket) => {
       const match = matches[roomId];
       
       if (match) {
-        console.log(`Player ${users[socket.id]} disconnected from room ${roomId}`);
+        console.log(`Player ${username} disconnected from room ${roomId}`);
         
         // Notify the other player that their opponent disconnected
         socket.to(roomId).emit('opponentDisconnected');
