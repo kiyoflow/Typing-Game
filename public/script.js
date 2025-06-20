@@ -69,6 +69,7 @@ let correctWords = 0;
 let correctChars = 0;
 let totalChars = 0;
 let testComplete = false; // Flag to track if the test is complete
+let isAlreadyInQueue = false; // Track if user is already in queue from another window
 
 // Function to display random words in the typing container
 function displayRandomWords(count = 25) {
@@ -386,33 +387,66 @@ pvpButton.addEventListener('click', function() {
     setTimeout(() => {
         menu.style.display = 'none';
         menuContent.style.display = 'none';
-        queueMenu.innerHTML = '<button class="queue-button">Find Match</button>';
+        
+        // Get the existing queue button and update its state
+        const queueButton = document.getElementById('queueBtn');
+
+        if (isAlreadyInQueue === true) {
+            queueButton.textContent = 'Finding Match...';
+        }
+        else{
+            queueButton.textContent = 'Find Match';
+        }
+        
+        // If already in queue, apply the same styling as the animated version
+        if (isAlreadyInQueue && queueButton) {
+            queueButton.style.animation = 'textChange 0.5s ease';
+        }
+        
         queueMenu.classList.add('active');
         queueMenu.style.display = 'block';
         queueMenu.style.opacity = '1';
         queueMenu.style.transform = 'translate(-50%, -50%) scale(1)';
-        
-        // Add click event listener to the queue button
-        const queueButton = queueMenu.querySelector('.queue-button');
-        
-        queueButton.addEventListener('click', function() {
-            this.style.animation = 'textChange 0.5s ease';
-            setTimeout(() => {
-                this.textContent = 'Finding Match...';
-                this.disabled = true;  // Disable the button
-                // Emit queue event to server
-                socket.emit('queueMatch');
-            }, 250);
-        });
+
+        // Add click event listener to the queue button    
+        if (queueButton) {
+            queueButton.addEventListener('click', function() {
+                if (this.textContent !== "Finding Match..."){
+                    this.style.animation = 'textChange 0.5s ease';
+                    setTimeout(() => {
+                        this.textContent = 'Finding Match...';
+                        // Emit queue event to server
+                        socket.emit('queueMatch');
+                    }, 250);
+                }
+
+                else{
+                    this.style.animation = 'textChange 0.5s ease';
+                    setTimeout(() => {
+                        this.textContent = 'Find Match';
+                        this.disabled = false;
+                    }, 250);
+                    socket.emit('leaveQueue');
+                }
+               
+            });
+        }
     }, 300);
 });
 
 // Add handler for alreadyInQueue event
 socket.on('alreadyInQueue', () => {
-    const queueButton = document.querySelector('.queue-button');
+    console.log('User is already in queue from another window');
+    isAlreadyInQueue = true;
+    
+    // If queue button exists, disable it immediately with animation
+    const queueButton = document.getElementById('queueBtn');
     if (queueButton) {
-        queueButton.textContent = 'Finding Match...';
-        queueButton.disabled = true;
+        queueButton.style.animation = 'textChange 0.5s ease';
+        setTimeout(() => {
+            queueButton.textContent = 'Finding Match...';
+            queueButton.disabled = true;
+        }, 250);
     }
 });
 

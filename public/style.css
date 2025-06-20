@@ -62,7 +62,7 @@ body {
     transform: translate(-50%, -50%) scale(1);
 }
 
-.queue-button {
+#queueBtn {
     font-family: 'Ubuntu', Courier, monospace;
     font-size: 40px;
     padding: 20px 40px;
@@ -74,10 +74,11 @@ body {
     box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
 }
 
-.queue-button:hover {
+#queueBtn:hover {
     transform: translateY(-10px) scale(1.1);
     box-shadow: 0 15px 30px rgba(44, 62, 80, 0.3),
-                0 0 30px rgba(236, 221, 165, 0.6);
+                0 0 30px rgba(236, 221, 165, 0.8),
+                0 0 10px rgba(236, 221, 165, 1);
     background-color: #e5d590;
 }
 

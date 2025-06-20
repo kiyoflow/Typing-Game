@@ -116,6 +116,16 @@ io.on('connection', (socket) => {
   socket.on('userData', (userData) => {
     users[socket.id] = userData;
     console.log(`${userData.displayName} connected`);
+    
+    // Check if this user is already in queue from another connection
+    const isAlreadyInQueue = playerQueue.some(socketId => {
+      const queuedUser = users[socketId];
+      return queuedUser && queuedUser.displayName === userData.displayName && socketId !== socket.id;
+    });
+    
+    if (isAlreadyInQueue) {
+      socket.emit('alreadyInQueue');
+    }
   });
 
   // Handle queue requests
@@ -123,8 +133,13 @@ io.on('connection', (socket) => {
     const user = users[socket.id];
     const username = user ? user.displayName : socket.id;
     
-    // Check if player is already in queue
-    if (playerQueue.includes(socket.id)) {
+    // Check if player is already in queue by display name
+    const isAlreadyInQueue = playerQueue.some(socketId => {
+      const queuedUser = users[socketId];
+      return queuedUser && queuedUser.displayName === username;
+    });
+    
+    if (isAlreadyInQueue) {
       console.log(`${username} is already in queue`);
       socket.emit('alreadyInQueue');
       return;
@@ -133,6 +148,7 @@ io.on('connection', (socket) => {
     console.log(`${username} joined the queue`);
     playerQueue.push(socket.id);
     socket.emit('queueJoined');
+    
 
     // Check if we have enough players for a match
     if (playerQueue.length >= 2) {
@@ -173,6 +189,16 @@ io.on('connection', (socket) => {
     }
   });
 
+
+  socket.on('leaveQueue', () => {
+    const user = users[socket.id];
+    const username = user ? user.displayName : socket.id;
+    
+    console.log(`${username} left the queue`);
+    playerQueue = playerQueue.filter((id) => id !== socket.id);
+  });
+
+  
   socket.on('words', (data) => {
     // Only broadcast to players in the same room
     if (socket.roomId) {
