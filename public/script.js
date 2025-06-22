@@ -195,7 +195,7 @@ function endPvPRace() {
     const playerTypingArea = document.getElementById('playerTypingArea');
     
     // Replace player's typing area with results
-    playerTypingArea.innerHTML = `
+    match.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; font-family: 'Ubuntu', Courier, monospace;">
             <h2 style="color: #2c3e50; margin-bottom: 30px;">Race Complete!</h2>
             <div class="stats" style="margin-bottom: 30px;">
@@ -205,6 +205,8 @@ function endPvPRace() {
             <button onclick="backToMenu()" style="margin-top: 20px; padding: 15px 25px; font-size: 18px; background-color: #ecdda5; border: 2px solid #2c3e50; border-radius: 8px; cursor: pointer; font-family: 'Ubuntu', Courier, monospace; transition: all 0.2s ease;">Back to Menu</button>
         </div>
     `;
+
+    socket.emit('gameOver')
 }
 
 function backToMenu() {

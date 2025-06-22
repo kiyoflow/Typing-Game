@@ -115,6 +115,7 @@ let matches = {}; // Track active matches and their rooms
 io.on('connection', (socket) => {
   socket.on('userData', (userData) => {
     users[socket.id] = userData;
+    socket.user = userData; // Store user data directly on socket
     console.log(`${userData.displayName} connected`);
     
     // Check if this user is already in queue from another connection
@@ -130,8 +131,7 @@ io.on('connection', (socket) => {
 
   // Handle queue requests
   socket.on('queueMatch', () => {
-    const user = users[socket.id];
-    const username = user ? user.displayName : socket.id;
+    const username = socket.user ? socket.user.displayName : socket.id;
     
     // Check if player is already in queue by display name
     const isAlreadyInQueue = playerQueue.some(socketId => {
@@ -191,13 +191,16 @@ io.on('connection', (socket) => {
 
 
   socket.on('leaveQueue', () => {
-    const user = users[socket.id];
-    const username = user ? user.displayName : socket.id;
+    const username = socket.user ? socket.user.displayName : socket.id;
     
     console.log(`${username} left the queue`);
     playerQueue = playerQueue.filter((id) => id !== socket.id);
   });
 
+  // Handle game over
+  socket.on('gameOver', () => {
+    return;
+  });
   
   socket.on('words', (data) => {
     // Only broadcast to players in the same room
@@ -207,8 +210,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    const user = users[socket.id];
-    const username = user ? user.displayName : socket.id;
+    const username = socket.user ? socket.user.displayName : socket.id;
     console.log('A user disconnected:', username);
     
     // Clean up match if player was in a room
