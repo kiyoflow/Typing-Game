@@ -52,9 +52,10 @@ let isAlreadyInQueue = false; // Track if user is already in queue from another 
 
 // Function to display words in the typing container
 function displayRandomWords(words) {
+    console.log('displayRandomWords called with:', words);
     const randomWords = words;
-    typingContainer = document.getElementById("typing-container");
-
+    
+    // Generate HTML for the words
     let i = 0;
     let wrappedText2 = '';
     randomWords.forEach(function(word, index) {
@@ -74,7 +75,15 @@ function displayRandomWords(words) {
         wrappedText2 += `</div>`;
     });
     
-    typingContainer.innerHTML = wrappedText2;
+    // Check if we're in PvP mode
+    const match = document.getElementById('match');
+
+    if (match && match.style.display === 'block') {
+        document.getElementById('player-typing-container').innerHTML = wrappedText2;
+    } else {
+        document.getElementById('typing-container').innerHTML = wrappedText2;
+    }
+    
     console.log('Total characters:', i);
     totalChars = i;
 }
@@ -340,15 +349,6 @@ socket.on('matchFound', (data) => {
         // Initialize the player's typing test
         startTest();
         displayRandomWords(data.words);
-        
-        // Move the generated content to the player's PvP container
-        const mainTypingContainer = document.getElementById('typing-container');
-        if (playerContainer && mainTypingContainer) {
-            playerContainer.innerHTML = mainTypingContainer.innerHTML;
-            
-            // Update the global reference for typing logic
-            typingContainer = playerContainer;
-        }
 
         // Send initial words to opponent
         if (playerContainer) {
