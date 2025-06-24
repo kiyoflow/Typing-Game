@@ -7,6 +7,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
 const axios = require('axios');
+const words = require('./public/words.js');
 
 // Validate required environment variables
 const requiredEnvVars = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'SESSION_SECRET'];
@@ -26,6 +27,15 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 const PORT = process.env.PORT || process.env.WEBSITES_PORT || 3000;
+
+function getRandomWords(count) {
+  const selectedWords = [];
+  for (let i = 0; i < count; i++) {
+      const randomIndex = Math.floor(Math.random() * words.length);
+      selectedWords.push(words[randomIndex]);
+  }
+  return selectedWords;
+}
 
 // Session configuration
 app.use(session({
@@ -176,10 +186,14 @@ io.on('connection', (socket) => {
       // Create a unique room for this match
       const roomId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
+      // Generate random words for this match
+      const matchWords = getRandomWords(25); // Generate 50 random words for the match
+      
       // Store match information
       matches[roomId] = {
         player1: player1,
         player2: player2,
+        words: matchWords,
         createdAt: new Date()
       };
       
@@ -197,9 +211,9 @@ io.on('connection', (socket) => {
       
       console.log(`Created room ${roomId} for players ${player1Name} and ${player2Name}`);
       
-      // Notify both players
-      io.to(player1).emit('matchFound', { opponent: player2Name, roomId: roomId });
-      io.to(player2).emit('matchFound', { opponent: player1Name, roomId: roomId });
+      // Notify both players with match info and words
+      io.to(player1).emit('matchFound', { opponent: player2Name, roomId: roomId, words: matchWords });
+      io.to(player2).emit('matchFound', { opponent: player1Name, roomId: roomId, words: matchWords });
     }
   });
 
@@ -248,6 +262,7 @@ io.on('connection', (socket) => {
     playerQueue = playerQueue.filter((id) => id !== socket.id);
   });
 });
+
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

@@ -1,0 +1,56 @@
+// Word list for random word generation
+const words = [
+    "apple", "banana", "desk", "car", "chair", "tree", "phone", "book", "pen", "light",
+    "rain", "shoes", "house", "cat", "dog", "bird", "fish", "jump", "run", "sleep",
+    "mirror", "window", "computer", "keyboard", "bottle", "basket", "notebook", "pencil", "bottle",
+    "table", "walking", "driving", "reading", "writing", "teacher", "student", "family", "city", "country",
+    "vacation", "architecture", "literature", "mathematics", "democracy", "revolution", "psychology",
+    "philosophy", "freedom", "technology", "motivation", "imagination", "humanity", "development",
+    "independent", "experience", "discovery", "creation", "evolution", "perception", "molecule", "gravity",
+    "galaxy", "physics", "biology", "chemistry", "experiment", "formula", "reaction", "atom", "energy",
+    "universe", "ecosystem", "evolution", "organism", "chromosome", "radiation", "solution", "temperature",
+    "pressure", "anticipation", "appreciation", "accomplishment", "collaboration", "sophistication",
+    "development", "creativity", "innovation", "concentration", "negotiation", "transformation", "reflection",
+    "responsibility", "sustainability", "comprehension", "determination", "calculation", "connection",
+    "realization", "motivation", "bamboozle", "subjugate", "flamboyant", "juxtapose", "ephemeral", "serendipity",
+    "quintessence", "catharsis", "plethora", "cryptic", "mnemonic", "labyrinth", "rhetoric", "scintillating",
+    "eloquence", "kaleidoscope", "transcendence", "nebulous", "fortuitous", "abyss", "algorithm", "function",
+    "variable", "loop", "array", "object", "class", "string", "integer", "index", "binary", "module",
+    "framework", "debug", "compiler", "encryption", "database", "repository", "version", "objectivity",
+    "mountain", "ocean", "forest", "river", "sunset", "morning", "evening", "midnight", "thunder", "lightning",
+    "coffee", "pizza", "chocolate", "strawberry", "orange", "purple", "yellow", "green", "blue", "red",
+    "guitar", "piano", "violin", "drums", "music", "song", "dance", "movie", "theater", "painting",
+    "photograph", "camera", "lens", "focus", "exposure", "shutter", "aperture", "flash", "portrait", "landscape",
+    "adventure", "journey", "destination", "travel", "passport", "luggage", "hotel", "restaurant", "museum", "library",
+    "hospital", "school", "university", "college", "graduation", "diploma", "certificate", "degree", "scholarship", "research",
+    "scientist", "doctor", "engineer", "lawyer", "artist", "writer", "journalist", "photographer", "musician", "athlete",
+    "basketball", "football", "soccer", "tennis", "swimming", "running", "cycling", "hiking", "climbing", "skiing",
+    "beach", "sand", "wave", "shell", "starfish", "dolphin", "whale", "shark", "turtle", "jellyfish",
+    "butterfly", "flower", "garden", "rose", "tulip", "sunflower", "daisy", "lily", "orchid", "carnation",
+    "diamond", "ruby", "emerald", "sapphire", "gold", "silver", "bronze", "platinum", "copper", "aluminum",
+    "breakfast", "lunch", "dinner", "sandwich", "salad", "soup", "pasta", "rice", "bread", "cheese",
+    "milk", "water", "juice", "tea", "wine", "beer", "cocktail", "smoothie", "milkshake", "soda",
+    "birthday", "wedding", "anniversary", "celebration", "party", "gift", "present", "surprise", "congratulations", "achievement",
+    "happiness", "joy", "laughter", "smile", "friendship", "love", "kindness", "generosity", "compassion", "empathy",
+    "courage", "strength", "wisdom", "patience", "perseverance", "dedication", "commitment", "loyalty", "honesty", "integrity",
+    "challenge", "opportunity", "success", "failure", "lesson", "knowledge", "education", "learning", "teaching", "discovery",
+    "invention", "innovation", "progress", "improvement", "excellence", "quality", "perfection", "precision", "accuracy", "detail",
+    "organization", "management", "leadership", "teamwork", "cooperation", "communication", "discussion", "conversation", "dialogue", "debate",
+    "question", "answer", "problem", "solution", "method", "technique", "strategy", "plan", "goal", "objective",
+    "dream", "ambition", "aspiration", "vision", "future", "past", "present", "memory", "nostalgia", "reminiscence",
+    "emotion", "feeling", "sensation", "thought", "idea", "concept", "theory", "hypothesis", "assumption", "conclusion",
+    "beginning", "middle", "end", "start", "finish", "complete", "incomplete", "perfect", "imperfect", "whole",
+    "part", "piece", "fragment", "section", "chapter", "paragraph", "sentence", "word", "letter", "character",
+    "story", "novel", "poem", "essay", "article", "report", "document", "file", "folder", "directory",
+    "software", "hardware", "application", "program", "code", "script", "language", "syntax", "logic", "structure",
+    "network", "internet", "website", "browser", "search", "download", "upload", "email", "message", "notification",
+    "smartphone", "laptop", "tablet", "desktop", "monitor", "speaker", "headphones", "microphone", "webcam", "printer",
+    "connection", "wireless", "bluetooth", "cable", "charger", "battery", "power", "electricity", "voltage", "current",
+    "machine", "robot", "artificial", "intelligence", "automation", "efficiency", "productivity", "performance", "speed", "acceleration"
+]
+
+// Export for Node.js (server-side)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = words;
+}
+// For browser (client-side), the words array is already available globally

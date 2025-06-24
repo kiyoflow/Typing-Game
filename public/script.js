@@ -1,24 +1,3 @@
-// Word list for random word generation
-const words = [
-    "apple", "banana", "desk", "car", "chair", "tree", "phone", "book", "pen", "light",
-    "rain", "shoes", "house", "cat", "dog", "bird", "fish", "jump", "run", "sleep",
-    "mirror", "window", "computer", "keyboard", "bottle", "basket", "notebook", "pencil", "bottle",
-    "table", "walking", "driving", "reading", "writing", "teacher", "student", "family", "city", "country",
-    "vacation", "architecture", "literature", "mathematics", "democracy", "revolution", "psychology",
-    "philosophy", "freedom", "technology", "motivation", "imagination", "humanity", "development",
-    "independent", "experience", "discovery", "creation", "evolution", "perception", "molecule", "gravity",
-    "galaxy", "physics", "biology", "chemistry", "experiment", "formula", "reaction", "atom", "energy",
-    "universe", "ecosystem", "evolution", "organism", "chromosome", "radiation", "solution", "temperature",
-    "pressure", "anticipation", "appreciation", "accomplishment", "collaboration", "sophistication",
-    "development", "creativity", "innovation", "concentration", "negotiation", "transformation", "reflection",
-    "responsibility", "sustainability", "comprehension", "determination", "calculation", "connection",
-    "realization", "motivation", "bamboozle", "subjugate", "flamboyant", "juxtapose", "ephemeral", "serendipity",
-    "quintessence", "catharsis", "plethora", "cryptic", "mnemonic", "labyrinth", "rhetoric", "scintillating",
-    "eloquence", "kaleidoscope", "transcendence", "nebulous", "fortuitous", "abyss", "algorithm", "function",
-    "variable", "loop", "array", "object", "class", "string", "integer", "index", "binary", "module",
-    "framework", "debug", "compiler", "encryption", "database", "repository", "version", "objectivity"
-]
-
 function menu(){
     const menu = document.getElementById('menu');
     const menuContent = document.getElementById('menu-content');
