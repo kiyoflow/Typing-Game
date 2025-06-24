@@ -60,8 +60,8 @@ passport.deserializeUser((user, done) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    //callbackURL: "http://localhost:3000/auth/google/callback" 
-    callbackURL: "https://typing-game.azurewebsites.net/auth/google/callback"
+    callbackURL: "http://localhost:3000/auth/google/callback" 
+    //callbackURL: "https://typing-game.azurewebsites.net/auth/google/callback"
 },
 function(accessToken, refreshToken, profile, done) {
     // Here you would typically save the user to your database
@@ -230,10 +230,10 @@ io.on('connection', (socket) => {
     return;
   });
   
-  socket.on('words', (data) => {
+  socket.on('typingProgress', (data) => {
     // Only broadcast to players in the same room
     if (socket.roomId) {
-      socket.to(socket.roomId).emit('wordsReceived', data);
+      socket.to(socket.roomId).emit('typingProgressReceived', data);
     }
   });
 

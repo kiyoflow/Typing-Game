@@ -24,8 +24,8 @@ function menu(){
     resultsScreen.style.display = 'none';
 }
 
-// Function to get random words from the word list
-function getRandomWords(count) {
+// Function to get random words for practice mode only
+function getPracticeWords(count) {
     const selectedWords = [];
     for (let i = 0; i < count; i++) {
         const randomIndex = Math.floor(Math.random() * words.length);
@@ -50,9 +50,9 @@ let totalChars = 0;
 let testComplete = false; // Flag to track if the test is complete
 let isAlreadyInQueue = false; // Track if user is already in queue from another window
 
-// Function to display random words in the typing container
-function displayRandomWords(count = 25) {
-    const randomWords = getRandomWords(count);
+// Function to display words in the typing container
+function displayRandomWords(words) {
+    const randomWords = words;
     typingContainer = document.getElementById("typing-container");
 
     let i = 0;
@@ -123,7 +123,7 @@ function endTest(){
     keyboard.style.display = 'none';
     resultsScreen.style.display = 'block';
     
-    socket.off('wordsReceived');
+    socket.off('typingProgressReceived');
     socket.off('opponentDisconnected');
 
 
@@ -148,7 +148,7 @@ function restartTest() {
     keyboard.style.display = 'block';
     
     startTest();
-    displayRandomWords(25);
+    displayRandomWords(getPracticeWords(25));
 }
 
 // PvP-specific end race function
@@ -206,7 +206,7 @@ function backToMenu() {
     }
     
     // Clean up socket events to prevent conflicts
-    socket.off('wordsReceived');
+    socket.off('typingProgressReceived');
     socket.off('opponentDisconnected');
     
     // Reset match container HTML (in case opponentDisconnected destroyed it)
@@ -240,7 +240,7 @@ const socket = io();
 // Function to setup PvP-specific socket event listeners
 function setupPvPSocketEvents() {
     // Handle received words from opponent
-    socket.on('wordsReceived', (data) => {
+    socket.on('typingProgressReceived', (data) => {
         // Only process if we're actually in a PvP match
         const match = document.getElementById('match');
         if (!match || match.style.display === 'none') {
@@ -339,7 +339,7 @@ socket.on('matchFound', (data) => {
         
         // Initialize the player's typing test
         startTest();
-        displayRandomWords(25);
+        displayRandomWords(data.words);
         
         // Move the generated content to the player's PvP container
         const mainTypingContainer = document.getElementById('typing-container');
@@ -352,7 +352,7 @@ socket.on('matchFound', (data) => {
 
         // Send initial words to opponent
         if (playerContainer) {
-            socket.emit('words', playerContainer.innerHTML);
+            socket.emit('typingProgress', playerContainer.innerHTML);
         }
     }
 });
@@ -503,7 +503,7 @@ document.addEventListener('keydown', function(event) {
     // Send current typing progress to opponent (only in PvP mode)
     const playerContainer = document.getElementById('player-typing-container');
     if (playerContainer && typingContainer === playerContainer) {
-        socket.emit('words', playerContainer.innerHTML);
+        socket.emit('typingProgress', playerContainer.innerHTML);
     }
 
     // Scroll handling: Keep the cursor visible
@@ -707,7 +707,7 @@ window.onload = function() {
         
         // Initialize the typing test
         startTest();
-        displayRandomWords(25);
+        displayRandomWords(getPracticeWords(25));
     });
     
     // Set up word count selection listeners after DOM is loaded
@@ -725,7 +725,7 @@ window.onload = function() {
             
             // Reset and start new test
             startTest();
-            displayRandomWords(wordCount);
+            displayRandomWords(getPracticeWords(wordCount));
         });
     });
     
