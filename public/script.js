@@ -174,11 +174,8 @@ function endPvPRace() {
     socket.off('opponentDisconnected');
 
     // Update PvP results in the overlay
-    const wpmElement = document.querySelector('#pvp-results #typingSpeed .highlight');
-    const accuracyElement = document.querySelector('#pvp-results #accuracy .highlight');
-    
-    if (wpmElement) wpmElement.textContent = typingSpeed;
-    if (accuracyElement) accuracyElement.textContent = accuracy + '%';
+    document.getElementById('typingSpeed').textContent = `Words Per Minute: ${typingSpeed}`;
+    document.getElementById('accuracy').textContent = `Accuracy: ${accuracy}%`;
     
     // Show results overlay
     showPvPResultsOverlay();

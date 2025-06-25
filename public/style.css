@@ -161,11 +161,6 @@ body {
     margin: 20px 0;
 }
 
-#pvp-results .highlight {
-    color: #ecdda5;
-    font-weight: bold;
-}
-
 .back-to-menu-btn {
     padding: 15px 25px;
     font-size: 18px;
@@ -353,12 +348,6 @@ body {
 
 #results-screen .stats {
     margin-top: 20px;
-}
-
-#results-screen .highlight {
-    color: #007bff;
-    font-weight: bold;
-    font-size: 1.2em;
 }
 
 #word-settings {
