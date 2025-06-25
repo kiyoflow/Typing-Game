@@ -75,14 +75,9 @@ function displayRandomWords(words) {
         wrappedText2 += `</div>`;
     });
     
-    // Check if we're in PvP mode
-    const match = document.getElementById('match');
-
-    if (match && match.style.display === 'block') {
-        document.getElementById('player-typing-container').innerHTML = wrappedText2;
-    } else {
-        document.getElementById('typing-container').innerHTML = wrappedText2;
-    }
+    // Get the active container and display words
+    const activeContainer = getActiveTypingContainer();
+    activeContainer.innerHTML = wrappedText2;
     
     console.log('Total characters:', i);
     totalChars = i;
@@ -102,7 +97,7 @@ function startTest() {
     testComplete = false; // Reset the test complete flag
 }
 
-// end of test function
+// end of test function (Practice Mode Only)
 function endTest(){
     const endTime = new Date();
 
@@ -119,40 +114,35 @@ function endTest(){
         key.style.backgroundColor = '#ecdeaa';
     });
     
-    console.log("End test ran successfully!");
+    console.log("Practice test ended successfully!");
     
     // Set the test complete flag to prevent further key presses
     testComplete = true;
 
-    const typingContainer = document.getElementById('typing-container');
-    const resultsScreen = document.getElementById('results-screen');
-    const keyboard = document.getElementById('keyboard');
-    
-    typingContainer.style.display = 'none';
-    keyboard.style.display = 'none';
-    resultsScreen.style.display = 'block';
-    
-    socket.off('typingProgressReceived');
-    socket.off('opponentDisconnected');
-
-
-    // Display WPM and accuracy
-    resultsScreen.innerHTML = `
-        <h2>Results</h2>
-        <div class="stats">
-            <p>Words Per Minute: <span class="highlight">${typingSpeed}</span></p>
-            <p>Accuracy: <span class="highlight">${accuracy}%</span></p>
-        </div>
-        <button onclick="restartTest()" style="margin-top: 20px; padding: 10px 20px; font-size: 16px; background-color: #ecdda5; border: 2px solid #2c3e50; border-radius: 8px; cursor: pointer; font-family: 'Ubuntu', Courier, monospace;">Try Again</button>
-    `;
+    // Show practice results overlay
+    showPracticeResultsOverlay();
 }
 
+function showPracticeResultsOverlay() {
+    // Update practice results in the overlay
+    const wpmElement = document.getElementById('practice-wpm');
+    const accuracyElement = document.getElementById('practice-accuracy');
+    
+    if (wpmElement) wpmElement.textContent = typingSpeed;
+    if (accuracyElement) accuracyElement.textContent = accuracy + '%';
+    
+    // Show practice results overlay
+    const practiceResults = document.getElementById('practice-results');
+    practiceResults.style.display = 'flex';
+}
+
+//Prac Mode Only
 function restartTest() {
-    const resultsScreen = document.getElementById('results-screen');
+    const practiceResults = document.getElementById('practice-results');
     const typingContainer = document.getElementById('typing-container');
     const keyboard = document.getElementById('keyboard');
     
-    resultsScreen.style.display = 'none';
+    practiceResults.style.display = 'none';
     typingContainer.style.display = 'block';
     keyboard.style.display = 'block';
     
@@ -179,22 +169,67 @@ function endPvPRace() {
     // Set the test complete flag to prevent further key presses
     testComplete = true;
 
-    // Show results in player typing area only (keep opponent area visible)
-    const playerTypingArea = document.getElementById('playerTypingArea');
-    
-    // Replace player's typing area with results
-    match.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; font-family: 'Ubuntu', Courier, monospace;">
-            <h2 style="color: #2c3e50; margin-bottom: 30px;">Race Complete!</h2>
-            <div class="stats" style="margin-bottom: 30px;">
-                <p style="font-size: 24px; margin: 10px 0;">Your WPM: <span style="color: #007bff; font-weight: bold; font-size: 1.2em;">${typingSpeed}</span></p>
-                <p style="font-size: 24px; margin: 10px 0;">Your Accuracy: <span style="color: #007bff; font-weight: bold; font-size: 1.2em;">${accuracy}%</span></p>
-            </div>
-            <button onclick="backToMenu()" style="margin-top: 20px; padding: 15px 25px; font-size: 18px; background-color: #ecdda5; border: 2px solid #2c3e50; border-radius: 8px; cursor: pointer; font-family: 'Ubuntu', Courier, monospace; transition: all 0.2s ease;">Back to Menu</button>
-        </div>
-    `;
+    // Clean up PvP socket events
+    socket.off('typingProgressReceived');
+    socket.off('opponentDisconnected');
 
-    socket.emit('gameOver')
+    // Update PvP results in the overlay
+    const wpmElement = document.querySelector('#pvp-results #typingSpeed .highlight');
+    const accuracyElement = document.querySelector('#pvp-results #accuracy .highlight');
+    
+    if (wpmElement) wpmElement.textContent = typingSpeed;
+    if (accuracyElement) accuracyElement.textContent = accuracy + '%';
+    
+    // Show results overlay
+    showPvPResultsOverlay();
+
+    socket.emit('gameOver');
+}
+
+function showDisconnectOverlay() {
+    const oppDisconnectScreen = document.getElementById('oppDisconnectScreen');
+    oppDisconnectScreen.style.display = 'block';
+}
+
+function showPvPResultsOverlay() {
+    const pvpResults = document.getElementById('pvp-results');
+    pvpResults.style.display = 'flex';
+}
+
+function hideAllOverlays() {
+    const overlays = document.querySelectorAll('.match-overlay');
+    overlays.forEach(overlay => {
+        overlay.style.display = 'none';
+    });
+}
+
+function showCountdown(callback) {
+    const countdownOverlay = document.getElementById('countdown-overlay');
+    const countdownText = document.getElementById('countdown-text');
+    
+    // Show countdown overlay
+    countdownOverlay.style.display = 'flex';
+    
+    let count = 3;
+    countdownText.textContent = count;
+    
+    const countdownInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            countdownText.textContent = count;
+        } else {
+            countdownText.textContent = 'GO!';
+            setTimeout(() => {
+                countdownOverlay.classList.add('fade-out');
+                // Hide countdown and start game
+                setTimeout(() => {
+                    countdownOverlay.style.display = 'none';
+                    callback(); // Start the game
+                }, 500);
+            }, 500);
+            clearInterval(countdownInterval);
+        }
+    }, 1000);
 }
 
 function backToMenu() {
@@ -218,24 +253,17 @@ function backToMenu() {
     socket.off('typingProgressReceived');
     socket.off('opponentDisconnected');
     
-    // Reset match container HTML (in case opponentDisconnected destroyed it)
-    if (match) {
-        match.innerHTML = `
-            <div id="playerTypingArea" class="typingArea">
-                <div class="typing-area-label">You</div>
-                <div id="player-typing-container" class="pvp-typing-container"></div>
-                <div id="player-keyboard-container"></div>
-            </div>
-            <div id="oppTypingArea" class="typingArea">
-                <div class="typing-area-label">Opponent</div>
-                <div id="opp-typing-container" class="pvp-typing-container"></div>
-                <div id="opp-keyboard-container"></div>
-            </div>
-        `;
-        
-        // Re-setup keyboards after resetting HTML
-        setupPvPKeyboards();
-    }
+    // Hide all overlays and reset containers
+    hideAllOverlays();
+    
+    // Clear typing containers
+    const playerContainer = document.getElementById('player-typing-container');
+    const oppContainer = document.getElementById('opp-typing-container');
+    if (playerContainer) playerContainer.innerHTML = '';
+    if (oppContainer) oppContainer.innerHTML = '';
+    
+    // Re-setup keyboards
+    setupPvPKeyboards();
     
     // Reset test state
     testComplete = false;
@@ -288,16 +316,8 @@ function setupPvPSocketEvents() {
             return;
         }
         
-        // Show a message to the user
-        if (match) {
-            match.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; font-family: 'Ubuntu', Courier, monospace;">
-                    <h2 style="color: #2c3e50; margin-bottom: 20px;">Opponent Disconnected</h2>
-                    <p style="font-size: 18px; margin-bottom: 30px; color: #7f8c8d;">Your opponent has left the match.</p>
-                    <button onclick="backToMenu()" style="padding: 15px 25px; font-size: 18px; background-color: #ecdda5; border: 2px solid #2c3e50; border-radius: 8px; cursor: pointer; font-family: 'Ubuntu', Courier, monospace; transition: all 0.2s ease;">Back to Menu</button>
-                </div>
-            `;
-        }
+        // Show disconnect overlay
+        showDisconnectOverlay();
         
         // Stop the test
         testComplete = true;
@@ -346,14 +366,17 @@ socket.on('matchFound', (data) => {
             oppKeyboard.style.display = 'block';
         }
         
-        // Initialize the player's typing test
-        startTest();
-        displayRandomWords(data.words);
+        // Show countdown before starting the game
+        showCountdown(() => {
+            // Initialize the player's typing test after countdown
+            startTest();
+            displayRandomWords(data.words);
 
-        // Send initial words to opponent
-        if (playerContainer) {
-            socket.emit('typingProgress', playerContainer.innerHTML);
-        }
+            // Send initial words to opponent
+            if (playerContainer) {
+                socket.emit('typingProgress', playerContainer.innerHTML);
+            }
+        });
     }
 });
 
@@ -442,7 +465,8 @@ document.addEventListener('keydown', function(event) {
         return;
     }
     
-    if (!typingContainer || typingContainer.style.display === 'none') {
+    const activeContainer = getActiveTypingContainer();
+    if (!activeContainer || activeContainer.style.display === 'none') {
         return; // Don't process keys if not in typing mode
     }
     
@@ -466,10 +490,10 @@ document.addEventListener('keydown', function(event) {
     if (event.key === 'Backspace') {
         if (keysPressed > 0) {
             keysPressed--;
-            const prevSpan = typingContainer.querySelector(`#char-${keysPressed}`);
+            const prevSpan = activeContainer.querySelector(`#char-${keysPressed}`);
             if (prevSpan) {
                 prevSpan.classList.remove("matched", "unmatched");
-                const cursor = typingContainer.querySelector('.cursor');
+                const cursor = activeContainer.querySelector('.cursor');
                 if (cursor && prevSpan.parentNode) {
                     prevSpan.parentNode.insertBefore(cursor, prevSpan);
                 }
@@ -478,7 +502,7 @@ document.addEventListener('keydown', function(event) {
         return;
     }
     
-    const currentSpan = typingContainer.querySelector(`#char-${keysPressed}`);
+    const currentSpan = activeContainer.querySelector(`#char-${keysPressed}`);
     if (!currentSpan) return;
     
     const currentLetter = currentSpan.textContent;
@@ -494,32 +518,32 @@ document.addEventListener('keydown', function(event) {
 
     keysPressed++;
     
-    const nextSpan = typingContainer.querySelector(`#char-${keysPressed}`);
-    const cursor = typingContainer.querySelector('.cursor');
+    const nextSpan = activeContainer.querySelector(`#char-${keysPressed}`);
+    const cursor = activeContainer.querySelector('.cursor');
     if (nextSpan && cursor && nextSpan.parentNode) {
         nextSpan.parentNode.insertBefore(cursor, nextSpan);
     }
 
     // Send current typing progress to opponent (only in PvP mode)
     const playerContainer = document.getElementById('player-typing-container');
-    if (playerContainer && typingContainer === playerContainer) {
+    if (playerContainer && activeContainer === playerContainer) {
         socket.emit('typingProgress', playerContainer.innerHTML);
     }
 
     // Scroll handling: Keep the cursor visible
     if (cursor) {
-        const containerRect = typingContainer.getBoundingClientRect();
+        const containerRect = activeContainer.getBoundingClientRect();
         const cursorRect = cursor.getBoundingClientRect();
 
         // Check if the cursor is below the visible area of the container
         if (cursorRect.bottom + 40 > containerRect.bottom) {
             // Scroll down to bring the cursor into view
-            typingContainer.scrollTop += cursorRect.bottom + 40 - containerRect.bottom + 20;
+            activeContainer.scrollTop += cursorRect.bottom + 40 - containerRect.bottom + 20;
         }
         // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
         else if (cursorRect.top < containerRect.top + 20) {
             // Scroll up to bring the cursor into view
-            typingContainer.scrollTop -= containerRect.top + 20 - cursorRect.top + 20;
+            activeContainer.scrollTop -= containerRect.top + 20 - cursorRect.top + 20;
         }
     }
 });
@@ -530,14 +554,15 @@ document.addEventListener('keyup', function(event) {
         return;
     }
     
-    if (!typingContainer || typingContainer.style.display === 'none') {
+    const activeContainer = getActiveTypingContainer();
+    if (!activeContainer || activeContainer.style.display === 'none') {
         return; // Don't process keys if not in typing mode
     }
     
     colorKey('#ecdeaa', event.key);
 
     // Check word completion and update correctWords count
-    const words = typingContainer.querySelectorAll('.word');
+    const words = activeContainer.querySelectorAll('.word');
     correctWords = 0;
     
     words.forEach(word => {
@@ -572,7 +597,7 @@ document.addEventListener('keyup', function(event) {
         if (lastWordMatched && lastWordChars.length > 0) {
             // Check if we're in PvP mode
             const playerContainer = document.getElementById('player-typing-container');
-            const isPvPMode = playerContainer && typingContainer === playerContainer;
+            const isPvPMode = playerContainer && activeContainer === playerContainer;
             
             if (isPvPMode) {
                 endPvPRace();
@@ -586,8 +611,9 @@ document.addEventListener('keyup', function(event) {
 // Function to manage keyboard key colors
 function colorKey(color, keyId) {
     // Determine which keyboard to target based on current mode
+    const activeContainer = getActiveTypingContainer();
     const playerContainer = document.getElementById('player-typing-container');
-    const isPvPMode = playerContainer && typingContainer === playerContainer;
+    const isPvPMode = playerContainer && activeContainer === playerContainer;
     
     // Special handling for spacebar
     if (keyId === ' ') {
@@ -650,6 +676,15 @@ function setupPvPKeyboards() {
     oppKeyboardContainer.appendChild(oppKeyboard);
 }
 
+// Helper function to get the active typing container
+function getActiveTypingContainer() {
+    const match = document.getElementById('match');
+    if (match && match.style.display === 'block') {
+        return document.getElementById('player-typing-container');
+    } else {
+        return document.getElementById('typing-container');
+    }
+}
 
 
 // Prevent manual scrolling on typing containers
@@ -743,3 +778,4 @@ window.onload = function() {
         })
         .catch(err => console.error('Auth status error:', err));
 };
+

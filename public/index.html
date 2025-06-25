@@ -26,6 +26,27 @@
     </div>
 
     <div id="match">
+        <div id="countdown-overlay" class="match-overlay">
+            <div id="countdown">
+                <div id="countdown-text">3</div>
+            </div>
+        </div>
+
+        <div id="pvp-results" class="match-overlay">
+            <h2>Results</h2>
+            <div class="stats">
+                <p id="typingSpeed">Words Per Minute: <span class="highlight"></span></p>
+                <p id="accuracy">Accuracy: <span class="highlight"></span></p>
+            </div>
+            <button onclick="backToMenu()" class="back-to-menu-btn">Back to Menu</button>
+        </div>
+        
+        <div id="oppDisconnectScreen" class="match-overlay">
+            <h2>Opponent Disconnected</h2>
+            <p>Your opponent has left the match.</p>
+            <button onclick="backToMenu()" class="back-to-menu-btn">Back to Menu</button>
+        </div>
+
         <div id="playerTypingArea" class="typingArea">
             <div class="typing-area-label">You</div>
             <div id="player-typing-container" class="pvp-typing-container"></div>
@@ -36,9 +57,21 @@
             <div id="opp-typing-container" class="pvp-typing-container"></div>
             <div id="opp-keyboard-container"></div>
         </div>
+
+
+
     </div>
 
     <div id="app">
+        <div id="practice-results" class="match-overlay">
+            <h2>Results</h2>
+            <div class="stats">
+                <p>Words Per Minute: <span id="practice-wpm" class="highlight"></span></p>
+                <p>Accuracy: <span id="practice-accuracy" class="highlight"></span></p>
+            </div>
+            <button onclick="restartTest()" class="back-to-menu-btn">Try Again</button>
+        </div>
+
         <div id="word-settings">
             <span class="word-count" data-count="2">2 words</span> |
             <span class="word-count" data-count="10">10 words</span> |
