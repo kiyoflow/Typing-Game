@@ -226,8 +226,8 @@ io.on('connection', (socket) => {
   });
 
   // Handle game over
-  socket.on('gameOver', () => {
-    return;
+  socket.on('raceOver', (data) => {
+    socket.to(socket.roomId).emit('raceOver', data);
   });
   
   socket.on('typingProgress', (data) => {

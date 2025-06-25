@@ -178,9 +178,16 @@ function endPvPRace() {
     document.getElementById('accuracy').textContent = `Accuracy: ${accuracy}%`;
     
     // Show results overlay
-    showPvPResultsOverlay();
-
-    socket.emit('gameOver');
+    socket.emit('raceOver', {
+        wpm: typingSpeed,
+        accuracy: accuracy
+    });
+    
+    finishAnimation();
+    setTimeout(() => {
+        showPvPResultsOverlay();
+    }, 1000);
+ 
 }
 
 function showDisconnectOverlay() {
@@ -229,6 +236,13 @@ function showCountdown(callback) {
     }, 1000);
 }
 
+
+
+
+function finishAnimation(){
+    // Empty function - no animation
+}
+
 function backToMenu() {
     const resultsScreen = document.getElementById('results-screen');
     const match = document.getElementById('match');
@@ -273,6 +287,14 @@ const socket = io();
 
 // Function to setup PvP-specific socket event listeners
 function setupPvPSocketEvents() {
+
+    socket.on('raceOver', (data) => {
+        finishAnimation();
+        setTimeout(() => {
+            showPvPResultsOverlay();
+        }, 1000);
+    });
+ 
     // Handle received words from opponent
     socket.on('typingProgressReceived', (data) => {
         // Only process if we're actually in a PvP match
