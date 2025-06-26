@@ -48,6 +48,7 @@ let correctWords = 0;
 let correctChars = 0;
 let totalChars = 0;
 let testComplete = false; // Flag to track if the test is complete
+let pvpRaceComplete = false; // Flag to track if the PvP race is complete
 let isAlreadyInQueue = false; // Track if user is already in queue from another window
 
 // Function to display words in the typing container
@@ -83,8 +84,8 @@ function displayRandomWords(words) {
     totalChars = i;
 }
 
-// function that starts the test
-function startTest() {
+// function that resets all variables for a new typing session
+function resetTypingVariables() {
     // Reset variables
     keysPressed = 0;
     userTyped = '';
@@ -95,6 +96,7 @@ function startTest() {
     correctWords = 0;
     totalChars = 0;
     testComplete = false; // Reset the test complete flag
+    pvpRaceComplete = false; // Reset the PvP race complete flag
 }
 
 // end of test function (Practice Mode Only)
@@ -146,7 +148,7 @@ function restartTest() {
     typingContainer.style.display = 'block';
     keyboard.style.display = 'block';
     
-    startTest();
+    resetTypingVariables();
     displayRandomWords(getPracticeWords(25));
 }
 
@@ -166,8 +168,8 @@ function endPvPRace() {
         key.style.backgroundColor = '#ecdeaa';
     });
 
-    // Set the test complete flag to prevent further key presses
-    testComplete = true;
+    // Set the PvP race complete flag to prevent further key presses
+    pvpRaceComplete = true;
 
     // Clean up PvP socket events
     socket.off('typingProgressReceived');
@@ -181,12 +183,13 @@ function endPvPRace() {
     socket.emit('raceOver', {
         wpm: typingSpeed,
         accuracy: accuracy
+        
     });
     
     finishAnimation();
     setTimeout(() => {
         showPvPResultsOverlay();
-    }, 1000);
+    }, 4000);
  
 }
 
@@ -240,7 +243,26 @@ function showCountdown(callback) {
 
 
 function finishAnimation(){
-    // Empty function - no animation
+    const finishOverlay = document.getElementById('finish-animation');
+    const finishText = document.getElementById('finish-text');
+    const winnerText = document.getElementById('winner-text');
+    
+    if (!finishOverlay || !finishText || !winnerText) {
+        console.log('Animation elements not found');
+        return;
+    }
+    
+    // Update text content
+    finishText.textContent = 'RACE FINISHED!';
+    winnerText.textContent = 'Well done!';
+    
+    // Show the overlay
+    finishOverlay.style.display = 'flex';
+    
+    // Hide after 4 seconds
+    setTimeout(() => {
+        finishOverlay.style.display = 'none';
+    }, 4000);
 }
 
 function backToMenu() {
@@ -278,6 +300,7 @@ function backToMenu() {
     
     // Reset test state
     testComplete = false;
+    pvpRaceComplete = false;
     
     menu(); // Go back to main menu
 }
@@ -289,10 +312,18 @@ const socket = io();
 function setupPvPSocketEvents() {
 
     socket.on('raceOver', (data) => {
+        // Set PvP race complete to prevent further typing
+        pvpRaceComplete = true;
+        
+        // Reset all keyboard key colors
+        document.querySelectorAll('.key').forEach(key => {
+            key.style.backgroundColor = '#ecdeaa';
+        });
+        
         finishAnimation();
         setTimeout(() => {
             showPvPResultsOverlay();
-        }, 1000);
+        }, 4000);
     });
  
     // Handle received words from opponent
@@ -338,8 +369,8 @@ function setupPvPSocketEvents() {
         // Show disconnect overlay
         showDisconnectOverlay();
         
-        // Stop the test
-        testComplete = true;
+        // Stop the PvP race
+        pvpRaceComplete = true;
     });
 }
 
@@ -387,8 +418,8 @@ socket.on('matchFound', (data) => {
         
         // Show countdown before starting the game
         showCountdown(() => {
-            // Initialize the player's typing test after countdown
-            startTest();
+            // Initialize the player's typing session after countdown
+            resetTypingVariables();
             displayRandomWords(data.words);
 
             // Send initial words to opponent
@@ -479,7 +510,7 @@ document.addEventListener('keydown', function(event) {
         event.preventDefault(); // Prevent space bar from scrolling
     }
     
-    if (testComplete) {
+    if (testComplete || pvpRaceComplete) {
         event.preventDefault();
         return;
     }
@@ -569,7 +600,7 @@ document.addEventListener('keydown', function(event) {
 
 document.addEventListener('keyup', function(event) {
     // If the test is complete, don't process any key lifts except for color reset
-    if (testComplete) {
+    if (testComplete || pvpRaceComplete) {
         return;
     }
     
@@ -759,8 +790,8 @@ window.onload = function() {
         if (playerKeyboard) playerKeyboard.style.display = 'none';
         if (oppKeyboard) oppKeyboard.style.display = 'none';
         
-        // Initialize the typing test
-        startTest();
+        // Initialize the typing session
+        resetTypingVariables();
         displayRandomWords(getPracticeWords(25));
     });
     
@@ -777,8 +808,8 @@ window.onload = function() {
             keyboard.style.display = 'block';
             resultsScreen.style.display = 'none';
             
-            // Reset and start new test
-            startTest();
+            // Reset and start new session
+            resetTypingVariables();
             displayRandomWords(getPracticeWords(wordCount));
         });
     });

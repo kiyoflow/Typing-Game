@@ -459,4 +459,69 @@ body {
     100% { opacity: 1; transform: scale(1); }
 }
 
+/* Clean Finish Animation */
+#finish-animation {
+    background: rgba(44, 62, 80, 0.9);
+    z-index: 2000;
+}
+
+.finish-container {
+    text-align: center;
+    animation: slideIn 0.8s ease-out;
+}
+
+.finish-text {
+    font-size: 4rem;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 0px 4px 8px rgba(0,0,0,0.5);
+    font-family: 'Ubuntu', Courier, monospace;
+    margin-bottom: 30px;
+    opacity: 0;
+    transform: translateY(50px);
+    animation: textSlideUp 1s ease-out 0.3s forwards;
+}
+
+.winner-text {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #ffdd44;
+    text-shadow: 0px 4px 8px rgba(0,0,0,0.5);
+    font-family: 'Ubuntu', Courier, monospace;
+    opacity: 0;
+    transform: translateY(50px);
+    animation: textSlideUp 1s ease-out 0.8s forwards, glow 2s ease-in-out 1.5s infinite;
+}
+
+@keyframes slideIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes textSlideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        text-shadow: 0px 4px 8px rgba(0,0,0,0.5);
+    }
+    50% {
+        text-shadow: 0px 4px 8px rgba(0,0,0,0.5), 0px 0px 20px #ffdd44;
+    }
+}
+
 
