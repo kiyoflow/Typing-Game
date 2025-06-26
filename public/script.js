@@ -186,7 +186,7 @@ function endPvPRace() {
         
     });
     
-    finishAnimation();
+    finishAnimation(true); // You won!
     setTimeout(() => {
         showPvPResultsOverlay();
     }, 4000);
@@ -242,7 +242,7 @@ function showCountdown(callback) {
 
 
 
-function finishAnimation(){
+function finishAnimation(isWinner = false, opponentName = 'Opponent'){
     const finishOverlay = document.getElementById('finish-animation');
     const finishText = document.getElementById('finish-text');
     const winnerText = document.getElementById('winner-text');
@@ -252,9 +252,13 @@ function finishAnimation(){
         return;
     }
     
-    // Update text content
+    // Update text content based on who won
     finishText.textContent = 'RACE FINISHED!';
-    winnerText.textContent = 'Well done!';
+    if (isWinner) {
+        winnerText.textContent = '🏆 YOU WON! 🏆';
+    } else {
+        winnerText.textContent = `${opponentName} Won!`;
+    }
     
     // Show the overlay
     finishOverlay.style.display = 'flex';
@@ -320,7 +324,11 @@ function setupPvPSocketEvents() {
             key.style.backgroundColor = '#ecdeaa';
         });
         
-        finishAnimation();
+        // Get opponent name from the label
+        const oppLabel = document.querySelector('#oppTypingArea .typing-area-label');
+        const opponentName = oppLabel ? oppLabel.textContent : 'Opponent';
+        
+        finishAnimation(false, opponentName); // Opponent won!
         setTimeout(() => {
             showPvPResultsOverlay();
         }, 4000);
