@@ -142,15 +142,8 @@ io.on('connection', (socket) => {
     socket.user = userData; // Store user data directly on socket
     console.log(`${userData.displayName} connected`);
     
-    // Check if this user is already in queue from another connection
-    const isAlreadyInQueue = playerQueue.some(socketId => {
-      const queuedUser = users[socketId];
-      return queuedUser && queuedUser.displayName === userData.displayName && socketId !== socket.id;
-    });
-    
-    if (isAlreadyInQueue) {
-      socket.emit('alreadyInQueue');
-    }
+    // No need to check queue status on connection anymore
+    // Let the queueMatch handler deal with duplicates
   });
 
   // Handle queue requests
@@ -165,7 +158,7 @@ io.on('connection', (socket) => {
     
     if (isAlreadyInQueue) {
       console.log(`${username} is already in queue`);
-      socket.emit('alreadyInQueue');
+      socket.emit('queueRejected');
       return;
     }
     

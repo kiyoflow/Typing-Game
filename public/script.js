@@ -49,7 +49,6 @@ let correctChars = 0;
 let totalChars = 0;
 let testComplete = false; // Flag to track if the test is complete
 let pvpRaceComplete = false; // Flag to track if the PvP race is complete
-let isAlreadyInQueue = false; // Track if user is already in queue from another window
 
 // Function to display words in the typing container
 function displayRandomWords(words) {
@@ -153,15 +152,8 @@ function restartTest() {
 }
 
 // PvP-specific end race function
-function endPvPRace() {
-    const endTime = new Date();
-
-    typingTime = endTime - startTime;
-    typingSpeed = Math.floor((correctWords / typingTime) * 60000);
-    accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);
-    accuracy = Math.min(accuracy, 100); // Cap accuracy at 100%
-
-    console.log("PvP race ended! WPM:", typingSpeed, "Accuracy:", accuracy);
+function handlePlayerFinish() {
+    calculateStats();
 
     // Reset all keyboard key colors
     document.querySelectorAll('.key').forEach(key => {
@@ -180,17 +172,27 @@ function endPvPRace() {
     document.getElementById('accuracy').textContent = `Accuracy: ${accuracy}%`;
     
     // Show results overlay
-    socket.emit('raceOver', {
-        wpm: typingSpeed,
-        accuracy: accuracy
-        
-    });
+    socket.emit('raceOver');
     
     finishAnimation(true); // You won!
     setTimeout(() => {
         showPvPResultsOverlay();
     }, 4000);
  
+} 
+
+function calculateStats(){
+    const endTime = new Date();
+
+    typingTime = endTime - startTime;
+    typingSpeed = Math.floor((correctWords / typingTime) * 60000);
+    accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);
+    accuracy = Math.min(accuracy, 100); // Cap accuracy at 100%
+
+    // Update the typing speed and accuracy in the PvP results overlay
+    document.getElementById('typingSpeed').textContent = `Words Per Minute: ${typingSpeed}`;
+    document.getElementById('accuracy').textContent = `Accuracy: ${accuracy}%`;
+
 }
 
 function showDisconnectOverlay() {
@@ -213,6 +215,10 @@ function hideAllOverlays() {
 function showCountdown(callback) {
     const countdownOverlay = document.getElementById('countdown-overlay');
     const countdownText = document.getElementById('countdown-text');
+    
+    // Reset countdown overlay state
+    countdownOverlay.classList.remove('fade-out');
+    countdownOverlay.style.opacity = '1';
     
     // Show countdown overlay
     countdownOverlay.style.display = 'flex';
@@ -316,8 +322,12 @@ const socket = io();
 function setupPvPSocketEvents() {
 
     socket.on('raceOver', (data) => {
+        
+
+        calculateStats();
         // Set PvP race complete to prevent further typing
         pvpRaceComplete = true;
+
         
         // Reset all keyboard key colors
         document.querySelectorAll('.key').forEach(key => {
@@ -450,20 +460,9 @@ pvpButton.addEventListener('click', function() {
         menu.style.display = 'none';
         menuContent.style.display = 'none';
         
-        // Get the existing queue button and update its state
+        // Get the existing queue button and reset its state
         const queueButton = document.getElementById('queueBtn');
-
-        if (isAlreadyInQueue === true) {
-            queueButton.textContent = 'Finding Match...';
-        }
-        else{
-            queueButton.textContent = 'Find Match';
-        }
-        
-        // If already in queue, apply the same styling as the animated version
-        if (isAlreadyInQueue && queueButton) {
-            queueButton.style.animation = 'textChange 0.5s ease';
-        }
+        queueButton.textContent = 'Find Match';
         
         queueMenu.classList.add('active');
         queueMenu.style.display = 'block';
@@ -496,20 +495,19 @@ pvpButton.addEventListener('click', function() {
     }, 300);
 });
 
-// Add handler for alreadyInQueue event
-socket.on('alreadyInQueue', () => {
-    console.log('User is already in queue from another window');
-    isAlreadyInQueue = true;
+// Add handler for when queue is rejected due to already being in queue
+socket.on('queueRejected', () => {
+    console.log('Queue rejected - already in queue from another window');
     
-    // If queue button exists, disable it immediately with animation
+    // Reset button to normal state
     const queueButton = document.getElementById('queueBtn');
     if (queueButton) {
-        queueButton.style.animation = 'textChange 0.5s ease';
-        setTimeout(() => {
-            queueButton.textContent = 'Finding Match...';
-            queueButton.disabled = true;
-        }, 250);
+        queueButton.textContent = 'Find Match';
+        queueButton.disabled = false;
     }
+    
+    // Show user feedback
+    alert('You are already in queue from another tab/window');
 });
 
 // Event listener for typing and backspace handling
@@ -658,7 +656,7 @@ document.addEventListener('keyup', function(event) {
             const isPvPMode = playerContainer && activeContainer === playerContainer;
             
             if (isPvPMode) {
-                endPvPRace();
+                handlePlayerFinish();
             } else {
                 endTest();
             }
