@@ -52,7 +52,6 @@ let pvpRaceComplete = false; // Flag to track if the PvP race is complete
 
 // Function to display words in the typing container
 function displayRandomWords(words) {
-    console.log('displayRandomWords called with:', words);
     const randomWords = words;
     
     // Generate HTML for the words
@@ -291,6 +290,15 @@ function backToMenu() {
         queueMenu.style.display = 'none';
         queueMenu.classList.remove('active');
     }
+
+    const queueButton = document.getElementById('queueBtn');
+    if (queueButton) {
+        queueButton.removeEventListener('click', queueClickHandler);
+    }
+    // Leave queue
+    socket.emit('leaveQueue');
+    
+
     
     // Clean up socket events to prevent conflicts
     socket.off('typingProgressReceived');
@@ -384,6 +392,7 @@ function setupPvPSocketEvents() {
             return;
         }
         
+        hideAllOverlays();
         // Show disconnect overlay
         showDisconnectOverlay();
         
@@ -452,6 +461,25 @@ const pvpButton = document.getElementById('pvp');
 const queueMenu = document.getElementById('queueMenu');
 const menuContent = document.getElementById('menu-content');
 
+const queueClickHandler = function() {
+    if (this.textContent !== "Finding Match..."){
+        this.style.animation = 'textChange 0.5s ease';
+        setTimeout(() => {
+            this.textContent = 'Finding Match...';
+            // Emit queue event to server
+            socket.emit('queueMatch');
+        }, 250);
+    }
+
+    else{
+        this.style.animation = 'textChange 0.5s ease';
+        setTimeout(() => {
+            this.textContent = 'Find Match';
+        }, 250);
+        socket.emit('leaveQueue');
+    }
+}
+
 pvpButton.addEventListener('click', function() {
     const menu = document.getElementById('menu');
     menuContent.style.opacity = '0';
@@ -471,26 +499,7 @@ pvpButton.addEventListener('click', function() {
 
         // Add click event listener to the queue button    
         if (queueButton) {
-            queueButton.addEventListener('click', function() {
-                if (this.textContent !== "Finding Match..."){
-                    this.style.animation = 'textChange 0.5s ease';
-                    setTimeout(() => {
-                        this.textContent = 'Finding Match...';
-                        // Emit queue event to server
-                        socket.emit('queueMatch');
-                    }, 250);
-                }
-
-                else{
-                    this.style.animation = 'textChange 0.5s ease';
-                    setTimeout(() => {
-                        this.textContent = 'Find Match';
-                        this.disabled = false;
-                    }, 250);
-                    socket.emit('leaveQueue');
-                }
-               
-            });
+            queueButton.addEventListener('click', queueClickHandler);
         }
     }, 300);
 });
@@ -503,7 +512,6 @@ socket.on('queueRejected', () => {
     const queueButton = document.getElementById('queueBtn');
     if (queueButton) {
         queueButton.textContent = 'Find Match';
-        queueButton.disabled = false;
     }
     
     // Show user feedback
