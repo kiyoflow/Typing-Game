@@ -146,6 +146,9 @@ function restartTest() {
     typingContainer.style.display = 'block';
     keyboard.style.display = 'block';
     
+    // Scroll back to top
+    typingContainer.scrollTop = 0;
+    
     resetTypingVariables();
     displayRandomWords(getPracticeWords(25));
 }
