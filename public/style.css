@@ -161,7 +161,7 @@ body {
     margin: 20px 0;
 }
 
-.back-to-menu-btn {
+.back-to-menu-btn, #restart-test-btn {
     padding: 15px 25px;
     font-size: 18px;
     background-color: #ecdda5;
@@ -173,7 +173,7 @@ body {
     margin-top: 20px;
 }
 
-.back-to-menu-btn:hover {
+.back-to-menu-btn:hover, #restart-test-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
     background-color: #e5d590;
