@@ -49,6 +49,7 @@ let correctChars = 0;
 let totalChars = 0;
 let testComplete = false; // Flag to track if the test is complete
 let pvpRaceComplete = false; // Flag to track if the PvP race is complete
+let currentWordCount = 25;
 
 // Function to display words in the typing container
 function displayRandomWords(words) {
@@ -150,7 +151,7 @@ function restartTest() {
     typingContainer.scrollTop = 0;
     
     resetTypingVariables();
-    displayRandomWords(getPracticeWords(25));
+    displayRandomWords(getPracticeWords(currentWordCount));
 }
 
 // PvP-specific end race function
@@ -316,8 +317,7 @@ function backToMenu() {
     if (playerContainer) playerContainer.innerHTML = '';
     if (oppContainer) oppContainer.innerHTML = '';
     
-    // Re-setup keyboards
-    setupPvPKeyboards();
+
     
     // Reset test state
     testComplete = false;
@@ -365,7 +365,7 @@ function setupPvPSocketEvents() {
         
         const oppContainer = document.getElementById('opp-typing-container');
         if (oppContainer) {
-            oppContainer.innerHTML = data;
+            oppContainer.innerHTML = data.htmlContent;
             const oppCursor = oppContainer.querySelector('.cursor');
             
             if (oppCursor) {
@@ -382,6 +382,23 @@ function setupPvPSocketEvents() {
                     // Scroll up to bring the cursor into view
                     oppContainer.scrollTop -= containerRect.top + 10 - oppCursorRect.top + 10;
                 }
+            }
+        }
+
+        // Color opponent's keyboard based on their key press
+        if (data.keyPressed) {
+            const keyId = data.keyPressed === ' ' ? 'space' : data.keyPressed.toUpperCase();
+            const oppKey = document.querySelector(`#opp-keyboard #${keyId}`);
+            
+            if (oppKey) {
+                // Set color based on correctness
+                const color = data.keyCorrect ? 'green' : 'red';
+                oppKey.style.backgroundColor = color;
+                
+                // Reset color after delay
+                setTimeout(() => {
+                    oppKey.style.backgroundColor = '#ecdeaa';
+                }, 100);
             }
         }
     });
@@ -452,10 +469,13 @@ socket.on('matchFound', (data) => {
             resetTypingVariables();
             displayRandomWords(data.words);
 
-            // Send initial words to opponent
+            // Send initial words to opponent (without key data)
             if (playerContainer) {
-                socket.emit('typingProgress', playerContainer.innerHTML);
+                socket.emit('typingProgress', {
+                    htmlContent: playerContainer.innerHTML
+                });
             }
+
         });
     }
 });
@@ -594,7 +614,12 @@ document.addEventListener('keydown', function(event) {
     // Send current typing progress to opponent (only in PvP mode)
     const playerContainer = document.getElementById('player-typing-container');
     if (playerContainer && activeContainer === playerContainer) {
-        socket.emit('typingProgress', playerContainer.innerHTML);
+        const wasCorrect = currentSpan.classList.contains('matched');
+        socket.emit('typingProgress', {
+            htmlContent: playerContainer.innerHTML,
+            keyPressed: event.key,
+            keyCorrect: wasCorrect
+        });
     }
 
     // Scroll handling: Keep the cursor visible
@@ -718,30 +743,7 @@ function colorKey(color, keyId) {
     }
 }   
 
-// Function to setup PvP keyboards by cloning the main keyboard
-function setupPvPKeyboards() {
-    const originalKeyboard = document.getElementById('keyboard');
-    if (!originalKeyboard) return;
-    
-    const playerKeyboardContainer = document.getElementById('player-keyboard-container');
-    const oppKeyboardContainer = document.getElementById('opp-keyboard-container');
-    
-    if (!playerKeyboardContainer || !oppKeyboardContainer) return;
-    
-    // Clone and setup player keyboard
-    const playerKeyboard = originalKeyboard.cloneNode(true);
-    playerKeyboard.id = 'player-keyboard';
-    playerKeyboard.className = 'keyboard pvp-keyboard';
-    playerKeyboard.style.display = 'none';
-    playerKeyboardContainer.appendChild(playerKeyboard);
-    
-    // Clone and setup opponent keyboard
-    const oppKeyboard = originalKeyboard.cloneNode(true);
-    oppKeyboard.id = 'opp-keyboard';
-    oppKeyboard.className = 'keyboard pvp-keyboard';
-    oppKeyboard.style.display = 'none';
-    oppKeyboardContainer.appendChild(oppKeyboard);
-}
+
 
 // Helper function to get the active typing container
 function getActiveTypingContainer() {
@@ -778,9 +780,6 @@ function preventManualScrolling() {
 window.onload = function() {
     menu();
     
-    // Setup PvP keyboards (containers already exist in HTML)
-    setupPvPKeyboards();
-    
     // Prevent manual scrolling
     preventManualScrolling();
 
@@ -815,7 +814,7 @@ window.onload = function() {
     // Set up word count selection listeners after DOM is loaded
     document.querySelectorAll('.word-count').forEach(element => {
         element.addEventListener('click', function() {
-            const wordCount = parseInt(this.dataset.count);
+            currentWordCount = parseInt(this.dataset.count);
             const resultsScreen = document.getElementById('results-screen');
             const keyboard = document.getElementById('keyboard');
             const typingContainer = document.getElementById('typing-container');
@@ -827,7 +826,7 @@ window.onload = function() {
             
             // Reset and start new session
             resetTypingVariables();
-            displayRandomWords(getPracticeWords(wordCount));
+            displayRandomWords(getPracticeWords(currentWordCount));
         });
     });
     
