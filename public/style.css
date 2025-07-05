@@ -47,7 +47,7 @@ body {
     font-family: 'Ubuntu', Courier, monospace;
 }
 
-#practice, #pvp{
+.modes{
     background-color: #f0e8ca;
     font-family: 'Ubuntu', Courier, monospace;
     font-size: 50px;
@@ -62,10 +62,14 @@ body {
     will-change: transform, box-shadow, background-color;
 }
 
-#practice:hover, #pvp:hover {
+.modes:hover {
     transform: translateY(-5px) scale(1.05);
     box-shadow: 0 10px 20px rgba(44, 62, 80, 0.3);
     background-color: #e5d590;
+}
+
+#privateMatch {
+    font-size: 41px; /* maximize font size without taking up to rows */
 }
 
 #queueMenu {

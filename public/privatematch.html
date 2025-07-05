@@ -5,210 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Private Match Room</title>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap" rel="stylesheet">
-    <style>
-        body {
-            background: #f0e8ca;
-            margin: 0;
-            min-height: 100vh;
-            font-family: 'Ubuntu Mono', monospace;
-            color: #2c3e50;
-            display: flex;
-            position: relative;
-        }
-        
-        /* Left sidebar - Players */
-        #left-sidebar {
-            width: 300px;
-            background: #ecdda5;
-            padding: 80px 20px 20px 20px;
-            border-right: 3px solid #2c3e50;
-            box-shadow: 2px 0 10px rgba(44, 62, 80, 0.1);
-        }
-        
-        .players-header {
-            color: #2c3e50;
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
-            text-align: center;
-            padding: 15px;
-            background: #e5d590;
-            border-radius: 10px;
-            border: 2px solid #2c3e50;
-        }
-        
-        .player-item {
-            background: #f0e8ca;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            border: 2px solid #2c3e50;
-            box-shadow: 0 3px 10px rgba(44, 62, 80, 0.1);
-            transition: transform 0.2s ease;
-        }
-        
-        .player-item:hover {
-            transform: translateY(-2px);
-        }
-        
-        .player-name {
-            color: #2c3e50;
-            font-weight: bold;
-            font-size: 1rem;
-        }
-        
-        .player-status {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-        
-        /* Center content */
-        .center-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 30px;
-            align-items: center;
-        }
-        
-        .room-title {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
-        }
-        
-        .room-id-display {
-            background: #ecdda5;
-            padding: 15px 25px;
-            border-radius: 10px;
-            border: 2px solid #2c3e50;
-            margin-bottom: 40px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #2c3e50;
-            box-shadow: 0 3px 10px rgba(44, 62, 80, 0.1);
-        }
-        
-        /* Room settings panel */
-        #roomSettings {
-            background: #ecdda5;
-            padding: 40px;
-            border-radius: 15px;
-            border: 2px solid #2c3e50;
-            box-shadow: 0 8px 25px rgba(44, 62, 80, 0.15);
-            min-width: 400px;
-        }
-        
-        .section-title {
-            color: #2c3e50;
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 25px;
-            letter-spacing: 1px;
-            text-align: center;
-        }
-        
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-            border-bottom: 2px solid #e5d590;
-        }
-        
-        .setting-row:last-child {
-            border-bottom: none;
-        }
-        
-        .setting-label {
-            color: #2c3e50;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-        
-        .wordcount-select {
-            background: #f0e8ca;
-            color: #2c3e50;
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: 2px solid #2c3e50;
-            font-family: inherit;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(44, 62, 80, 0.1);
-            transition: all 0.2s ease;
-        }
-        
-        .wordcount-select:hover, .wordcount-select:focus {
-            background: #e5d590;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(44, 62, 80, 0.2);
-            outline: none;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-top: 30px;
-        }
-        
-        .btn {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 10px;
-            font-family: inherit;
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 3px 10px rgba(44, 62, 80, 0.1);
-            border: 2px solid #2c3e50;
-        }
-        
-        #startBtn {
-            background: #f0e8ca;
-            color: #2c3e50;
-        }
-        
-        .start-btn:hover {
-            background: #e5d590;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
-        }
-        
-        .exit-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #e74c3c;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-family: inherit;
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 3px 10px rgba(231, 76, 60, 0.2);
-            z-index: 1000;
-        }
-        
-        .exit-btn:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
-        }
-    </style>
+    <link rel="stylesheet" href="privatematch.css">
 </head>
 <body>
+
+    <!-- From Uiverse.io by NlghtM4re - also just a placeholder for the room creation animation for now--> 
+    <div class="animationContainer">
+        <div class="item" style="--i:0;"></div>
+        <div class="item" style="--i:1;"></div>
+        <div class="item" style="--i:2;"></div>
+        <div class="item" style="--i:3;"></div>
+        <div class="item" style="--i:4;"></div>
+        <div class="item" style="--i:5;"></div>
+        <div class="item" style="--i:6;"></div>
+        <div class="item" style="--i:7;"></div>
+        <div class="item" style="--i:8;"></div>
+        <div class="item" style="--i:9;"></div>
+        <div class="item" style="--i:10;"></div>
+        <div class="item" style="--i:11;"></div>
+        <div class="item" style="--i:12;"></div>
+        <div class="item" style="--i:13;"></div>
+        <div class="item" style="--i:14;"></div>
+        <div class="item" style="--i:15;"></div>
+        <div class="item" style="--i:16;"></div>
+        <div class="item" style="--i:17;"></div>
+        <div class="item" style="--i:18;"></div>
+        <div class="item" style="--i:19;"></div>
+        <div class="item" style="--i:20;"></div>
+        <div class="loading-text">Creating room<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>
+    </div>
+
+
     <button id="exitBtn" class="exit-btn">EXIT</button>
     
     <div id="left-sidebar">
@@ -243,5 +70,21 @@
     </div>
     
     <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hide animation after 3 seconds with fade out
+            const animationContainer = document.querySelector('.animationContainer');
+            
+            if (animationContainer) {
+                setTimeout(() => {
+                    animationContainer.classList.add('fade-out');
+                    setTimeout(() => {
+                        animationContainer.style.display = 'none';
+                    }, 1000); // Wait for fade transition to complete
+                }, 3000);
+            }
+        });
+    </script>
 </body>
 </html>

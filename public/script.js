@@ -9,6 +9,7 @@ function menu(){
     const resultsScreen = document.getElementById('results-screen');
     const pvpButton = document.getElementById('pvp');
     const practiceButton = document.getElementById('practice');
+    const privateMatchButton = document.getElementById('privateMatch')
     
     menu.style.display = 'block';
     menuContent.style.display = 'flex';
@@ -16,6 +17,7 @@ function menu(){
     menuContent.style.transform = 'scale(1)';
     pvpButton.style.display = 'block';
     practiceButton.style.display = 'block';
+    privateMatchButton.style.display = 'block';
     app.style.display = 'none';
     match.style.display = 'none';
     wordSettings.style.display = 'none';
@@ -481,6 +483,7 @@ socket.on('matchFound', (data) => {
 });
 
 const pvpButton = document.getElementById('pvp');
+const privateMatchButton = document.getElementById('privateMatch');
 const queueMenu = document.getElementById('queueMenu');
 const menuContent = document.getElementById('menu-content');
 
@@ -525,6 +528,12 @@ pvpButton.addEventListener('click', function() {
             queueButton.addEventListener('click', queueClickHandler);
         }
     }, 300);
+});
+
+const animationContainer = document.getElementById('animationContainer');
+
+privateMatchButton.addEventListener('click', function() {
+    window.location.href = '/privatematch.html';
 });
 
 // Add handler for when queue is rejected due to already being in queue
