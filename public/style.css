@@ -528,4 +528,189 @@ body {
     }
 }
 
+/* Invite Popup Styles */
+#invitePopup {
+    position: fixed;
+    top: 20px;
+    right: -320px;
+    width: 300px;
+    background: #ecdda5;
+    border: 3px solid #2c3e50;
+    border-radius: 15px;
+    padding: 0;
+    z-index: 2000;
+    font-family: 'Ubuntu', Courier, monospace;
+    box-shadow: 0 10px 30px rgba(44, 62, 80, 0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    transform: translateX(20px) scale(0.9);
+    display: none;
+}
+
+.invite-popup {
+    position: fixed;
+    top: 20px;
+    right: -320px;
+    width: 300px;
+    background: #ecdda5;
+    border: 3px solid #2c3e50;
+    border-radius: 15px;
+    padding: 0;
+    z-index: 2000;
+    font-family: 'Ubuntu', Courier, monospace;
+    box-shadow: 0 10px 30px rgba(44, 62, 80, 0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    transform: translateX(20px) scale(0.9);
+}
+
+.invite-popup.show {
+    right: 20px;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+}
+
+.invite-popup.hidden {
+    right: -320px;
+    opacity: 0;
+    transform: translateX(20px) scale(0.9);
+}
+
+.invite-content {
+    padding: 20px;
+}
+
+.invite-popup h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.invite-popup p {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 1rem;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.invite-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.invite-buttons button {
+    padding: 12px 20px;
+    border: 2px solid #2c3e50;
+    border-radius: 8px;
+    font-family: 'Ubuntu', Courier, monospace;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+#acceptBtn {
+    background: #27ae60;
+    color: white;
+}
+
+#acceptBtn:hover {
+    background: #219a52;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+}
+
+#declineBtn {
+    background: #e74c3c;
+    color: white;
+}
+
+#declineBtn:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+/* Slide-in animation */
+@keyframes slideInFromRight {
+    from {
+        right: -320px;
+        opacity: 0;
+        transform: translateX(20px) scale(0.9);
+    }
+    to {
+        right: 20px;
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Index.html specific invite popup styles */
+#invitePopupContent {
+    padding: 20px;
+}
+
+#invitePopupHeader {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+#choiceButtons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+#choiceButtons button {
+    padding: 12px 20px;
+    border: 2px solid #2c3e50;
+    border-radius: 8px;
+    font-family: 'Ubuntu', Courier, monospace;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+#acceptInvite {
+    background: #27ae60;
+    color: white;
+}
+
+#acceptInvite:hover {
+    background: #219a52;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+}
+
+#rejectInvite {
+    background: #e74c3c;
+    color: white;
+}
+
+#rejectInvite:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+#invitePopup.show {
+    right: 20px;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    display: block;
+}
+
 

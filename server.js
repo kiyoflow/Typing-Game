@@ -110,6 +110,15 @@ app.get('/auth/status', (req, res) => {
     });
 });
 
+// Protected route for private match page
+app.get('/privatematch.html', (req, res) => {
+    if (req.isAuthenticated()) {
+        res.sendFile(path.join(__dirname, 'public', 'privatematch.html'));
+    } else {
+        res.redirect('/login');
+    }
+});
+
 // Proxy route for Google profile images
 app.get('/proxy-image', async (req, res) => {
     const imageUrl = req.query.url;
@@ -251,7 +260,18 @@ io.on('connection', (socket) => {
     }
 
   socket.on('invitePlayer', (data) => {
-    socket.to(data.invitee).emit('inviteReceived', data.inviter);
+    console.log('Received invite request:', data);
+    console.log('Current users:', Object.keys(users).map(id => users[id].displayName));
+    
+    for (user in users){
+      console.log(`Checking user: ${users[user].displayName} against ${data.invitee}`);
+      if (users[user].displayName === data.invitee){
+        console.log(`Found match! Sending invite to socket ${user}`);
+        io.to(user).emit('inviteReceived', data.inviter);
+        return; // Exit after finding the user
+      }
+    }
+    console.log(`User ${data.invitee} not found`);
   })
     
     // Remove the user from the player queue and users list

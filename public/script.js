@@ -550,6 +550,7 @@ socket.on('queueRejected', () => {
     alert('You are already in queue from another tab/window');
 });
 
+
 // Event listener for typing and backspace handling
 document.addEventListener('keydown', function(event) {
     if (event.key === ' ') {
@@ -852,6 +853,48 @@ window.onload = function() {
             }
         })
         .catch(err => console.error('Auth status error:', err));
+
+    // Listen for incoming invitations (works on all pages)
+    socket.on('inviteReceived', (inviterName) => {
+        console.log('Received invite from:', inviterName);
+        const popup = document.getElementById('invitePopup');
+        const header = document.getElementById('invitePopupHeader');
+        
+        console.log('Popup element:', popup);
+        console.log('Header element:', header);
+        
+        if (popup && header) {
+            header.textContent = `${inviterName} invited you to join their private room!`;
+            popup.classList.add('show');
+            console.log('Popup should now be visible');
+        } else {
+            console.log('Popup or header element not found!');
+        }
+    });
+
+    // Accept invite button (works on all pages)
+    const acceptBtn = document.getElementById('acceptInvite');
+    if (acceptBtn) {
+        acceptBtn.addEventListener('click', () => {
+            const popup = document.getElementById('invitePopup');
+            if (popup) {
+                popup.classList.remove('show');
+                alert('Invitation accepted!');
+            }
+        });
+    }
+
+    // Reject invite button (works on all pages)
+    const rejectBtn = document.getElementById('rejectInvite');
+    if (rejectBtn) {
+        rejectBtn.addEventListener('click', () => {
+            const popup = document.getElementById('invitePopup');
+            if (popup) {
+                popup.classList.remove('show');
+                alert('Invitation rejected.');
+            }
+        });
+    }
 };
 
 

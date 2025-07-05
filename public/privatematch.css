@@ -86,6 +86,73 @@ body {
     box-shadow: 0 3px 10px rgba(44, 62, 80, 0.1);
 }
 
+/* Invite section */
+.invite-section {
+    background: #ecdda5;
+    padding: 30px;
+    border-radius: 15px;
+    border: 2px solid #2c3e50;
+    box-shadow: 0 8px 25px rgba(44, 62, 80, 0.15);
+    min-width: 400px;
+    margin-bottom: 30px;
+}
+
+.invite-title {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.invite-input-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#inviteInput {
+    flex: 1;
+    background: #f0e8ca;
+    color: #2c3e50;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 2px solid #2c3e50;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(44, 62, 80, 0.1);
+}
+
+#inviteInput:focus {
+    background: #e5d590;
+    outline: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(44, 62, 80, 0.2);
+}
+
+#inviteBtn {
+    background: #f0e8ca;
+    color: #2c3e50;
+    padding: 12px 20px;
+    border: 2px solid #2c3e50;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(44, 62, 80, 0.1);
+}
+
+#inviteBtn:hover {
+    background: #e5d590;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
+}
+
 /* Room settings panel */
 #roomSettings {
     background: #ecdda5;
@@ -283,4 +350,84 @@ body {
     33% {
       opacity: 1;
     }
+  }
+
+  /* Invite Popup Styles */
+  #invitePopup {
+    position: fixed;
+    top: 20px;
+    right: -320px;
+    width: 300px;
+    background: #ecdda5;
+    border: 3px solid #2c3e50;
+    border-radius: 15px;
+    padding: 0;
+    z-index: 2000;
+    font-family: 'Ubuntu Mono', monospace;
+    box-shadow: 0 10px 30px rgba(44, 62, 80, 0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    transform: translateX(20px) scale(0.9);
+    display: none;
+  }
+
+  #invitePopup.show {
+    right: 20px;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    display: block;
+  }
+
+  #invitePopupContent {
+    padding: 20px;
+  }
+
+  #invitePopupHeader {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  #choiceButtons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  #choiceButtons button {
+    padding: 12px 20px;
+    border: 2px solid #2c3e50;
+    border-radius: 8px;
+    font-family: 'Ubuntu Mono', monospace;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+  }
+
+  #acceptInvite {
+    background: #27ae60;
+    color: white;
+  }
+
+  #acceptInvite:hover {
+    background: #219a52;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+  }
+
+  #rejectInvite {
+    background: #e74c3c;
+    color: white;
+  }
+
+  #rejectInvite:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
   }

@@ -9,7 +9,17 @@
 </head>
 <body>
 
-    <!-- From Uiverse.io by NlghtM4re - also just a placeholder for the room creation animation for now--> 
+    <div id="invitePopup">
+        <div id="invitePopupContent">
+            <div id="invitePopupHeader"></div>
+            <div id="choiceButtons">
+                <button id="acceptInvite">Accept</button>
+                <button id="rejectInvite">Reject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- From Uiverse.io by NlghtM4re - also just a placeholder for the room creation animation for now-->     
     <div class="animationContainer">
         <div class="item" style="--i:0;"></div>
         <div class="item" style="--i:1;"></div>
@@ -50,6 +60,14 @@
         
         <div id="roomId" class="room-id-display">Room ID:</div>
         
+        <div class="invite-section">
+            <div class="invite-title">INVITE PLAYER</div>
+            <div class="invite-input-container">
+                <input type="text" id="inviteInput" placeholder="Enter username..." maxlength="20">
+                <button id="inviteBtn">INVITE</button>
+            </div>
+        </div>
+        
         <div id="roomSettings">
             <div class="section-title">ROOM SETTINGS</div>
             
@@ -72,6 +90,28 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
     <script>
+        let myUsername = null;
+        
+        // Wait for the socket from script.js to be ready
+        function waitForSocket() {
+            if (typeof socket !== 'undefined' && socket.connected) {
+                console.log('Socket is ready!');
+                return true;
+            }
+            return false;
+        }
+        
+        // Get username when page loads
+        fetch('/auth/status')
+            .then(res => res.json())
+            .then(data => {
+                if (data.authenticated && data.user) {
+                    myUsername = data.user.displayName;
+                }
+            });
+
+
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Hide animation after 3 seconds with fade out
             const animationContainer = document.querySelector('.animationContainer');
@@ -83,6 +123,47 @@
                         animationContainer.style.display = 'none';
                     }, 1000); // Wait for fade transition to complete
                 }, 3000);
+            }
+        });
+
+
+        const inviteButton = document.getElementById('inviteBtn');
+        const inviteInput = document.getElementById('inviteInput');
+
+        inviteButton.addEventListener('click', () => {
+            console.log('Invite button clicked!');
+            console.log('Socket exists:', typeof socket !== 'undefined');
+            console.log('Socket connected:', socket ? socket.connected : 'socket undefined');
+            console.log('My username:', myUsername);
+            
+            const username = inviteInput.value.trim();
+            console.log('Target username:', username);
+            
+            if (username.length >= 5) {
+                if (myUsername) {
+                    if (waitForSocket()) {
+                        console.log('Sending invite data:', {
+                            inviter: myUsername,
+                            invitee: username
+                        });
+                        socket.emit('invitePlayer', {
+                            inviter: myUsername,
+                            invitee: username
+                        });
+                        alert('Invitation sent to ' + username);
+                        inviteInput.value = ''; // Clear input
+                    } else {
+                        alert('Connection not ready. Please try again.');
+                    }
+                } else {
+                    alert('Please wait, loading your profile...');
+                }
+            }
+            else if (username.length < 5 && username.length > 0) {
+                alert('Please enter a valid username (at least 5 characters)');
+            }
+            else {
+                alert('Please enter a username');
             }
         });
     </script>
