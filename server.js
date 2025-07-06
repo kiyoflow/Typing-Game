@@ -37,6 +37,16 @@ function getRandomWords(count) {
   return selectedWords;
 }
 
+function generatePrivateRoomId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let roomId = '';
+  for (let i = 0; i < 4; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length);
+    roomId += chars[randomIndex];
+  }
+  return roomId;
+}
+
 // Session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -264,19 +274,21 @@ io.on('connection', (socket) => {
     playerQueue = playerQueue.filter((id) => id !== socket.id);
   });
 
+  socket.on('createPrivateRoom', () => {
+    const privateRoomId = generatePrivateRoomId();
+    socket.emit('privateRoomCreated', privateRoomId);
+  });
+
   socket.on('invitePlayer', (data) => {
-    console.log('Received invite request:', data);
-    console.log('Current users:', Object.keys(users).map(id => users[id].displayName));
-    
     for (user in users){
-      console.log(`Checking user: ${users[user].displayName} against ${data.invitee}`);
       if (users[user].displayName === data.invitee){
-        console.log(`Found match! Sending invite to socket ${user}`);
         io.to(user).emit('inviteReceived', data.inviter);
-        return; // Exit after finding the user
       }
     }
-    console.log(`User ${data.invitee} not found`);
+  });
+
+  socket.on('acceptInvite', () => {
+
   });
 });
 

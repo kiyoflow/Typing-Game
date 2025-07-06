@@ -533,7 +533,12 @@ pvpButton.addEventListener('click', function() {
 const animationContainer = document.getElementById('animationContainer');
 
 privateMatchButton.addEventListener('click', function() {
-    window.location.href = '/privatematch.html';
+    console.log('Private match button clicked!');
+    socket.emit('createPrivateRoom');
+});
+
+socket.on('privateRoomCreated', (roomId) => {
+    window.location.href = `/privatematch.html?room=${roomId}`;
 });
 
 // Add handler for when queue is rejected due to already being in queue
@@ -860,13 +865,10 @@ window.onload = function() {
         const popup = document.getElementById('invitePopup');
         const header = document.getElementById('invitePopupHeader');
         
-        console.log('Popup element:', popup);
-        console.log('Header element:', header);
         
         if (popup && header) {
             header.textContent = `${inviterName} invited you to join their private room!`;
             popup.classList.add('show');
-            console.log('Popup should now be visible');
         } else {
             console.log('Popup or header element not found!');
         }
@@ -879,7 +881,7 @@ window.onload = function() {
             const popup = document.getElementById('invitePopup');
             if (popup) {
                 popup.classList.remove('show');
-                alert('Invitation accepted!');
+                socket.emit('acceptInvite');
             }
         });
     }
@@ -891,7 +893,7 @@ window.onload = function() {
             const popup = document.getElementById('invitePopup');
             if (popup) {
                 popup.classList.remove('show');
-                alert('Invitation rejected.');
+                socket.emit('rejectInvite');
             }
         });
     }

@@ -92,14 +92,7 @@
     <script>
         let myUsername = null;
         
-        // Wait for the socket from script.js to be ready
-        function waitForSocket() {
-            if (typeof socket !== 'undefined' && socket.connected) {
-                console.log('Socket is ready!');
-                return true;
-            }
-            return false;
-        }
+
         
         // Get username when page loads
         fetch('/auth/status')
@@ -110,7 +103,14 @@
                 }
             });
 
+        
 
+        // Check URL for room ID and display it
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('room');
+        if (roomId) {
+            document.getElementById('roomId').textContent = 'Room ID: ' + roomId;
+        }
         
         document.addEventListener('DOMContentLoaded', function() {
             // Hide animation after 3 seconds with fade out
@@ -131,37 +131,21 @@
         const inviteInput = document.getElementById('inviteInput');
 
         inviteButton.addEventListener('click', () => {
-            console.log('Invite button clicked!');
-            console.log('Socket exists:', typeof socket !== 'undefined');
-            console.log('Socket connected:', socket ? socket.connected : 'socket undefined');
-            console.log('My username:', myUsername);
-            
             const username = inviteInput.value.trim();
-            console.log('Target username:', username);
             
-            if (username.length >= 5) {
-                if (myUsername) {
-                    if (waitForSocket()) {
-                        console.log('Sending invite data:', {
-                            inviter: myUsername,
-                            invitee: username
-                        });
-                        socket.emit('invitePlayer', {
-                            inviter: myUsername,
-                            invitee: username
-                        });
-                        alert('Invitation sent to ' + username);
-                        inviteInput.value = ''; // Clear input
-                    } else {
-                        alert('Connection not ready. Please try again.');
-                    }
-                } else {
-                    alert('Please wait, loading your profile...');
-                }
+            if (username.length >= 5 && myUsername) {
+                socket.emit('invitePlayer', {
+                    inviter: myUsername,
+                    invitee: username
+                });
+                alert('Invitation sent to ' + username);
+                inviteInput.value = '';
             }
+
             else if (username.length < 5 && username.length > 0) {
                 alert('Please enter a valid username (at least 5 characters)');
             }
+
             else {
                 alert('Please enter a username');
             }
