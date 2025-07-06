@@ -258,6 +258,11 @@ io.on('connection', (socket) => {
         delete matches[roomId];
       }
     }
+    
+    // Remove the user from the player queue and users list
+    delete users[socket.id];
+    playerQueue = playerQueue.filter((id) => id !== socket.id);
+  });
 
   socket.on('invitePlayer', (data) => {
     console.log('Received invite request:', data);
@@ -272,11 +277,6 @@ io.on('connection', (socket) => {
       }
     }
     console.log(`User ${data.invitee} not found`);
-  })
-    
-    // Remove the user from the player queue and users list
-    delete users[socket.id];
-    playerQueue = playerQueue.filter((id) => id !== socket.id);
   });
 });
 
