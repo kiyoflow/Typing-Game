@@ -45,47 +45,66 @@
         <div class="loading-text">Creating room<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>
     </div>
 
+    <div id="privateMatch">
+        <div id="playerContainer">
+            <div id="playerTypingContainer">
 
-    <button id="exitBtn" class="exit-btn">EXIT</button>
+            </div>
     
-    <div id="left-sidebar">
-        <div class="players-header">PLAYERS ()</div>
-        <div id="playerList">
+            <div id="playerKeyboard">
+    
+            </div>
+        </div>
+
+        <div id="progressLeaderboard">
+            <h2 id="title">LEADERBOARD</h2>
+            <h3 id="players"></h3> <!-- as in like every player's progress-->
+        </div>
+    </div>
+    
+    <div id="privateRoom">
+        <button id="exitBtn" class="exit-btn">EXIT</button>
+    
+        <div id="left-sidebar">
+            <div class="players-header">PLAYERS ()</div>
+            <div id="playerList">
+                </div>
+            </div>
+        </div>
+        
+        <div class="center-content">
+            <div class="room-title">PRIVATE ROOM</div>
+            
+            <div id="roomId" class="room-id-display">Room ID:</div>
+            
+            <div class="invite-section">
+                <div class="invite-title">INVITE PLAYER</div>
+                <div class="invite-input-container">
+                    <input type="text" id="inviteInput" placeholder="Enter username..." maxlength="20">
+                    <button id="inviteBtn">INVITE</button>
+                </div>
+            </div>
+            
+            <div id="roomSettings">
+                <div class="section-title">ROOM SETTINGS</div>
+                
+                <div class="setting-row">
+                    <div class="setting-label">Word Count</div>
+                    <select class="wordcount-select">
+                        <option value="10">10 Words</option>
+                        <option value="25" selected>25 Words</option>
+                        <option value="50">50 Words</option>
+                        <option value="100">100 Words</option>
+                    </select>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="startBtn" class = 'btn'>START MATCH</button>
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="center-content">
-        <div class="room-title">PRIVATE ROOM</div>
-        
-        <div id="roomId" class="room-id-display">Room ID:</div>
-        
-        <div class="invite-section">
-            <div class="invite-title">INVITE PLAYER</div>
-            <div class="invite-input-container">
-                <input type="text" id="inviteInput" placeholder="Enter username..." maxlength="20">
-                <button id="inviteBtn">INVITE</button>
-            </div>
-        </div>
-        
-        <div id="roomSettings">
-            <div class="section-title">ROOM SETTINGS</div>
-            
-            <div class="setting-row">
-                <div class="setting-label">Word Count</div>
-                <select class="wordcount-select">
-                    <option value="10">10 Words</option>
-                    <option value="25" selected>25 Words</option>
-                    <option value="50">50 Words</option>
-                    <option value="100">100 Words</option>
-                </select>
-            </div>
-            
-            <div class="action-buttons">
-                <button id="startBtn" class = 'btn'>START MATCH</button>
-            </div>
-        </div>
-    </div>
     
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
@@ -168,6 +187,23 @@
                 alert('Please enter a username');
             }
         });
+
+        const startBtn = document.getElementById('startBtn');
+        startBtn.addEventListener('click', () => {
+            // Get current player count
+            const playerItems = document.querySelectorAll('.player-item');
+            const playerCount = playerItems.length;
+            
+            if (playerCount < 2) {
+                alert('You must have at least 2 players to start the match');
+            }
+
+            else {
+                document.getElementById('privateRoom').style.display = 'none';
+                document.getElementById('privateMatch').classList.add('active');
+            }
+
+        })
 
         // Handle player list updates
         socket.on('playerJoined', (data) => {

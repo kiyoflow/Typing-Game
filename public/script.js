@@ -555,7 +555,6 @@ socket.on('queueRejected', () => {
     alert('You are already in queue from another tab/window');
 });
 
-
 // Event listener for typing and backspace handling
 document.addEventListener('keydown', function(event) {
     if (event.key === ' ') {
@@ -901,4 +900,3 @@ window.onload = function() {
 };
 
 
-    
