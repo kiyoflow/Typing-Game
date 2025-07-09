@@ -100,6 +100,14 @@
             .then(data => {
                 if (data.authenticated && data.user) {
                     myUsername = data.user.displayName;
+                    
+                    // Request room data when page loads
+                    if (roomId) {
+                        socket.emit('joinPrivateRoom', {
+                            privateRoomId: roomId,
+                            playerName: myUsername
+                        });
+                    }
                 }
             });
 
@@ -108,21 +116,30 @@
         // Check URL for room ID and display it
         const urlParams = new URLSearchParams(window.location.search);
         const roomId = urlParams.get('room');
+        const isRedirected = urlParams.get('redirected') === 'true';
+        
         if (roomId) {
             document.getElementById('roomId').textContent = 'Room ID: ' + roomId;
+            // Request current players in room
+            socket.emit('getRoomPlayers', roomId);
         }
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Hide animation after 3 seconds with fade out
             const animationContainer = document.querySelector('.animationContainer');
             
             if (animationContainer) {
-                setTimeout(() => {
-                    animationContainer.classList.add('fade-out');
+                if (isRedirected) {
+                    // Skip animation if redirected from accepting invite
+                    animationContainer.style.display = 'none';
+                } else {
+                    // Hide animation after 3 seconds with fade out (for room creators)
                     setTimeout(() => {
-                        animationContainer.style.display = 'none';
-                    }, 1000); // Wait for fade transition to complete
-                }, 3000);
+                        animationContainer.classList.add('fade-out');
+                        setTimeout(() => {
+                            animationContainer.style.display = 'none';
+                        }, 1000); // Wait for fade transition to complete
+                    }, 3000);
+                }
             }
         });
 
@@ -135,6 +152,7 @@
             
             if (username.length >= 5 && myUsername) {
                 socket.emit('invitePlayer', {
+                    privateRoomId: roomId,
                     inviter: myUsername,
                     invitee: username
                 });
@@ -150,6 +168,39 @@
                 alert('Please enter a username');
             }
         });
+
+        // Handle player list updates
+        socket.on('playerJoined', (data) => {
+            updatePlayersList(data.players, data.playerCount);
+        });
+
+        function updatePlayersList(players, playerCount) {
+            const playerList = document.getElementById('playerList');
+            const playersHeader = document.querySelector('.players-header');
+            
+            // Update header with player count
+            if (playersHeader) {
+                playersHeader.textContent = `PLAYERS (${playerCount})`;
+            }
+            
+            // Clear current list
+            if (playerList) {
+                playerList.innerHTML = '';
+                
+                // Add each player
+                players.forEach(playerName => {
+                    const playerItem = document.createElement('div');
+                    playerItem.className = 'player-item';
+                    
+                    const playerNameDiv = document.createElement('div');
+                    playerNameDiv.className = 'player-name';
+                    playerNameDiv.textContent = playerName;
+                    
+                    playerItem.appendChild(playerNameDiv);
+                    playerList.appendChild(playerItem);
+                });
+            }
+        }
     </script>
 </body>
 </html>

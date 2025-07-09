@@ -537,8 +537,8 @@ privateMatchButton.addEventListener('click', function() {
     socket.emit('createPrivateRoom');
 });
 
-socket.on('privateRoomCreated', (roomId) => {
-    window.location.href = `/privatematch.html?room=${roomId}`;
+socket.on('privateRoomCreated', (privateRoomId) => {
+    window.location.href = `/privatematch.html?room=${privateRoomId}`;
 });
 
 // Add handler for when queue is rejected due to already being in queue
@@ -860,43 +860,45 @@ window.onload = function() {
         .catch(err => console.error('Auth status error:', err));
 
     // Listen for incoming invitations (works on all pages)
-    socket.on('inviteReceived', (inviterName) => {
-        console.log('Received invite from:', inviterName);
+    socket.on('inviteReceived', (data) => {
+        console.log('Received invite from:', data.inviter);
         const popup = document.getElementById('invitePopup');
         const header = document.getElementById('invitePopupHeader');
-        
+        const acceptBtn = document.getElementById('acceptInvite');
+        const rejectBtn = document.getElementById('rejectInvite');
         
         if (popup && header) {
-            header.textContent = `${inviterName} invited you to join their private room!`;
+            header.textContent = `${data.inviter} invited you to join their private room!`;
             popup.classList.add('show');
         } else {
             console.log('Popup or header element not found!');
         }
+
+        if (acceptBtn) {
+            acceptBtn.onclick = () => {
+                if (popup) {
+                    popup.classList.remove('show');
+                    socket.emit('acceptInvite', {privateRoomId: data.privateRoomId});
+                }
+            }
+        }
+
+        if (rejectBtn) {
+            rejectBtn.onclick = () => {
+                if (popup) {
+                    popup.classList.remove('show');
+                    socket.emit('rejectInvite', {privateRoomId: data.privateRoomId});
+                }
+            }
+        }
     });
 
-    // Accept invite button (works on all pages)
-    const acceptBtn = document.getElementById('acceptInvite');
-    if (acceptBtn) {
-        acceptBtn.addEventListener('click', () => {
-            const popup = document.getElementById('invitePopup');
-            if (popup) {
-                popup.classList.remove('show');
-                socket.emit('acceptInvite');
-            }
-        });
-    }
-
-    // Reject invite button (works on all pages)
-    const rejectBtn = document.getElementById('rejectInvite');
-    if (rejectBtn) {
-        rejectBtn.addEventListener('click', () => {
-            const popup = document.getElementById('invitePopup');
-            if (popup) {
-                popup.classList.remove('show');
-                socket.emit('rejectInvite');
-            }
-        });
-    }
+    // Handle redirect to private room after accepting invite
+    socket.on('redirectToRoom', (roomId) => {
+        window.location.href = `/privatematch.html?room=${roomId}&redirected=true`;
+                
+    });
 };
 
 
+    

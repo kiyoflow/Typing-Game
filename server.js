@@ -154,6 +154,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 let playerQueue = [];
 let users = {};
 let matches = {}; // Track active matches and their rooms
+let privateRooms = {};
 
 io.on('connection', (socket) => {
   socket.on('userData', (userData) => {
@@ -274,23 +275,72 @@ io.on('connection', (socket) => {
     playerQueue = playerQueue.filter((id) => id !== socket.id);
   });
 
-  socket.on('createPrivateRoom', () => {
+    socket.on('createPrivateRoom', () => {
     const privateRoomId = generatePrivateRoomId();
+    privateRooms[privateRoomId] = {
+      creator: socket.user.displayName,
+      createdAt: new Date(),
+      players: [socket.user.displayName]
+    };
+    
+    // Join the creator to the room
+    socket.join(privateRoomId);
+    
     socket.emit('privateRoomCreated', privateRoomId);
   });
 
   socket.on('invitePlayer', (data) => {
     for (user in users){
       if (users[user].displayName === data.invitee){
-        io.to(user).emit('inviteReceived', data.inviter);
+        io.to(user).emit('inviteReceived', {
+          inviter: data.inviter, 
+          privateRoomId: data.privateRoomId
+        });
       }
     }
   });
 
-  socket.on('acceptInvite', () => {
+  socket.on('acceptInvite', (data) => {
+    const privateRoomId = data.privateRoomId;
+    const roomInfo = privateRooms[privateRoomId];
 
+    if (roomInfo && socket.user) {
+      // Add player to room players array
+      if (!roomInfo.players.includes(socket.user.displayName)) {
+        roomInfo.players.push(socket.user.displayName);
+      }
+
+      // Join the invited player to the room
+      socket.join(privateRoomId);
+      
+      // Send redirect to the accepting player
+      socket.emit('redirectToRoom', privateRoomId);
+
+      // Update all players in the room
+      io.to(privateRoomId).emit('playerJoined', {
+        players: roomInfo.players,
+        playerCount: roomInfo.players.length
+      });
+    }
+  });
+
+  socket.on('rejectInvite', (data) => {
+    const privateRoomId = data.privateRoomId;
+    console.log(`Invite rejected for room ${privateRoomId}`);
+  });
+
+  socket.on('getRoomPlayers', (roomId) => {
+    const room = privateRooms[roomId];
+    if (room) {
+      socket.emit('playerJoined', {
+        players: room.players,
+        playerCount: room.players.length
+      });
+    }
   });
 });
+
+  
 
 
 server.listen(PORT, () => {
