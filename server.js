@@ -332,6 +332,9 @@ io.on('connection', (socket) => {
   socket.on('getRoomPlayers', (roomId) => {
     const room = privateRooms[roomId];
     if (room) {
+      // Join the socket to the room so they receive future updates
+      socket.join(roomId);
+      
       socket.emit('playerJoined', {
         players: room.players,
         playerCount: room.players.length
