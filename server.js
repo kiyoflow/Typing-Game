@@ -200,7 +200,7 @@ io.on('connection', (socket) => {
       const roomId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       // Generate random words for this match
-      const matchWords = getRandomWords(25); // Generate 50 random words for the match
+      const matchWords = getRandomWords(25); // Generate 25 random words for the match
       
       // Store match information
       matches[roomId] = {
@@ -269,6 +269,10 @@ io.on('connection', (socket) => {
         delete matches[roomId];
       }
     }
+    
+    // Don't remove players from private rooms on disconnect
+    // They stay in the room until they explicitly leave via EXIT button
+    // This prevents rooms from being deleted during page navigation
     
     // Remove the user from the player queue and users list
     delete users[socket.id];
@@ -341,7 +345,62 @@ io.on('connection', (socket) => {
       });
     }
   });
+
+  socket.on('leavePrivateRoom', (data) => {
+    const privateRoomId = data.privateRoomId;
+    const username = data.username || (socket.user ? socket.user.displayName : socket.id);
+    const room = privateRooms[privateRoomId];
+    
+    if (room && room.players.includes(username)) {
+      // Remove player from room
+      room.players = room.players.filter(player => player !== username);
+      
+      // Leave the socket room
+      socket.leave(privateRoomId);
+      
+      console.log(`${username} left private room ${privateRoomId}`);
+      
+      // If room is empty, delete it
+      if (room.players.length === 0) {
+        delete privateRooms[privateRoomId];
+        console.log(`Private room ${privateRoomId} deleted (empty)`);
+      } else {
+        // Notify remaining players
+        io.to(privateRoomId).emit('playerLeft', {
+          username: username,
+          players: room.players,
+          playerCount: room.players.length
+        });
+      }
+    }
+  });
+
+  socket.on('privateMatchStarted', (data) => {
+    const privateRoomId = data.privateRoomId;
+    const wordCount = data.wordCount || 25; // Default to 25 if not specified
+    
+    if (privateRoomId) {
+      const matchWords = getRandomWords(wordCount);
+      
+      // Store room ID in all sockets in this room for typing progress
+      const socketsInRoom = io.sockets.adapter.rooms.get(privateRoomId);
+      if (socketsInRoom) {
+        socketsInRoom.forEach(socketId => {
+          const socket = io.sockets.sockets.get(socketId);
+          if (socket) {
+            socket.roomId = privateRoomId;
+          }
+        });
+      }
+      
+      io.to(privateRoomId).emit('privateMatchStarted', {words: matchWords});
+    }
+  });
+
+
 });
+
+
 
   
 

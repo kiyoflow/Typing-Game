@@ -51,9 +51,8 @@
 
             </div>
     
-            <div id="playerKeyboard">
+            <keyboard-component></keyboard-component>
     
-            </div>
         </div>
 
         <div id="progressLeaderboard">
@@ -108,9 +107,10 @@
     
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
+    <script src="keyboardComponent.js"></script>
+    <!-- <script src="debug_private_match.js"></script> -->
     <script>
         let myUsername = null;
-        
 
         
         // Get username when page loads
@@ -137,7 +137,25 @@
         const roomId = urlParams.get('room');
         const isRedirected = urlParams.get('redirected') === 'true';
         
-        if (roomId) {
+        // Check if page was refreshed
+        const isRefresh = performance.navigation.type === 1; // 1 means reload
+        
+        if (isRefresh && roomId) {
+            // If refreshed, leave the room and redirect to menu
+            fetch('/auth/status')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.authenticated && data.user) {
+                        socket.emit('leavePrivateRoom', { 
+                            privateRoomId: roomId, 
+                            username: data.user.displayName 
+                        });
+                    }
+                });
+            alert('You have been removed from the room because you refreshed the page.');
+            window.location.href = '/';
+
+        } else if (roomId) {
             document.getElementById('roomId').textContent = 'Room ID: ' + roomId;
             // Request current players in room
             socket.emit('getRoomPlayers', roomId);
@@ -199,8 +217,13 @@
             }
 
             else {
-                document.getElementById('privateRoom').style.display = 'none';
-                document.getElementById('privateMatch').classList.add('active');
+                // Get selected word count
+                const selectedWordCount = document.querySelector('.wordcount-select').value;
+                
+                socket.emit('privateMatchStarted', { 
+                    privateRoomId: roomId,
+                    wordCount: selectedWordCount 
+                });
             }
 
         })
@@ -208,6 +231,43 @@
         // Handle player list updates
         socket.on('playerJoined', (data) => {
             updatePlayersList(data.players, data.playerCount);
+        });
+
+        // Handle player leaving
+        socket.on('playerLeft', (data) => {
+            updatePlayersList(data.players, data.playerCount);
+            
+            // Show notification if someone leaves during a match
+            const privateMatch = document.getElementById('privateMatch');
+            if (privateMatch.classList.contains('active')) {
+                alert(`${data.username} left the match!`);
+            }
+        });
+
+        socket.on('privateMatchStarted', (data) => {
+            document.getElementById('privateRoom').style.display = 'none';
+            document.getElementById('privateMatch').classList.add('active');
+            document.getElementById('progressLeaderboard').style.display = 'block';
+            
+            // Initialize typing session with the server-generated words
+            resetTypingVariables();
+            displayRandomWords(data.words);
+            
+            // Show keyboard (wait for component to load)
+            setTimeout(() => {
+                const keyboard = document.getElementById('keyboard');
+                if (keyboard) {
+                    keyboard.style.display = 'block';
+                }
+            }, 100);
+        });
+
+        // Handle EXIT button
+        document.getElementById('exitBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to leave the room?')) {
+                socket.emit('leavePrivateRoom', { privateRoomId: roomId });
+                window.location.href = '/';
+            }
         });
 
         function updatePlayersList(players, playerCount) {

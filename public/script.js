@@ -482,6 +482,7 @@ socket.on('matchFound', (data) => {
     }
 });
 
+// Move these to be available for the event listeners above
 const pvpButton = document.getElementById('pvp');
 const privateMatchButton = document.getElementById('privateMatch');
 const queueMenu = document.getElementById('queueMenu');
@@ -506,7 +507,8 @@ const queueClickHandler = function() {
     }
 }
 
-pvpButton.addEventListener('click', function() {
+if (pvpButton) {
+    pvpButton.addEventListener('click', function() {
     const menu = document.getElementById('menu');
     menuContent.style.opacity = '0';
     menuContent.style.transform = 'scale(0.8)';
@@ -528,14 +530,17 @@ pvpButton.addEventListener('click', function() {
             queueButton.addEventListener('click', queueClickHandler);
         }
     }, 300);
-});
+    });
+}
 
 const animationContainer = document.getElementById('animationContainer');
 
-privateMatchButton.addEventListener('click', function() {
-    console.log('Private match button clicked!');
-    socket.emit('createPrivateRoom');
-});
+if (privateMatchButton) {
+    privateMatchButton.addEventListener('click', function() {
+        console.log('Private match button clicked!');
+        socket.emit('createPrivateRoom');
+    });
+}
 
 socket.on('privateRoomCreated', (privateRoomId) => {
     window.location.href = `/privatematch.html?room=${privateRoomId}`;
@@ -557,6 +562,7 @@ socket.on('queueRejected', () => {
 
 // Event listener for typing and backspace handling
 document.addEventListener('keydown', function(event) {
+    
     if (event.key === ' ') {
         event.preventDefault(); // Prevent space bar from scrolling
     }
@@ -642,14 +648,14 @@ document.addEventListener('keydown', function(event) {
         const cursorRect = cursor.getBoundingClientRect();
 
         // Check if the cursor is below the visible area of the container
-        if (cursorRect.bottom + 40 > containerRect.bottom) {
-            // Scroll down to bring the cursor into view
-            activeContainer.scrollTop += cursorRect.bottom + 40 - containerRect.bottom + 20;
+        if (cursorRect.bottom + 80 > containerRect.bottom) {
+            // Scroll down to bring the cursor into view (smaller scroll amount)
+            activeContainer.scrollTop += 20; // Smaller scroll increment
         }
         // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
-        else if (cursorRect.top < containerRect.top + 20) {
-            // Scroll up to bring the cursor into view
-            activeContainer.scrollTop -= containerRect.top + 20 - cursorRect.top + 20;
+        else if (cursorRect.top < containerRect.top + 80) {
+            // Scroll up to bring the cursor into view (smaller scroll amount)
+            activeContainer.scrollTop -= 20; // Smaller scroll increment
         }
     }
 });
@@ -719,7 +725,10 @@ function colorKey(color, keyId) {
     // Determine which keyboard to target based on current mode
     const activeContainer = getActiveTypingContainer();
     const playerContainer = document.getElementById('player-typing-container');
+    const privateContainer = document.getElementById('playerTypingContainer');
+    
     const isPvPMode = playerContainer && activeContainer === playerContainer;
+    const isPrivateMode = privateContainer && activeContainer === privateContainer;
     
     // Special handling for spacebar
     if (keyId === ' ') {
@@ -761,18 +770,26 @@ function colorKey(color, keyId) {
 
 // Helper function to get the active typing container
 function getActiveTypingContainer() {
+    // Check for private match mode first
+    const privateMatch = document.getElementById('privateMatch');
+    if (privateMatch && privateMatch.classList.contains('active')) {
+        return document.getElementById('playerTypingContainer');
+    }
+    
+    // Check for PVP match mode
     const match = document.getElementById('match');
     if (match && match.style.display === 'block') {
         return document.getElementById('player-typing-container');
-    } else {
-        return document.getElementById('typing-container');
-    }
+    } 
+    
+    // Default to practice mode
+    return document.getElementById('typing-container');
 }
 
 
 // Prevent manual scrolling on typing containers
 function preventManualScrolling() {
-    const containers = ['typing-container', 'player-typing-container', 'opp-typing-container'];
+    const containers = ['typing-container', 'player-typing-container', 'opp-typing-container', 'playerTypingContainer'];
     
     containers.forEach(containerId => {
         const container = document.getElementById(containerId);
@@ -797,8 +814,10 @@ window.onload = function() {
     // Prevent manual scrolling
     preventManualScrolling();
 
-    // Practice mode button handler
-    document.querySelector('#practice').addEventListener('click', function() {
+    // Practice mode button handler (only exists on index.html)
+    const practiceButton = document.querySelector('#practice');
+    if (practiceButton) {
+        practiceButton.addEventListener('click', function() {
         const menu = document.getElementById('menu');
         const wordSettings = document.getElementById('word-settings');
         const typingContainer = document.getElementById('typing-container');
@@ -823,10 +842,13 @@ window.onload = function() {
         // Initialize the typing session
         resetTypingVariables();
         displayRandomWords(getPracticeWords(25));
-    });
+        });
+    }
     
-    // Set up word count selection listeners after DOM is loaded
-    document.querySelectorAll('.word-count').forEach(element => {
+    // Set up word count selection listeners after DOM is loaded (only exists on index.html)
+    const wordCountElements = document.querySelectorAll('.word-count');
+    if (wordCountElements.length > 0) {
+        wordCountElements.forEach(element => {
         element.addEventListener('click', function() {
             currentWordCount = parseInt(this.dataset.count);
             const resultsScreen = document.getElementById('results-screen');
@@ -841,8 +863,9 @@ window.onload = function() {
             // Reset and start new session
             resetTypingVariables();
             displayRandomWords(getPracticeWords(currentWordCount));
+            });
         });
-    });
+    }
     
     // Send userData immediately
     fetch('/auth/status')

@@ -475,16 +475,58 @@ body {
     line-height: 1.8;
     margin-bottom: 10px;
     flex-shrink: 0;
+    text-align: left;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
-#playerKeyboard {
-    max-height: 150px;
-    overflow: hidden;
-    transform: scale(0.7);
-    flex-shrink: 0;
+#playerTypingContainer::-webkit-scrollbar {
+    display: none;
 }
+
+#playerTypingContainer .word {
+    display: inline-flex;
+    margin: 0 0.4em 0.2em 0;
+    white-space: nowrap;
+    align-items: baseline;
+    height: 36px;
+}
+
+#playerTypingContainer .char {
+    display: inline-block;
+    position: relative;
+}
+
+#playerTypingContainer .cursor {
+    animation: blink 1s infinite;
+    background-color: #2c3e50;
+    width: 2px;
+    height: 1.2em;
+    display: inline-block;
+    position: relative;
+}
+
+#playerTypingContainer .matched {
+    background-color: rgba(76, 175, 80, 0.3);
+    color: #4CAF50;
+}
+
+#playerTypingContainer .unmatched {
+    background-color: rgba(244, 67, 54, 0.3);
+    color: #F44336;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+
 
 #progressLeaderboard {
+    display: none;
     width: 300px;
     background: #ecdda5;
     border-left: 3px solid #2c3e50;
@@ -505,4 +547,49 @@ body {
 #progressLeaderboard #players {
     color: #2c3e50;
     font-size: 1rem;
+}
+
+/* Keyboard Styles */
+.pvp-keyboard {
+    transform: scale(1.0);
+    position: static;
+    margin-top: 15px;
+    width: auto;
+    padding: 15px;
+    background-color: rgba(236, 221, 165, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(44, 62, 80, 0.1);
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-bottom: 5px;
+    gap: 5px;
+}
+
+.key {
+    padding: 10px 15px;
+    border: 2px solid #2c3e50;
+    border-radius: 8px;
+    background-color: #ecdeaa;
+    color: #000000;
+    font-size: 16px;
+    font-family: 'Ubuntu Mono', Courier, monospace;
+    font-weight: bold;
+    transition: transform 0.2s ease;
+    cursor: pointer;
+    min-width: 35px;
+    text-align: center;
+}
+
+.key:hover {
+    background-color: #e5d590;
+    transform: translateY(-2px);
+}
+
+#space {
+    min-width: 200px;
 }
