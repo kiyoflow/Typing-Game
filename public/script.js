@@ -642,6 +642,16 @@ document.addEventListener('keydown', function(event) {
         });
     }
 
+    // Send current typing progress to server (only in private match mode)
+    const privateContainer = document.getElementById('playerTypingContainer');
+    if (privateContainer && activeContainer === privateContainer) {
+        socket.emit('privateMatchProgress', {
+            progress: correctChars,
+            totalChars: keysPressed,
+            finished: false
+        });
+    }
+
     // Scroll handling: Keep the cursor visible
     if (cursor) {
         const containerRect = activeContainer.getBoundingClientRect();
@@ -919,6 +929,10 @@ window.onload = function() {
     socket.on('redirectToRoom', (roomId) => {
         window.location.href = `/privatematch.html?room=${roomId}&redirected=true`;
                 
+    });
+
+    socket.on('leaderboardUpdate', (data) => {
+        return;
     });
 };
 

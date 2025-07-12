@@ -250,6 +250,40 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('privateMatchProgress', (data) => {
+    const privateRoomId = socket.roomId;
+    const room = privateRooms[privateRoomId];
+    const username = socket.user.displayName;
+    
+    if (room && room.matchData && room.matchData.playerStats[username]) {
+      // Calculate elapsed time since match started
+      const elapsed = new Date() - room.matchData.startTime;
+      const elapsedMinutes = elapsed / 60000;
+      
+      // Calculate WPM and accuracy
+      const wordsTyped = data.progress / 5; // Standard: 5 chars = 1 word
+      const wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
+      const accuracy = data.totalChars > 0 ? Math.round((data.progress / data.totalChars) * 100) : 0;
+      
+      // Update player stats
+      room.matchData.playerStats[username] = {
+        progress: data.progress,
+        totalChars: data.totalChars,
+        wpm: wpm,
+        accuracy: accuracy,
+        finished: data.finished,
+        finishTime: data.finished ? new Date() : null,
+        finalWpm: data.finished ? wpm : 0,
+        finalAccuracy: data.finished ? accuracy : 0
+      };
+      
+      // Send updated leaderboard to everyone in the room
+      io.to(privateRoomId).emit('leaderboardUpdate', {
+        playerStats: room.matchData.playerStats
+      });
+    }
+  });
+
   socket.on('disconnect', () => {
     const username = socket.user ? socket.user.displayName : socket.id;
     console.log('A user disconnected:', username);
@@ -333,11 +367,11 @@ io.on('connection', (socket) => {
     console.log(`Invite rejected for room ${privateRoomId}`);
   });
 
-  socket.on('getRoomPlayers', (roomId) => {
-    const room = privateRooms[roomId];
+  socket.on('getRoomPlayers', (privateRoomId) => {
+    const room = privateRooms[privateRoomId];
     if (room) {
       // Join the socket to the room so they receive future updates
-      socket.join(roomId);
+      socket.join(privateRoomId);
       
       socket.emit('playerJoined', {
         players: room.players,
@@ -377,10 +411,34 @@ io.on('connection', (socket) => {
 
   socket.on('privateMatchStarted', (data) => {
     const privateRoomId = data.privateRoomId;
-    const wordCount = data.wordCount || 25; // Default to 25 if not specified
+    const wordCount = data.wordCount || 25;
     
     if (privateRoomId) {
+      const privateRoom = privateRooms[privateRoomId];
       const matchWords = getRandomWords(wordCount);
+      
+      // Initialize match data when the match STARTS (not when room is created)
+      privateRoom.matchData = {
+        totalWords: wordCount,
+        startTime: new Date(),  // ✅ Set when START button is pressed!
+        playerStats: {}
+      };
+      
+      // Add all players in the room to playerStats
+      privateRoom.players.forEach(username => {
+        privateRoom.matchData.playerStats[username] = {
+          progress: 0,           // Characters typed correctly
+          totalChars: 0,         // Total characters attempted
+          wpm: 0,                // Current WPM
+          accuracy: 0,           // Current accuracy %
+          finished: false,       // Has completed the race
+          finishTime: null,      // When they finished
+          finalWpm: 0,           // Final WPM
+          finalAccuracy: 0       // Final accuracy
+        };
+      });
+      
+      console.log(`Match started for room ${privateRoomId} with players:`, Object.keys(privateRoom.matchData.playerStats));
       
       // Store room ID in all sockets in this room for typing progress
       const socketsInRoom = io.sockets.adapter.rooms.get(privateRoomId);

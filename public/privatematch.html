@@ -121,9 +121,9 @@
                     myUsername = data.user.displayName;
                     
                     // Request room data when page loads
-                    if (roomId) {
+                    if (privateRoomId) {
                         socket.emit('joinPrivateRoom', {
-                            privateRoomId: roomId,
+                            privateRoomId: privateRoomId,
                             playerName: myUsername
                         });
                     }
@@ -134,20 +134,20 @@
 
         // Check URL for room ID and display it
         const urlParams = new URLSearchParams(window.location.search);
-        const roomId = urlParams.get('room');
+        const privateRoomId = urlParams.get('room');
         const isRedirected = urlParams.get('redirected') === 'true';
         
         // Check if page was refreshed
         const isRefresh = performance.navigation.type === 1; // 1 means reload
         
-        if (isRefresh && roomId) {
+        if (isRefresh && privateRoomId) {
             // If refreshed, leave the room and redirect to menu
             fetch('/auth/status')
                 .then(res => res.json())
                 .then(data => {
                     if (data.authenticated && data.user) {
                         socket.emit('leavePrivateRoom', { 
-                            privateRoomId: roomId, 
+                            privateRoomId: privateRoomId, 
                             username: data.user.displayName 
                         });
                     }
@@ -155,10 +155,10 @@
             alert('You have been removed from the room because you refreshed the page.');
             window.location.href = '/';
 
-        } else if (roomId) {
-            document.getElementById('roomId').textContent = 'Room ID: ' + roomId;
+        } else if (privateRoomId) {
+            document.getElementById('roomId').textContent = 'Room ID: ' + privateRoomId;
             // Request current players in room
-            socket.emit('getRoomPlayers', roomId);
+            socket.emit('getRoomPlayers', privateRoomId);
         }
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -189,7 +189,7 @@
             
             if (username.length >= 5 && myUsername) {
                 socket.emit('invitePlayer', {
-                    privateRoomId: roomId,
+                    privateRoomId: privateRoomId,
                     inviter: myUsername,
                     invitee: username
                 });
@@ -221,7 +221,7 @@
                 const selectedWordCount = document.querySelector('.wordcount-select').value;
                 
                 socket.emit('privateMatchStarted', { 
-                    privateRoomId: roomId,
+                    privateRoomId: privateRoomId,
                     wordCount: selectedWordCount 
                 });
             }
@@ -265,7 +265,7 @@
         // Handle EXIT button
         document.getElementById('exitBtn').addEventListener('click', () => {
             if (confirm('Are you sure you want to leave the room?')) {
-                socket.emit('leavePrivateRoom', { privateRoomId: roomId });
+                socket.emit('leavePrivateRoom', { privateRoomId: privateRoomId });
                 window.location.href = '/';
             }
         });
