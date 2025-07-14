@@ -549,6 +549,71 @@ body {
     font-size: 1rem;
 }
 
+.player-entry {
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+}
+
+.player-row {
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ranking-up {
+    background-color: rgba(76, 175, 80, 0.2);
+    border-left: 3px solid #4CAF50;
+    animation: rankUpGlow 0.6s ease-out;
+}
+
+.ranking-down {
+    background-color: rgba(244, 67, 54, 0.2);
+    border-left: 3px solid #F44336;
+    animation: rankDownGlow 0.6s ease-out;
+}
+
+@keyframes rankUpGlow {
+    0% { 
+        transform: translateX(-5px);
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+    }
+    50% { 
+        transform: translateX(0px);
+        box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+    }
+    100% { 
+        transform: translateX(0px);
+        box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+    }
+}
+
+@keyframes rankDownGlow {
+    0% { 
+        transform: translateX(5px);
+        box-shadow: 0 0 15px rgba(244, 67, 54, 0.6);
+    }
+    50% { 
+        transform: translateX(0px);
+        box-shadow: 0 0 20px rgba(244, 67, 54, 0.8);
+    }
+    100% { 
+        transform: translateX(0px);
+        box-shadow: 0 0 5px rgba(244, 67, 54, 0.3);
+    }
+}
+
+.player-name {
+    font-weight: bold;
+}
+
+.playerStats {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
 /* Keyboard Styles */
 .pvp-keyboard {
     transform: scale(1.0);

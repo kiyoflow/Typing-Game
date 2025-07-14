@@ -46,6 +46,8 @@
     </div>
 
     <div id="privateMatch">
+        <countdown-component id="private-countdown"></countdown-component>
+        
         <div id="playerContainer">
             <div id="playerTypingContainer">
 
@@ -108,6 +110,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
     <script src="keyboardComponent.js"></script>
+    <script src="countdownComponent.js"></script>
     <!-- <script src="debug_private_match.js"></script> -->
     <script>
         let myUsername = null;
@@ -249,17 +252,21 @@
             document.getElementById('privateMatch').classList.add('active');
             document.getElementById('progressLeaderboard').style.display = 'block';
             
-            // Initialize typing session with the server-generated words
-            resetTypingVariables();
-            displayRandomWords(data.words);
-            
-            // Show keyboard (wait for component to load)
-            setTimeout(() => {
-                const keyboard = document.getElementById('keyboard');
-                if (keyboard) {
-                    keyboard.style.display = 'block';
-                }
-            }, 100);
+            // Start countdown using the countdown component
+            const countdown = document.getElementById('private-countdown');
+            countdown.start(() => {
+                // Initialize typing session with the server-generated words
+                resetTypingVariables();
+                displayRandomWords(data.words);
+                
+                // Show keyboard (wait for component to load)
+                setTimeout(() => {
+                    const keyboard = document.getElementById('keyboard');
+                    if (keyboard) {
+                        keyboard.style.display = 'block';
+                    }
+                }, 100);
+            });
         });
 
         // Handle EXIT button

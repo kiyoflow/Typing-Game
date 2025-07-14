@@ -218,36 +218,8 @@ function hideAllOverlays() {
 }
 
 function showCountdown(callback) {
-    const countdownOverlay = document.getElementById('countdown-overlay');
-    const countdownText = document.getElementById('countdown-text');
-    
-    // Reset countdown overlay state
-    countdownOverlay.classList.remove('fade-out');
-    countdownOverlay.style.opacity = '1';
-    
-    // Show countdown overlay
-    countdownOverlay.style.display = 'flex';
-    
-    let count = 3;
-    countdownText.textContent = count;
-    
-    const countdownInterval = setInterval(() => {
-        count--;
-        if (count > 0) {
-            countdownText.textContent = count;
-        } else {
-            countdownText.textContent = 'GO!';
-            setTimeout(() => {
-                countdownOverlay.classList.add('fade-out');
-                // Hide countdown and start game
-                setTimeout(() => {
-                    countdownOverlay.style.display = 'none';
-                    callback(); // Start the game
-                }, 500);
-            }, 500);
-            clearInterval(countdownInterval);
-        }
-    }, 1000);
+    const countdownComponent = document.querySelector('countdown-component');
+    countdownComponent.start(callback);
 }
 
 
@@ -563,7 +535,8 @@ socket.on('queueRejected', () => {
 // Event listener for typing and backspace handling
 document.addEventListener('keydown', function(event) {
     
-    if (event.key === ' ') {
+    // Allow space key to work in input fields
+    if (event.key === ' ' && event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
         event.preventDefault(); // Prevent space bar from scrolling
     }
     
@@ -796,6 +769,62 @@ function getActiveTypingContainer() {
     return document.getElementById('typing-container');
 }
 
+// Store previous rankings for animation
+let previousRankings = {};
+
+function updateLeaderboard(playerStats) {
+    const leaderboard = document.getElementById('players');
+    const playerList = Object.entries(playerStats);
+
+    const sortedPlayers = playerList.sort((playerA, playerB) => {
+        if (playerA[1].wpm === playerB[1].wpm) {
+            return playerA[1].accuracy - playerB[1].accuracy;
+        }
+
+        else {
+            return playerB[1].wpm - playerA[1].wpm;
+        }
+    });
+
+    // Clear existing leaderboard
+    leaderboard.innerHTML = '';
+
+    sortedPlayers.forEach((player, index) => {
+        const playerName = player[0];
+        const currentRanking = index + 1;
+        const playerWpm = player[1].wpm;
+        const playerAccuracy = player[1].accuracy;
+        const previousRanking = previousRankings[playerName] || currentRanking;
+
+        const playerElement = document.createElement('div');
+        playerElement.id = `${playerName}`;
+        playerElement.className = 'player-entry';
+
+        // Determine ranking change animation
+        let rankingChangeClass = '';
+        let rankingIndicator = '';
+        
+        if (previousRanking > currentRanking) {
+            rankingChangeClass = 'ranking-up';
+            rankingIndicator = ' ↑';
+        } else if (previousRanking < currentRanking) {
+            rankingChangeClass = 'ranking-down';
+            rankingIndicator = ' ↓';
+        }
+
+        playerElement.innerHTML = `
+            <div class="player-row ${rankingChangeClass}">
+                <div class="player-name">#${currentRanking} ${playerName}${rankingIndicator}</div>
+                <div class="playerStats">${playerWpm} WPM | ${playerAccuracy}%</div>
+            </div>
+        `;
+
+        leaderboard.appendChild(playerElement);
+
+        // Store current ranking for next update
+        previousRankings[playerName] = currentRanking;
+    });
+}
 
 // Prevent manual scrolling on typing containers
 function preventManualScrolling() {
@@ -932,7 +961,7 @@ window.onload = function() {
     });
 
     socket.on('leaderboardUpdate', (data) => {
-        return;
+        updateLeaderboard(data.playerStats);
     });
 };
 

@@ -451,7 +451,7 @@ io.on('connection', (socket) => {
         });
       }
       
-      io.to(privateRoomId).emit('privateMatchStarted', {words: matchWords});
+      io.to(privateRoomId).emit('privateMatchStarted', {words: matchWords, players: privateRoom.players});
     }
   });
 
