@@ -38,8 +38,8 @@ class Keyboard extends HTMLElement {
                 </div>
                 <div class="row">
                     <div class="key" id="space">Space</div>
-                </div>
-            </div>`
+            </div>
+        </div>`
     }
 }
 

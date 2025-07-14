@@ -37,12 +37,7 @@
     <div id="match">
         <countdown-component></countdown-component>
 
-        <div id="finish-animation" class="match-overlay">
-            <div class="finish-container">
-                <div id="finish-text" class="finish-text">RACE FINISHED!</div>
-                <div id="winner-text" class="winner-text">Well done!</div>
-            </div>
-        </div>
+        <finish-animation id="finish-animation-component"></finish-animation>
 
         <div id="pvp-results" class="match-overlay">
             <h2>Results</h2>
@@ -109,6 +104,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="words.js"></script>
+    <script src="finishAnimationComponent.js"></script>
     <script src="script.js"></script>
     <script src="keyboardComponent.js"></script>
     <script src="countdownComponent.js"></script>

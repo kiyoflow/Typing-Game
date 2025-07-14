@@ -11,19 +11,22 @@ function menu(){
     const practiceButton = document.getElementById('practice');
     const privateMatchButton = document.getElementById('privateMatch')
     
-    menu.style.display = 'block';
-    menuContent.style.display = 'flex';
-    menuContent.style.opacity = '1';
-    menuContent.style.transform = 'scale(1)';
-    pvpButton.style.display = 'block';
-    practiceButton.style.display = 'block';
-    privateMatchButton.style.display = 'block';
-    app.style.display = 'none';
-    match.style.display = 'none';
-    wordSettings.style.display = 'none';
-    typingContainer.style.display = 'none';
-    keyboard.style.display = 'none';
-    resultsScreen.style.display = 'none';
+    // All these elements should exist on index.html - if they don't, something's wrong
+    if (menu) menu.style.display = 'block';
+    if (menuContent) {
+        menuContent.style.display = 'flex';
+        menuContent.style.opacity = '1';
+        menuContent.style.transform = 'scale(1)';
+    }
+    if (pvpButton) pvpButton.style.display = 'block';
+    if (practiceButton) practiceButton.style.display = 'block';
+    if (privateMatchButton) privateMatchButton.style.display = 'block';
+    if (app) app.style.display = 'none';
+    if (match) match.style.display = 'none';
+    if (wordSettings) wordSettings.style.display = 'none';
+    if (typingContainer) typingContainer.style.display = 'none';
+    if (keyboard) keyboard.style.display = 'none';
+    if (resultsScreen) resultsScreen.style.display = 'none';
 }
 
 // Function to get random words for practice mode only
@@ -52,6 +55,7 @@ let totalChars = 0;
 let testComplete = false; // Flag to track if the test is complete
 let pvpRaceComplete = false; // Flag to track if the PvP race is complete
 let currentWordCount = 25;
+let privateMatchProgressInterval = null; // Timer for sending progress updates
 
 // Function to display words in the typing container
 function displayRandomWords(words) {
@@ -98,6 +102,35 @@ function resetTypingVariables() {
     totalChars = 0;
     testComplete = false; // Reset the test complete flag
     pvpRaceComplete = false; // Reset the PvP race complete flag
+    
+    // Clear any existing progress interval
+    if (privateMatchProgressInterval) {
+        clearInterval(privateMatchProgressInterval);
+        privateMatchProgressInterval = null;
+    }
+}
+
+// Function to start sending progress updates every second for private matches
+function startPrivateMatchProgressTimer() {
+    // Only start if we're in a private match and don't already have a timer
+    const privateMatch = document.getElementById('privateMatch');
+    if (!privateMatch || !privateMatch.classList.contains('active') || privateMatchProgressInterval) {
+        return;
+    }
+    
+    privateMatchProgressInterval = setInterval(() => {
+        const activeContainer = getActiveTypingContainer();
+        const privateContainer = document.getElementById('playerTypingContainer');
+        
+        // Only send if we're in private match mode and have started typing
+        if (privateContainer && activeContainer === privateContainer && startTime) {
+            socket.emit('privateMatchProgress', {
+                progress: correctChars,
+                totalChars: keysPressed,
+                finished: false
+            });
+        }
+    }, 1000); // Send every second
 }
 
 // end of test function (Practice Mode Only)
@@ -121,6 +154,12 @@ function endTest(){
     
     // Set the test complete flag to prevent further key presses
     testComplete = true;
+    
+    // Clear progress timer if running
+    if (privateMatchProgressInterval) {
+        clearInterval(privateMatchProgressInterval);
+        privateMatchProgressInterval = null;
+    }
 
     // Show practice results overlay
     showPracticeResultsOverlay();
@@ -167,6 +206,12 @@ function handlePlayerFinish() {
 
     // Set the PvP race complete flag to prevent further key presses
     pvpRaceComplete = true;
+    
+    // Clear progress timer if running
+    if (privateMatchProgressInterval) {
+        clearInterval(privateMatchProgressInterval);
+        privateMatchProgressInterval = null;
+    }
 
     // Clean up PvP socket events
     socket.off('typingProgressReceived');
@@ -226,30 +271,19 @@ function showCountdown(callback) {
 
 
 function finishAnimation(isWinner = false, opponentName = 'Opponent'){
-    const finishOverlay = document.getElementById('finish-animation');
-    const finishText = document.getElementById('finish-text');
-    const winnerText = document.getElementById('winner-text');
+    const finishComponent = document.getElementById('finish-animation-component');
     
-    if (!finishOverlay || !finishText || !winnerText) {
-        console.log('Animation elements not found');
+    if (!finishComponent) {
+        console.log('Finish animation component not found');
         return;
     }
     
-    // Update text content based on who won
-    finishText.textContent = 'RACE FINISHED!';
-    if (isWinner) {
-        winnerText.textContent = '🏆 YOU WON! 🏆';
-    } else {
-        winnerText.textContent = `${opponentName} Won!`;
-    }
-    
-    // Show the overlay
-    finishOverlay.style.display = 'flex';
-    
-    // Hide after 4 seconds
-    setTimeout(() => {
-        finishOverlay.style.display = 'none';
-    }, 4000);
+    // Use the web component's show method
+    finishComponent.show({
+        isWinner: isWinner,
+        opponentName: opponentName,
+        duration: 4000
+    });
 }
 
 function backToMenu() {
@@ -349,12 +383,12 @@ function setupPvPSocketEvents() {
                 // Check if the cursor is below the visible area of the container
                 if (oppCursorRect.bottom + 40 > containerRect.bottom) {
                     // Scroll down to bring the cursor into view
-                    oppContainer.scrollTop += oppCursorRect.bottom + 40 - containerRect.bottom + 10;
+                    oppContainer.scrollTop += 20;
                 }
                 // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
-                else if (oppCursorRect.top < containerRect.top + 10) {
+                else if (oppCursorRect.top < containerRect.top + 40) {
                     // Scroll up to bring the cursor into view
-                    oppContainer.scrollTop -= containerRect.top + 10 - oppCursorRect.top + 10;
+                    oppContainer.scrollTop -= 20;
                 }
             }
         }
@@ -480,7 +514,7 @@ const queueClickHandler = function() {
 }
 
 if (pvpButton) {
-    pvpButton.addEventListener('click', function() {
+pvpButton.addEventListener('click', function() {
     const menu = document.getElementById('menu');
     menuContent.style.opacity = '0';
     menuContent.style.transform = 'scale(0.8)';
@@ -502,16 +536,16 @@ if (pvpButton) {
             queueButton.addEventListener('click', queueClickHandler);
         }
     }, 300);
-    });
+});
 }
 
 const animationContainer = document.getElementById('animationContainer');
 
 if (privateMatchButton) {
-    privateMatchButton.addEventListener('click', function() {
-        console.log('Private match button clicked!');
-        socket.emit('createPrivateRoom');
-    });
+privateMatchButton.addEventListener('click', function() {
+    console.log('Private match button clicked!');
+    socket.emit('createPrivateRoom');
+});
 }
 
 socket.on('privateRoomCreated', (privateRoomId) => {
@@ -540,7 +574,7 @@ document.addEventListener('keydown', function(event) {
         event.preventDefault(); // Prevent space bar from scrolling
     }
     
-    if (testComplete || pvpRaceComplete) {
+    if (testComplete || pvpRaceComplete || window.countdownActive) {
         event.preventDefault();
         return;
     }
@@ -615,15 +649,8 @@ document.addEventListener('keydown', function(event) {
         });
     }
 
-    // Send current typing progress to server (only in private match mode)
-    const privateContainer = document.getElementById('playerTypingContainer');
-    if (privateContainer && activeContainer === privateContainer) {
-        socket.emit('privateMatchProgress', {
-            progress: correctChars,
-            totalChars: keysPressed,
-            finished: false
-        });
-    }
+    // Progress updates for private matches are now handled by the timer function
+    // No need to send on every keypress since we send every second
 
     // Scroll handling: Keep the cursor visible
     if (cursor) {
@@ -631,12 +658,13 @@ document.addEventListener('keydown', function(event) {
         const cursorRect = cursor.getBoundingClientRect();
 
         // Check if the cursor is below the visible area of the container
-        if (cursorRect.bottom + 80 > containerRect.bottom) {
+        const buffer = activeContainer.id === 'player-typing-container' ? 40 : 80;
+        if (cursorRect.bottom + buffer > containerRect.bottom) {
             // Scroll down to bring the cursor into view (smaller scroll amount)
             activeContainer.scrollTop += 20; // Smaller scroll increment
         }
         // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
-        else if (cursorRect.top < containerRect.top + 80) {
+        else if (cursorRect.top < containerRect.top + buffer) {
             // Scroll up to bring the cursor into view (smaller scroll amount)
             activeContainer.scrollTop -= 20; // Smaller scroll increment
         }
@@ -766,14 +794,20 @@ function getActiveTypingContainer() {
     } 
     
     // Default to practice mode
-    return document.getElementById('typing-container');
-}
+        return document.getElementById('typing-container');
+    }
 
 // Store previous rankings for animation
 let previousRankings = {};
 
 function updateLeaderboard(playerStats) {
     const leaderboard = document.getElementById('players');
+    
+    // Safety check - only update leaderboard if element exists (privatematch.html only)
+    if (!leaderboard) {
+        return;
+    }
+    
     const playerList = Object.entries(playerStats);
 
     const sortedPlayers = playerList.sort((playerA, playerB) => {
@@ -848,7 +882,10 @@ function preventManualScrolling() {
 
 // Initialize game and set up word count selection
 window.onload = function() {
-    menu();
+    // Only call menu() on index.html (check if menu element exists)
+    if (document.getElementById('menu')) {
+        menu();
+    }
     
     // Prevent manual scrolling
     preventManualScrolling();
@@ -881,7 +918,7 @@ window.onload = function() {
         // Initialize the typing session
         resetTypingVariables();
         displayRandomWords(getPracticeWords(25));
-        });
+    });
     }
     
     // Set up word count selection listeners after DOM is loaded (only exists on index.html)
@@ -902,8 +939,8 @@ window.onload = function() {
             // Reset and start new session
             resetTypingVariables();
             displayRandomWords(getPracticeWords(currentWordCount));
-            });
         });
+    });
     }
     
     // Send userData immediately

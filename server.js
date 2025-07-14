@@ -263,7 +263,8 @@ io.on('connection', (socket) => {
       // Calculate WPM and accuracy
       const wordsTyped = data.progress / 5; // Standard: 5 chars = 1 word
       const wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
-      const accuracy = data.totalChars > 0 ? Math.round((data.progress / data.totalChars) * 100) : 0;
+      // Fix accuracy calculation to match client-side calculation
+      const accuracy = data.totalChars > 1 ? Math.min(Math.round((data.progress / (data.totalChars - 1)) * 100), 100) : 0;
       
       // Update player stats
       room.matchData.playerStats[username] = {
@@ -416,7 +417,7 @@ io.on('connection', (socket) => {
     if (privateRoomId) {
       const privateRoom = privateRooms[privateRoomId];
       const matchWords = getRandomWords(wordCount);
-      
+
       // Initialize match data when the match STARTS (not when room is created)
       privateRoom.matchData = {
         totalWords: wordCount,

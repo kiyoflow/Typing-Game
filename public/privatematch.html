@@ -59,7 +59,9 @@
 
         <div id="progressLeaderboard">
             <h2 id="title">LEADERBOARD</h2>
-            <h3 id="players"></h3> <!-- as in like every player's progress-->
+            <div id="players">
+                
+            </div><!-- as in like every player's progress-->
         </div>
     </div>
     
@@ -252,20 +254,38 @@
             document.getElementById('privateMatch').classList.add('active');
             document.getElementById('progressLeaderboard').style.display = 'block';
             
+            // Initialize and show everything immediately (but disable typing)
+            resetTypingVariables();
+            displayRandomWords(data.words);
+            
+            // Show keyboard immediately but disable it
+            setTimeout(() => {
+                const keyboard = document.getElementById('keyboard');
+                if (keyboard) {
+                    keyboard.style.display = 'block';
+                    keyboard.style.pointerEvents = 'none'; // Disable keyboard interactions
+                    keyboard.style.opacity = '0.6'; // Visual indication it's disabled
+                }
+            }, 100);
+            
+            // Disable typing during countdown
+            window.countdownActive = true;
+            
             // Start countdown using the countdown component
             const countdown = document.getElementById('private-countdown');
             countdown.start(() => {
-                // Initialize typing session with the server-generated words
-                resetTypingVariables();
-                displayRandomWords(data.words);
+                // Re-enable typing after countdown
+                window.countdownActive = false;
                 
-                // Show keyboard (wait for component to load)
-                setTimeout(() => {
-                    const keyboard = document.getElementById('keyboard');
-                    if (keyboard) {
-                        keyboard.style.display = 'block';
-                    }
-                }, 100);
+                // Re-enable keyboard
+                const keyboard = document.getElementById('keyboard');
+                if (keyboard) {
+                    keyboard.style.pointerEvents = 'auto';
+                    keyboard.style.opacity = '1';
+                }
+                
+                // Start the progress timer for real-time leaderboard updates
+                startPrivateMatchProgressTimer();
             });
         });
 
