@@ -453,6 +453,11 @@ io.on('connection', (socket) => {
       }
       
       io.to(privateRoomId).emit('privateMatchStarted', {words: matchWords, players: privateRoom.players});
+      
+      // Send initial leaderboard with all players at 0 WPM/accuracy
+      io.to(privateRoomId).emit('leaderboardUpdate', {
+        playerStats: privateRoom.matchData.playerStats
+      });
     }
   });
 

@@ -47,6 +47,7 @@
 
     <div id="privateMatch">
         <countdown-component id="private-countdown"></countdown-component>
+        <match-timer-component></match-timer-component>
         
         <div id="playerContainer">
             <div id="playerTypingContainer">
@@ -113,6 +114,7 @@
     <script src="script.js"></script>
     <script src="keyboardComponent.js"></script>
     <script src="countdownComponent.js"></script>
+    <script src="matchTimer.js"></script>
     <!-- <script src="debug_private_match.js"></script> -->
     <script>
         let myUsername = null;
@@ -286,6 +288,12 @@
                 
                 // Start the progress timer for real-time leaderboard updates
                 startPrivateMatchProgressTimer();
+                
+                // Start the 2-minute match timer
+                const timer = document.querySelector('match-timer-component');
+                if (timer) {
+                    timer.startTimer();
+                }
             });
         });
 

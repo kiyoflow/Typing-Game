@@ -234,14 +234,22 @@ function handlePlayerFinish() {
 function calculateStats(){
     const endTime = new Date();
 
-    typingTime = endTime - startTime;
+    // Use match time for PvP, personal time for practice
+    typingTime = getMatchElapsedTime() || (endTime - startTime);
     typingSpeed = Math.floor((correctWords / typingTime) * 60000);
     accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);
     accuracy = Math.min(accuracy, 100); // Cap accuracy at 100%
 
-    // Update the typing speed and accuracy in the PvP results overlay
-    document.getElementById('typingSpeed').textContent = `Words Per Minute: ${typingSpeed}`;
-    document.getElementById('accuracy').textContent = `Accuracy: ${accuracy}%`;
+    // Update the typing speed and accuracy in the PvP results overlay (only if elements exist)
+    const typingSpeedElement = document.getElementById('typingSpeed');
+    const accuracyElement = document.getElementById('accuracy');
+    
+    if (typingSpeedElement) {
+        typingSpeedElement.textContent = `Words Per Minute: ${typingSpeed}`;
+    }
+    if (accuracyElement) {
+        accuracyElement.textContent = `Accuracy: ${accuracy}%`;
+    }
 
 }
 
@@ -541,7 +549,8 @@ pvpButton.addEventListener('click', function() {
 
 const animationContainer = document.getElementById('animationContainer');
 
-if (privateMatchButton) {
+// Only attach event listener if it's actually a button (on index.html, not privatematch.html)
+if (privateMatchButton && privateMatchButton.tagName === 'BUTTON') {
 privateMatchButton.addEventListener('click', function() {
     console.log('Private match button clicked!');
     socket.emit('createPrivateRoom');
@@ -812,7 +821,7 @@ function updateLeaderboard(playerStats) {
 
     const sortedPlayers = playerList.sort((playerA, playerB) => {
         if (playerA[1].wpm === playerB[1].wpm) {
-            return playerA[1].accuracy - playerB[1].accuracy;
+            return playerB[1].accuracy - playerA[1].accuracy;
         }
 
         else {
