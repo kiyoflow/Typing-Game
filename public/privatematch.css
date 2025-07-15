@@ -488,7 +488,6 @@ body {
 
 #playerTypingContainer .word {
     display: inline-flex;
-    margin: 0 0.4em 0.2em 0;
     white-space: nowrap;
     align-items: baseline;
     height: 36px;
@@ -547,6 +546,18 @@ body {
 #progressLeaderboard #players {
     color: #2c3e50;
     font-size: 1rem;
+}
+
+#finalLeaderboard {
+    display: none;
+    width: 300px;
+    background: #ecdda5;
+    border-left: 3px solid #2c3e50;
+    padding: 20px;
+    overflow-y: auto;
+    height: 100vh;
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .player-entry {

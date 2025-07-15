@@ -114,9 +114,6 @@ class MatchTimerComponent extends HTMLElement {
             privateMatchProgressInterval = null;
         }
         
-        // Calculate stats for everyone who didn't finish
-        calculateStats();
-        
         // Send final progress for private match
         socket.emit('privateMatchProgress', {
             progress: correctChars,
@@ -130,21 +127,9 @@ class MatchTimerComponent extends HTMLElement {
             timeUpDiv.style.display = 'block';
             setTimeout(() => {
                 timeUpDiv.style.display = 'none';
-                this.showFinalRankings();
+                // The server will emit matchEnded event when all players finish
+                // No need to call showFinalLeaderboard here
             }, 3000);
-        }
-    }
-
-    showFinalRankings() {
-        // Calculate final stats for everyone
-        calculateStats();
-        
-        // Show results
-        const resultsDiv = this.querySelector('#final-results');
-        if (resultsDiv) {
-            resultsDiv.style.display = 'block';
-            // Update with final rankings
-            console.log('Final rankings time!');
         }
     }
 

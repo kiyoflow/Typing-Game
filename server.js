@@ -256,27 +256,51 @@ io.on('connection', (socket) => {
     const username = socket.user.displayName;
     
     if (room && room.matchData && room.matchData.playerStats[username]) {
-      // Calculate elapsed time since match started
-      const elapsed = new Date() - room.matchData.startTime;
-      const elapsedMinutes = elapsed / 60000;
+      const currentStats = room.matchData.playerStats[username];
       
-      // Calculate WPM and accuracy
-      const wordsTyped = data.progress / 5; // Standard: 5 chars = 1 word
-      const wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
-      // Fix accuracy calculation to match client-side calculation
-      const accuracy = data.totalChars > 1 ? Math.min(Math.round((data.progress / (data.totalChars - 1)) * 100), 100) : 0;
+      // If player is already finished, don't recalculate WPM (it would go down as time increases)
+      if (currentStats.finished) {
+        // Only update progress if they're still typing (shouldn't happen but just in case)
+        room.matchData.playerStats[username] = {
+          ...currentStats,
+          progress: data.progress,
+          totalChars: data.totalChars
+        };
+      } else {
+        // Calculate elapsed time since match started
+        const elapsed = new Date() - room.matchData.startTime;
+        const elapsedMinutes = elapsed / 60000;
+        
+        // Calculate WPM and accuracy
+        const wordsTyped = data.progress / 5; // Standard: 5 chars = 1 word
+        const wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
+        // Fix accuracy calculation to match client-side calculation
+        const accuracy = data.totalChars > 1 ? Math.min(Math.round((data.progress / (data.totalChars - 1)) * 100), 100) : 0;
+        
+        // Update player stats
+        room.matchData.playerStats[username] = {
+          progress: data.progress,
+          totalChars: data.totalChars,
+          wpm: wpm,
+          accuracy: accuracy,
+          finished: data.finished,
+          finishTime: data.finished ? new Date() : null,
+          finalWpm: data.finished ? wpm : 0,
+          finalAccuracy: data.finished ? accuracy : 0
+        };
+      }
       
-      // Update player stats
-      room.matchData.playerStats[username] = {
-        progress: data.progress,
-        totalChars: data.totalChars,
-        wpm: wpm,
-        accuracy: accuracy,
-        finished: data.finished,
-        finishTime: data.finished ? new Date() : null,
-        finalWpm: data.finished ? wpm : 0,
-        finalAccuracy: data.finished ? accuracy : 0
-      };
+      // Check if all players have finished
+      const allPlayers = Object.keys(room.matchData.playerStats);
+      const finishedPlayers = allPlayers.filter(player => room.matchData.playerStats[player].finished);
+      
+      // If all players have finished, emit matchEnded event
+      if (finishedPlayers.length === allPlayers.length && allPlayers.length > 0) {
+        console.log(`All players finished in room ${privateRoomId}. Emitting matchEnded event.`);
+        io.to(privateRoomId).emit('privateMatchEnded', {
+          finalRankings: room.matchData.playerStats
+        });
+      }
       
       // Send updated leaderboard to everyone in the room
       io.to(privateRoomId).emit('leaderboardUpdate', {

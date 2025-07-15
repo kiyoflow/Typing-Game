@@ -72,7 +72,7 @@ function displayRandomWords(words) {
             i++;
         });
         if (index < randomWords.length - 1) {
-            wrappedText2 += `<span id="char-${i}" class="char space"> </span>`;
+            wrappedText2 += `<span id="char-${i}" class="char space">&nbsp;</span>`;
             i++;
         } else {
             wrappedText2 += `<span id="char-${i}" class="char"></span>`;
@@ -122,7 +122,7 @@ function startPrivateMatchProgressTimer() {
         const activeContainer = getActiveTypingContainer();
         const privateContainer = document.getElementById('playerTypingContainer');
         
-        // Only send if we're in private match mode and have started typing
+        // Only send if we're in private match mode and match has started
         if (privateContainer && activeContainer === privateContainer && startTime) {
             socket.emit('privateMatchProgress', {
                 progress: correctChars,
@@ -169,13 +169,15 @@ function showPracticeResultsOverlay() {
     // Update practice results in the overlay
     const wpmElement = document.getElementById('practice-wpm');
     const accuracyElement = document.getElementById('practice-accuracy');
+    const practiceResults = document.getElementById('practice-results');
     
     if (wpmElement) wpmElement.textContent = typingSpeed;
     if (accuracyElement) accuracyElement.textContent = accuracy + '%';
     
-    // Show practice results overlay
-    const practiceResults = document.getElementById('practice-results');
-    practiceResults.style.display = 'flex';
+    // Show practice results overlay (only if element exists)
+    if (practiceResults) {
+        practiceResults.style.display = 'flex';
+    }
 }
 
 //Prac Mode Only
@@ -628,15 +630,29 @@ document.addEventListener('keydown', function(event) {
     const currentSpan = activeContainer.querySelector(`#char-${keysPressed}`);
     if (!currentSpan) return;
     
-    const currentLetter = currentSpan.textContent;
+    let currentLetter = currentSpan.textContent;
+    if (currentLetter.charCodeAt(0) === 160) { // 160 is the char code for &nbsp;
+        currentLetter = ' ';
+    }
+    
+    // Debug logging for spaces
+    if (event.key === ' ' || currentLetter === ' ') {
+        console.log('Space detected:', {
+            eventKey: `"${event.key}"`,
+            currentLetter: `"${currentLetter}"`,
+            eventKeyLength: event.key.length,
+            currentLetterLength: currentLetter.length,
+            isMatch: event.key === currentLetter
+        });
+    }
     
     if (event.key === currentLetter) {
         currentSpan.classList.add("matched");
-        colorKey('green', event.key);
+        colorKey('#4CAF50', event.key);
         correctChars++; // Increment correctChars for accurate typing
     } else {
         currentSpan.classList.add("unmatched");
-        colorKey('red', event.key);
+        colorKey('#F44336', event.key);
     }
 
     keysPressed++;
@@ -727,12 +743,22 @@ document.addEventListener('keyup', function(event) {
         });
         
         if (lastWordMatched && lastWordChars.length > 0) {
-            // Check if we're in PvP mode
+            // Check if we're in PvP mode or private match mode
             const playerContainer = document.getElementById('player-typing-container');
+            const privateContainer = document.getElementById('playerTypingContainer');
             const isPvPMode = playerContainer && activeContainer === playerContainer;
+            const isPrivateMode = privateContainer && activeContainer === privateContainer;
             
             if (isPvPMode) {
                 handlePlayerFinish();
+            } else if (isPrivateMode) {
+                // For private matches, send finished signal and let the timer handle completion
+                socket.emit('privateMatchProgress', {
+                    progress: correctChars,
+                    totalChars: keysPressed,
+                    finished: true
+                });
+                // Don't call endTest() - the timer will handle it
             } else {
                 endTest();
             }
@@ -750,7 +776,9 @@ function colorKey(color, keyId) {
     const isPvPMode = playerContainer && activeContainer === playerContainer;
     const isPrivateMode = privateContainer && activeContainer === privateContainer;
     
-    // Special handling for spacebar
+
+    
+    // Special handling for spacebar keyboard key
     if (keyId === ' ') {
         if (isPvPMode) {
             const playerSpacebar = document.querySelector('#player-keyboard #space');
@@ -766,13 +794,13 @@ function colorKey(color, keyId) {
         return;
     }
     
-    // Only handle letter keys (A-Z)
+    // Only handle letter keys (A-Z) for keyboard
     const upperKey = keyId.toUpperCase();
     if (!/^[A-Z]$/.test(upperKey)) {
         return; // Skip special characters and numbers
     }
     
-    // Handle regular keys
+    // Handle regular keyboard keys
     if (isPvPMode) {
         const playerKey = document.querySelector(`#player-keyboard #${upperKey}`);
         if (playerKey) {
@@ -867,6 +895,119 @@ function updateLeaderboard(playerStats) {
         // Store current ranking for next update
         previousRankings[playerName] = currentRanking;
     });
+}
+
+function cleanupPrivateMatchListeners() {
+    // Clear progress timer
+    if (privateMatchProgressInterval) {
+        clearInterval(privateMatchProgressInterval);
+        privateMatchProgressInterval = null;
+    }
+    
+    // Stop the match timer if it's running
+    const timer = document.querySelector('match-timer-component');
+    if (timer && timer.matchTimer) {
+        clearInterval(timer.matchTimer);
+    }
+    
+    // Clean up socket listeners that are specific to private matches
+    socket.off('privateMatchEnded');
+    socket.off('privateMatchStarted');
+    socket.off('leaderboardUpdate');
+    socket.off('playerJoined');
+    socket.off('playerLeft');
+    
+    // Reset typing state
+    testComplete = true;
+    pvpRaceComplete = true;
+    
+    // Reset keyboard colors
+    document.querySelectorAll('.key').forEach(key => {
+        key.style.backgroundColor = '#ecdeaa';
+    });
+    
+    console.log('Private match listeners cleaned up');
+}
+
+function showFinalLeaderboard(playerStats) {
+    // Clean up private match listeners and state
+    cleanupPrivateMatchListeners();
+    finalLeaderboardOverlay.style.display = 'block';
+    
+    // Create a full-screen overlay for final results
+    const finalLeaderboardOverlay = document.createElement('div');
+    finalLeaderboardOverlay.id = 'final-results-overlay';
+
+    // Create the results container
+    const resultsContainer = document.createElement('div');
+    resultsContainer.className = 'final-results-container';
+
+    // Create title
+    const title = document.createElement('h1');
+    title.textContent = '🏆 FINAL RESULTS 🏆';
+    title.className = 'final-results-title';
+
+    // Create rankings container
+    const rankingsContainer = document.createElement('div');
+    rankingsContainer.id = 'final-rankings';
+
+    // Sort players by WPM (highest first)
+    const sortedPlayers = Object.entries(playerStats).sort((a, b) => {
+        if (b[1].finalWpm === a[1].finalWpm) {
+            return b[1].finalAccuracy - a[1].finalAccuracy;
+        }
+        else {
+            return b[1].finalWpm - a[1].finalWpm;
+        }
+    });
+
+    // Create player rank cards
+    sortedPlayers.forEach((player, index) => {
+        const [playerName, stats] = player;
+        const rank = index + 1;
+        
+        const playerCard = document.createElement('div');
+        playerCard.className = `player-rank-card rank-${rank <= 3 ? rank : 'other'}`;
+        playerCard.style.animationDelay = `${index * 0.2}s`;
+
+        const rankText = document.createElement('div');
+        rankText.textContent = `#${rank}`;
+        rankText.className = 'player-rank-number';
+
+        const playerInfo = document.createElement('div');
+        playerInfo.className = 'player-info';
+
+        const playerNameDiv = document.createElement('div');
+        playerNameDiv.textContent = playerName;
+        playerNameDiv.className = 'player-name-final';
+
+        const playerStatsDiv = document.createElement('div');
+        playerStatsDiv.textContent = `${stats.finalWpm} WPM | ${stats.finalAccuracy}% Accuracy`;
+        playerStatsDiv.className = 'player-stats-final';
+
+        playerInfo.appendChild(playerNameDiv);
+        playerInfo.appendChild(playerStatsDiv);
+        playerCard.appendChild(rankText);
+        playerCard.appendChild(playerInfo);
+        rankingsContainer.appendChild(playerCard);
+    });
+
+    // Create back to menu button
+    const backButton = document.createElement('button');
+    backButton.textContent = 'Back to Menu';
+    backButton.className = 'final-back-button';
+
+    backButton.addEventListener('click', () => {
+        // Just redirect to menu (cleanup already done)
+        window.location.href = '/';
+    });
+
+    // Assemble the overlay
+    resultsContainer.appendChild(title);
+    resultsContainer.appendChild(rankingsContainer);
+    resultsContainer.appendChild(backButton);
+    finalLeaderboardOverlay.appendChild(resultsContainer);
+    document.body.appendChild(finalLeaderboardOverlay);
 }
 
 // Prevent manual scrolling on typing containers
