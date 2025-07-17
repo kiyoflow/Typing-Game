@@ -235,9 +235,22 @@ function handlePlayerFinish() {
 
 function calculateStats(){
     const endTime = new Date();
+    const privateMatch = document.getElementById('privateMatch');
+    const isPrivateMode = privateMatch && privateMatch.classList.contains('active');
 
-    // Use match time for PvP, personal time for practice
-    typingTime = getMatchElapsedTime() || (endTime - startTime);
+    // For private matches, use the shared match timer. For other modes, use personal start/end time.
+    if (isPrivateMode) {
+        // This code only runs on privatematch.html, where the function is guaranteed to exist.
+        typingTime = getMatchElapsedTime();
+    } else {
+        typingTime = endTime - startTime;
+    }
+    
+    // Fallback if typingTime is somehow 0 to prevent division by zero
+    if (!typingTime || typingTime <= 0) {
+        typingTime = endTime - startTime;
+    }
+
     typingSpeed = Math.floor((correctWords / typingTime) * 60000);
     accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);
     accuracy = Math.min(accuracy, 100); // Cap accuracy at 100%
