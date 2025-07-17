@@ -201,36 +201,12 @@ function restartTest() {
 function handlePlayerFinish() {
     calculateStats();
 
-    // Reset all keyboard key colors
-    document.querySelectorAll('.key').forEach(key => {
-        key.style.backgroundColor = '#ecdeaa';
-    });
-
     // Set the PvP race complete flag to prevent further key presses
     pvpRaceComplete = true;
-    
-    // Clear progress timer if running
-    if (privateMatchProgressInterval) {
-        clearInterval(privateMatchProgressInterval);
-        privateMatchProgressInterval = null;
-    }
 
-    // Clean up PvP socket events
-    socket.off('typingProgressReceived');
-    socket.off('opponentDisconnected');
-
-    // Update PvP results in the overlay
-    document.getElementById('typingSpeed').textContent = `Words Per Minute: ${typingSpeed}`;
-    document.getElementById('accuracy').textContent = `Accuracy: ${accuracy}%`;
-    
-    // Show results overlay
-    socket.emit('raceOver');
-    
-    finishAnimation(true); // You won!
-    setTimeout(() => {
-        showPvPResultsOverlay();
-    }, 4000);
- 
+    // Notify the server that this player has finished.
+    // The server will then broadcast the 'raceOver' event to all players.
+    socket.emit('playerFinished');
 } 
 
 function calculateStats(){
@@ -364,23 +340,24 @@ const socket = io();
 function setupPvPSocketEvents() {
 
     socket.on('raceOver', (data) => {
-        
-
+        // This event is now received by both the winner and the loser at the same time.
+        pvpRaceComplete = true; // Stop typing for both players
         calculateStats();
-        // Set PvP race complete to prevent further typing
-        pvpRaceComplete = true;
 
-        
         // Reset all keyboard key colors
         document.querySelectorAll('.key').forEach(key => {
             key.style.backgroundColor = '#ecdeaa';
         });
         
-        // Get opponent name from the label
-        const oppLabel = document.querySelector('#oppTypingArea .typing-area-label');
-        const opponentName = oppLabel ? oppLabel.textContent : 'Opponent';
-        
-        finishAnimation(false, opponentName); // Opponent won!
+        // Check if the current client is the winner
+        if (socket.id === data.winnerId) {
+            finishAnimation(true); // Show "You Win!" animation
+        } else {
+            // Otherwise, they are the loser, show the opponent's name
+            finishAnimation(false, data.winnerName); 
+        }
+
+        // Show the results overlay for both players after the animation
         setTimeout(() => {
             showPvPResultsOverlay();
         }, 4000);

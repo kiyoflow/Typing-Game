@@ -238,9 +238,25 @@ io.on('connection', (socket) => {
     playerQueue = playerQueue.filter((id) => id !== socket.id);
   });
 
-  // Handle game over
-  socket.on('raceOver', (data) => {
-    socket.to(socket.roomId).emit('raceOver', data);
+  // Handle a player finishing the race
+  socket.on('playerFinished', () => {
+    const roomId = socket.roomId;
+    if (!roomId || !matches[roomId]) return;
+
+    const match = matches[roomId];
+    const winnerId = socket.id;
+    
+    // Determine the loser's ID
+    const loserId = (winnerId === match.player1) ? match.player2 : match.player1;
+
+    // Get winner's name
+    const winnerName = users[winnerId] ? users[winnerId].displayName : 'Winner';
+
+    // Notify both players that the race is over, and who won.
+    io.to(roomId).emit('raceOver', { winnerId: winnerId, winnerName: winnerName });
+    
+    // Clean up the match from memory
+    delete matches[roomId];
   });
   
   socket.on('typingProgress', (data) => {
