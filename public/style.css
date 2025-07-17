@@ -651,4 +651,40 @@ body {
     }
 }
 
+#profile {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: none; /* Initially hidden */
+    align-items: center;
+    gap: 12px;
+    background-color: #ecdda5;
+    padding: 6px 12px 6px 6px;
+    border-radius: 50px;
+    border: 2px solid #2c3e50;
+    box-shadow: 0 4px 10px rgba(44, 62, 80, 0.2);
+    z-index: 100;
+    font-family: 'Ubuntu', Courier, monospace;
+}
+
+#profile-picture {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid #2c3e50;
+}
+
+#username {
+    font-size: 16px;
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+}
+
 

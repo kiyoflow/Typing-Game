@@ -1170,4 +1170,26 @@ window.onload = function() {
     });
 };
 
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/auth/status')
+        .then(res => res.json())
+        .then(data => {
+            if (data.authenticated && data.user) {
+                const profileDiv = document.getElementById('profile');
+                const usernameDiv = document.getElementById('username');
+                const profilePicDiv = document.getElementById('profile-picture');
+
+                usernameDiv.textContent = data.user.displayName;
+                // The correct property for Google OAuth picture is _json.picture
+                if (data.user._json && data.user._json.picture) {
+                    const picUrl = data.user._json.picture;
+                    // Use the server-side proxy to avoid potential cross-origin issues
+                    profilePicDiv.style.backgroundImage = `url('/proxy-image?url=${encodeURIComponent(picUrl)}')`;
+                }
+
+                profileDiv.style.display = 'flex'; // Show the profile section
+            }
+        });
+});
+
 
