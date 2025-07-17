@@ -125,26 +125,44 @@
     <!-- <script src="debug_private_match.js"></script> -->
     <script>
         let myUsername = null;
-
+        let isOwner = false;
         
-        // Get username when page loads
+        // --- Get references to owner controls and disable them by default ---
+        const inviteButton = document.getElementById('inviteBtn');
+        const startBtn = document.getElementById('startBtn');
+        const wordCountSelect = document.querySelector('.wordcount-select');
+
+        if(inviteButton) inviteButton.disabled = true;
+        if(startBtn) startBtn.disabled = true;
+        if(wordCountSelect) wordCountSelect.disabled = true;
+        
+        // Get username when page loads, then check ownership
         fetch('/auth/status')
             .then(res => res.json())
             .then(data => {
                 if (data.authenticated && data.user) {
                     myUsername = data.user.displayName;
-                    
-                    // Request room data when page loads
-                    if (privateRoomId) {
-                        socket.emit('joinPrivateRoom', {
-                            privateRoomId: privateRoomId,
-                            playerName: myUsername
-                        });
-                    }
+
+                    socket.emit('userData', data.user);
+                    // Now that we have the username, ask the server if we are the owner
+                    setTimeout(() => {
+                        if (privateRoomId) {
+                            socket.emit('checkOwnership', { privateRoomId: privateRoomId });
+                        }
+                    }, 100);
                 }
             });
 
-        
+        // Listen for the server's response to enable controls
+        socket.on('ownershipResult', (data) => {
+            if (data.isOwner) {
+                isOwner = true;
+                // Enable controls ONLY for the owner
+                if(inviteButton) inviteButton.disabled = false;
+                if(startBtn) startBtn.disabled = false;
+                if(wordCountSelect) wordCountSelect.disabled = false;
+            }
+        });
 
         // Check URL for room ID and display it
         const urlParams = new URLSearchParams(window.location.search);
@@ -194,11 +212,8 @@
             }
         });
 
-
-        const inviteButton = document.getElementById('inviteBtn');
-        const inviteInput = document.getElementById('inviteInput');
-
         inviteButton.addEventListener('click', () => {
+            // The button is disabled for non-owners, so no check is needed here.
             const username = inviteInput.value.trim();
             
             if (username.length >= 5 && myUsername) {
@@ -220,8 +235,8 @@
             }
         });
 
-        const startBtn = document.getElementById('startBtn');
         startBtn.addEventListener('click', () => {
+            // The button is disabled for non-owners, so no check is needed here.
             // Get current player count
             const playerItems = document.querySelectorAll('.player-item');
             const playerCount = playerItems.length;
@@ -302,6 +317,10 @@
                     timer.startTimer();
                 }
             });
+        });
+
+        socket.on('privateMatchEnded', (data) => {
+            showFinalLeaderboard(data.finalRankings);
         });
 
         // Handle EXIT button

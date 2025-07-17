@@ -118,7 +118,8 @@ class MatchTimerComponent extends HTMLElement {
         socket.emit('privateMatchProgress', {
             progress: correctChars,
             totalChars: keysPressed,
-            finished: true // Mark as finished due to time limit
+            finished: true, // Mark as finished due to time limit
+            reason: 'time_up'
         });
         
         // Show time's up message
@@ -130,6 +131,13 @@ class MatchTimerComponent extends HTMLElement {
                 // The server will emit matchEnded event when all players finish
                 // No need to call showFinalLeaderboard here
             }, 3000);
+        }
+    }
+
+    stopTimer() {
+        if (this.matchTimer) {
+            clearInterval(this.matchTimer);
+            this.matchTimer = null;
         }
     }
 

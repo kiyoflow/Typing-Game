@@ -267,45 +267,53 @@ io.on('connection', (socket) => {
           totalChars: data.totalChars
         };
       } else {
-        // Calculate elapsed time since match started
-        const elapsed = new Date() - room.matchData.startTime;
-        const elapsedMinutes = elapsed / 60000;
-        
-        // Calculate WPM and accuracy
-        const wordsTyped = data.progress / 5; // Standard: 5 chars = 1 word
-        const wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
-        // Fix accuracy calculation to match client-side calculation
-        const accuracy = data.totalChars > 1 ? Math.min(Math.round((data.progress / (data.totalChars - 1)) * 100), 100) : 0;
-        
-        // Update player stats
-        room.matchData.playerStats[username] = {
-          progress: data.progress,
-          totalChars: data.totalChars,
-          wpm: wpm,
-          accuracy: accuracy,
-          finished: data.finished,
-          finishTime: data.finished ? new Date() : null,
-          finalWpm: data.finished ? wpm : 0,
-          finalAccuracy: data.finished ? accuracy : 0
-        };
+      // Calculate elapsed time since match started
+      const elapsed = new Date() - room.matchData.startTime;
+      const elapsedMinutes = elapsed / 60000;
+      
+      // Calculate WPM and accuracy
+      const wordsTyped = data.progress / 5; // Standard: 5 chars = 1 word
+      const wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
+      // Fix accuracy calculation to match client-side calculation
+      const accuracy = data.totalChars > 1 ? Math.min(Math.round((data.progress / (data.totalChars - 1)) * 100), 100) : 0;
+      
+      // Update player stats
+      room.matchData.playerStats[username] = {
+        progress: data.progress,
+        totalChars: data.totalChars,
+        wpm: wpm,
+        accuracy: accuracy,
+        finished: data.finished,
+        finishTime: data.finished ? new Date() : null,
+        finalWpm: data.finalWpm || (data.finished ? wpm : 0),
+        finalAccuracy: data.finalAccuracy || (data.finished ? accuracy : 0)
+      };
       }
       
-      // Check if all players have finished
+      // Check if all players have finished or if time has run out for one player
       const allPlayers = Object.keys(room.matchData.playerStats);
       const finishedPlayers = allPlayers.filter(player => room.matchData.playerStats[player].finished);
       
-      // If all players have finished, emit matchEnded event
-      if (finishedPlayers.length === allPlayers.length && allPlayers.length > 0) {
-        console.log(`All players finished in room ${privateRoomId}. Emitting matchEnded event.`);
+      // End the match if time ran out OR if all players finished normally.
+      if (!room.matchData.isOver && (data.reason === 'time_up' || finishedPlayers.length === allPlayers.length)) {
+        if (data.reason === 'time_up') {
+          console.log(`Timer ran out for room ${privateRoomId}. Forcing match end.`);
+        } else {
+          console.log(`All players finished in room ${privateRoomId}. Emitting matchEnded event.`);
+        }
+        
+        room.matchData.isOver = true; // Prevent this from firing multiple times
         io.to(privateRoomId).emit('privateMatchEnded', {
           finalRankings: room.matchData.playerStats
         });
       }
       
-      // Send updated leaderboard to everyone in the room
-      io.to(privateRoomId).emit('leaderboardUpdate', {
-        playerStats: room.matchData.playerStats
-      });
+      // If the match is still ongoing, send a leaderboard update.
+      if (!room.matchData.isOver) {
+          io.to(privateRoomId).emit('leaderboardUpdate', {
+              playerStats: room.matchData.playerStats
+          });
+      }
     }
   });
 
@@ -339,19 +347,27 @@ io.on('connection', (socket) => {
   });
 
     socket.on('createPrivateRoom', () => {
-    const privateRoomId = generatePrivateRoomId();
-    privateRooms[privateRoomId] = {
-      creator: socket.user.displayName,
-      createdAt: new Date(),
-      players: [socket.user.displayName]
-    };
-    
-    // Join the creator to the room
-    socket.join(privateRoomId);
-    
-    socket.emit('privateRoomCreated', privateRoomId);
+      const privateRoomId = generatePrivateRoomId();
+      privateRooms[privateRoomId] = {
+        creator: socket.user.displayName,
+        createdAt: new Date(),
+        players: [socket.user.displayName]
+      };
+      
+      // Join the creator to the room
+      socket.join(privateRoomId);
+      
+      socket.emit('privateRoomCreated', privateRoomId);
   });
 
+
+  socket.on('checkOwnership', (data) => {
+    const privateRoomId= data.privateRoomId;
+    if (privateRoomId && socket.user) {
+      const isOwner = privateRooms[privateRoomId].creator === socket.user.displayName;
+      socket.emit('ownershipResult', { isOwner: isOwner });
+    }
+  });
   socket.on('invitePlayer', (data) => {
     for (user in users){
       if (users[user].displayName === data.invitee){
@@ -446,7 +462,8 @@ io.on('connection', (socket) => {
       privateRoom.matchData = {
         totalWords: wordCount,
         startTime: new Date(),  // ✅ Set when START button is pressed!
-        playerStats: {}
+        playerStats: {},
+        isOver: false // Flag to ensure 'matchEnded' is emitted only once
       };
       
       // Add all players in the room to playerStats

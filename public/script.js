@@ -694,6 +694,69 @@ document.addEventListener('keydown', function(event) {
             activeContainer.scrollTop -= 20; // Smaller scroll increment
         }
     }
+
+    // --- NEW COMPLETION LOGIC ---
+    // Check if we've reached the last character (totalChars - 1 because it's 0-indexed)
+    if (keysPressed === totalChars - 1) {
+        const words = activeContainer.querySelectorAll('.word');
+        const lastWord = words[words.length - 1];
+        const lastWordChars = lastWord.querySelectorAll('.char:not(:empty)');
+        let lastWordMatched = true;
+        
+        lastWordChars.forEach(char => {
+            if (!char.classList.contains('matched')) {
+                lastWordMatched = false;
+            }
+        });
+
+        // Only end the match if the last word is fully correct
+        if (lastWordMatched) {
+            // Check if we're in PvP mode or private match mode
+            const playerContainer = document.getElementById('player-typing-container');
+            const privateContainer = document.getElementById('playerTypingContainer');
+            const isPvPMode = playerContainer && activeContainer === playerContainer;
+            const isPrivateMode = privateContainer && activeContainer === privateContainer;
+                
+            if (isPvPMode) {
+                handlePlayerFinish();
+            } else if (isPrivateMode) {
+                // Stop the visual timer immediately
+                const timer = document.querySelector('match-timer-component');
+                if (timer) {
+                    timer.stopTimer();
+                }
+
+                // Mark as complete to stop typing and the timer
+                testComplete = true; 
+                
+                // Reset all keyboard colors
+                document.querySelectorAll('.key').forEach(key => {
+                    key.style.backgroundColor = '#ecdeaa';
+                });
+
+                // Calculate final stats before sending
+                calculateStats();
+                
+                // For private matches, send the final finished signal
+                socket.emit('privateMatchProgress', {
+                    progress: correctChars,
+                    totalChars: keysPressed,
+                    finished: true,
+                    finalWpm: typingSpeed, // Send final WPM
+                    finalAccuracy: accuracy // Send final accuracy
+                });
+
+                // Stop the progress interval immediately
+                if (privateMatchProgressInterval) {
+                    clearInterval(privateMatchProgressInterval);
+                    privateMatchProgressInterval = null;
+                }
+            } else {
+                // This handles practice mode
+                endTest();
+            }
+        }
+    }
 });
 
 document.addEventListener('keyup', function(event) {
@@ -727,43 +790,6 @@ document.addEventListener('keyup', function(event) {
             correctWords++;
         }
     });
-
-    // Check if we've reached the last character before the empty span
-    if (keysPressed === totalChars - 1) {
-        const lastWord = words[words.length - 1];
-        
-        // Check if all non-empty characters in the last word are matched
-        const lastWordChars = lastWord.querySelectorAll('.char:not(:empty)');
-        let lastWordMatched = true;
-        
-        lastWordChars.forEach(char => {
-            if (!char.classList.contains('matched')) {
-                lastWordMatched = false;
-            }
-        });
-        
-        if (lastWordMatched && lastWordChars.length > 0) {
-            // Check if we're in PvP mode or private match mode
-            const playerContainer = document.getElementById('player-typing-container');
-            const privateContainer = document.getElementById('playerTypingContainer');
-            const isPvPMode = playerContainer && activeContainer === playerContainer;
-            const isPrivateMode = privateContainer && activeContainer === privateContainer;
-            
-            if (isPvPMode) {
-                handlePlayerFinish();
-            } else if (isPrivateMode) {
-                // For private matches, send finished signal and let the timer handle completion
-                socket.emit('privateMatchProgress', {
-                    progress: correctChars,
-                    totalChars: keysPressed,
-                    finished: true
-                });
-                // Don't call endTest() - the timer will handle it
-            } else {
-                endTest();
-            }
-        }
-    }
 });
 
 // Function to manage keyboard key colors
@@ -932,43 +958,38 @@ function cleanupPrivateMatchListeners() {
 function showFinalLeaderboard(playerStats) {
     // Clean up private match listeners and state
     cleanupPrivateMatchListeners();
-    finalLeaderboardOverlay.style.display = 'block';
-    
-    // Create a full-screen overlay for final results
-    const finalLeaderboardOverlay = document.createElement('div');
-    finalLeaderboardOverlay.id = 'final-results-overlay';
 
-    // Create the results container
-    const resultsContainer = document.createElement('div');
-    resultsContainer.className = 'final-results-container';
+    const finalLeaderboard = document.getElementById('finalLeaderboard');
+    const playerRankingsContainer = document.getElementById('playerRankings');
 
-    // Create title
-    const title = document.createElement('h1');
-    title.textContent = '🏆 FINAL RESULTS 🏆';
-    title.className = 'final-results-title';
+    if (!finalLeaderboard || !playerRankingsContainer) {
+        console.error('Final leaderboard elements not found!');
+        return;
+    }
 
-    // Create rankings container
-    const rankingsContainer = document.createElement('div');
-    rankingsContainer.id = 'final-rankings';
+    // Clear any previous rankings to prevent duplicates
+    playerRankingsContainer.innerHTML = '';
 
-    // Sort players by WPM (highest first)
+    // Sort players by WPM (highest first), then accuracy
     const sortedPlayers = Object.entries(playerStats).sort((a, b) => {
-        if (b[1].finalWpm === a[1].finalWpm) {
-            return b[1].finalAccuracy - a[1].finalAccuracy;
+        const wpmA = a[1].finalWpm || a[1].wpm || 0;
+        const wpmB = b[1].finalWpm || b[1].wpm || 0;
+        if (wpmB !== wpmA) {
+            return wpmB - wpmA;
         }
-        else {
-            return b[1].finalWpm - a[1].finalWpm;
-        }
+        const accA = a[1].finalAccuracy || a[1].accuracy || 0;
+        const accB = b[1].finalAccuracy || b[1].accuracy || 0;
+        return accB - accA;
     });
 
-    // Create player rank cards
+    // Create and append player rank cards
     sortedPlayers.forEach((player, index) => {
         const [playerName, stats] = player;
         const rank = index + 1;
         
         const playerCard = document.createElement('div');
         playerCard.className = `player-rank-card rank-${rank <= 3 ? rank : 'other'}`;
-        playerCard.style.animationDelay = `${index * 0.2}s`;
+        playerCard.style.animationDelay = `${index * 0.15}s`;
 
         const rankText = document.createElement('div');
         rankText.textContent = `#${rank}`;
@@ -982,32 +1003,29 @@ function showFinalLeaderboard(playerStats) {
         playerNameDiv.className = 'player-name-final';
 
         const playerStatsDiv = document.createElement('div');
-        playerStatsDiv.textContent = `${stats.finalWpm} WPM | ${stats.finalAccuracy}% Accuracy`;
+        const wpm = stats.finalWpm || stats.wpm || 0;
+        const accuracy = stats.finalAccuracy || stats.accuracy || 0;
+        playerStatsDiv.textContent = `${wpm} WPM | ${accuracy}% Accuracy`;
         playerStatsDiv.className = 'player-stats-final';
 
         playerInfo.appendChild(playerNameDiv);
         playerInfo.appendChild(playerStatsDiv);
         playerCard.appendChild(rankText);
         playerCard.appendChild(playerInfo);
-        rankingsContainer.appendChild(playerCard);
+        playerRankingsContainer.appendChild(playerCard);
     });
 
-    // Create back to menu button
-    const backButton = document.createElement('button');
-    backButton.textContent = 'Back to Menu';
-    backButton.className = 'final-back-button';
+    // Add back to menu button if it's not there already
+    if (!finalLeaderboard.querySelector('.final-back-button')) {
+        const backButton = document.createElement('button');
+        backButton.className = 'final-back-button';
+        backButton.textContent = 'Back to Menu';
+        backButton.onclick = () => { window.location.href = '/'; };
+        finalLeaderboard.appendChild(backButton);
+    }
 
-    backButton.addEventListener('click', () => {
-        // Just redirect to menu (cleanup already done)
-        window.location.href = '/';
-    });
-
-    // Assemble the overlay
-    resultsContainer.appendChild(title);
-    resultsContainer.appendChild(rankingsContainer);
-    resultsContainer.appendChild(backButton);
-    finalLeaderboardOverlay.appendChild(resultsContainer);
-    document.body.appendChild(finalLeaderboardOverlay);
+    // Make the full-screen overlay visible
+    finalLeaderboard.style.display = 'flex';
 }
 
 // Prevent manual scrolling on typing containers
