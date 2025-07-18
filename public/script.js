@@ -203,7 +203,7 @@ function handlePlayerFinish() {
 
     // Set the PvP race complete flag to prevent further key presses
     pvpRaceComplete = true;
-
+    
     // Notify the server that this player has finished.
     // The server will then broadcast the 'raceOver' event to all players.
     socket.emit('playerFinished');
@@ -213,7 +213,7 @@ function calculateStats(){
     const endTime = new Date();
     const privateMatch = document.getElementById('privateMatch');
     const isPrivateMode = privateMatch && privateMatch.classList.contains('active');
-
+    
     // For private matches, use the shared match timer. For other modes, use personal start/end time.
     if (isPrivateMode) {
         // This code only runs on privatematch.html, where the function is guaranteed to exist.
@@ -343,7 +343,7 @@ function setupPvPSocketEvents() {
         // This event is now received by both the winner and the loser at the same time.
         pvpRaceComplete = true; // Stop typing for both players
         calculateStats();
-
+        
         // Reset all keyboard key colors
         document.querySelectorAll('.key').forEach(key => {
             key.style.backgroundColor = '#ecdeaa';
@@ -438,6 +438,7 @@ socket.on('matchFound', (data) => {
     console.log('Your opponent is:', data.opponent);
     console.log('Room ID:', data.roomId);
     const queueMenu = document.getElementById('queueMenu');
+    const animationOverlay = document.getElementById('queue-animation-overlay');
     const match = document.getElementById('match');
     const playerContainer = document.getElementById('player-typing-container');
     const oppLabel = document.querySelector('#oppTypingArea .typing-area-label');
@@ -447,7 +448,10 @@ socket.on('matchFound', (data) => {
     
     if (match) {
         // Hide the queue menu and show the match container
+        if (animationOverlay) animationOverlay.classList.remove('active');
         queueMenu.style.display = 'none';
+        const queueBackBtn = document.getElementById('queueBackBtn');
+        if (queueBackBtn) queueBackBtn.classList.remove('active');
         match.style.display = 'block';
         
         // Update opponent label with their name
@@ -493,22 +497,61 @@ const pvpButton = document.getElementById('pvp');
 const privateMatchButton = document.getElementById('privateMatch');
 const queueMenu = document.getElementById('queueMenu');
 const menuContent = document.getElementById('menu-content');
+const animationOverlay = document.getElementById('queue-animation-overlay');
+
+function createGrid() {
+    if (!animationOverlay) return;
+    animationOverlay.innerHTML = '';
+    const numCells = 20 * 10; // 20 columns, 10 rows
+    for (let i = 0; i < numCells; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('grid-cell');
+        animationOverlay.appendChild(cell);
+    }
+}
 
 const queueClickHandler = function() {
     if (this.textContent !== "Finding Match..."){
-        this.style.animation = 'textChange 0.5s ease';
-        setTimeout(() => {
-            this.textContent = 'Finding Match...';
-            // Emit queue event to server
-            socket.emit('queueMatch');
-        }, 250);
+        this.textContent = 'Finding Match...';
+        this.classList.add('finding-match'); // Add button animation class
+        
+        // --- Trigger Grid Animation ---
+        if (animationOverlay) {
+            animationOverlay.classList.remove('active'); // Reset animation
+            // Stagger the animation of each cell to create a wave effect
+            const cells = animationOverlay.children;
+            for (let i = 0; i < cells.length; i++) {
+                const row = Math.floor(i / 20);
+                const col = i % 20;
+                cells[i].style.animationDelay = `${(row + col) * 0.04}s`;
+            }
+            void animationOverlay.offsetWidth; // Force reflow to restart animation
+            animationOverlay.classList.add('active');
+        }
+        
+        socket.emit('queueMatch');
     }
 
     else{
-        this.style.animation = 'textChange 0.5s ease';
-        setTimeout(() => {
-            this.textContent = 'Find Match';
-        }, 250);
+        this.textContent = 'Find Match';
+        this.classList.remove('finding-match'); // Remove button animation class
+
+        if (animationOverlay) {
+            animationOverlay.classList.remove('active');
+            
+            // Ensure all cells have no animation delay for the leaving animation
+            const cells = animationOverlay.children;
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].style.animationDelay = '0s';
+            }
+
+            animationOverlay.classList.add('leaving');
+            // Remove the 'leaving' class after the animation completes
+            setTimeout(() => {
+                animationOverlay.classList.remove('leaving');
+            }, 1000); // Must match animation duration
+        }
+        
         socket.emit('leaveQueue');
     }
 }
@@ -516,17 +559,28 @@ const queueClickHandler = function() {
 if (pvpButton) {
 pvpButton.addEventListener('click', function() {
     const menu = document.getElementById('menu');
+    const profileDiv = document.getElementById('profile');
+
+    // Hide profile when entering queue
+    if (profileDiv) {
+        profileDiv.style.display = 'none';
+    }
+
     menuContent.style.opacity = '0';
     menuContent.style.transform = 'scale(0.8)';
     setTimeout(() => {
         menu.style.display = 'none';
         menuContent.style.display = 'none';
         
-        // Get the existing queue button and reset its state
+        // Get the buttons
         const queueButton = document.getElementById('queueBtn');
+        const queueBackBtn = document.getElementById('queueBackBtn');
         queueButton.textContent = 'Find Match';
         
+        // Show the queue menu AND the back button together
         queueMenu.classList.add('active');
+        if (queueBackBtn) queueBackBtn.classList.add('active');
+        
         queueMenu.style.display = 'block';
         queueMenu.style.opacity = '1';
         queueMenu.style.transform = 'translate(-50%, -50%) scale(1)';
@@ -534,6 +588,18 @@ pvpButton.addEventListener('click', function() {
         // Add click event listener to the queue button    
         if (queueButton) {
             queueButton.addEventListener('click', queueClickHandler);
+        }
+
+        if (queueBackBtn) {
+            queueBackBtn.addEventListener('click', () => {
+                // Hide the menu and back button
+                queueMenu.classList.remove('active');
+                queueBackBtn.classList.remove('active');
+
+                backToMenu(); // Use the robust backToMenu function
+                profileDiv.style.display = 'flex';
+
+            });
         }
     }, 300);
 });
@@ -561,6 +627,13 @@ socket.on('queueRejected', () => {
     const queueButton = document.getElementById('queueBtn');
     if (queueButton) {
         queueButton.textContent = 'Find Match';
+        queueButton.classList.remove('finding-match');
+        
+        // Hide animation overlay if it's active
+        const animationOverlay = document.getElementById('queue-animation-overlay');
+        if (animationOverlay) {
+            animationOverlay.classList.remove('active');
+        }
     }
     
     // Show user feedback
@@ -1044,6 +1117,9 @@ window.onload = function() {
     if (document.getElementById('menu')) {
         menu();
     }
+    
+    // Create the grid for the animation on page load
+    createGrid();
     
     // Prevent manual scrolling
     preventManualScrolling();
