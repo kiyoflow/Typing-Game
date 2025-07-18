@@ -70,6 +70,10 @@
             <div id="playerRankings">
                 
             </div>
+            <div class="final-buttons-container">
+                <button id="playAgainBtn" style="display: none;">Play Again</button>
+                <button id="finalMenuBtn" style="display: none;">Back to Menu</button>
+            </div>
         </div>
     </div>
     
@@ -194,6 +198,38 @@
         }
         
         document.addEventListener('DOMContentLoaded', function() {
+            // Add click listeners for the end-of-game buttons
+            const playAgainBtn = document.getElementById('playAgainBtn');
+            const finalMenuBtn = document.getElementById('finalMenuBtn');
+
+            if (playAgainBtn) {
+                playAgainBtn.onclick = () => {
+                    // Hide the parent container of the leaderboard and typing area
+                    const privateMatchContainer = document.getElementById('privateMatch');
+                    if (privateMatchContainer) {
+                        privateMatchContainer.classList.remove('active');
+                    }
+
+                    // Show the lobby
+                    const privateRoom = document.getElementById('privateRoom');
+                    if (privateRoom) {
+                        privateRoom.style.display = 'block';
+                    }
+
+                    // Reset local game state for the next round
+                    resetTypingVariables();
+                };
+            }
+
+            if (finalMenuBtn) {
+                finalMenuBtn.onclick = () => {
+                    // Clean up all socket listeners before leaving the page
+                    cleanupPrivateMatchListeners();
+                    socket.emit('leavePrivateRoom', { privateRoomId });
+                    window.location.href = '/';
+                };
+            }
+
             const animationContainer = document.querySelector('.animationContainer');
             
             if (animationContainer) {
@@ -274,53 +310,63 @@
         });
 
         socket.on('privateMatchStarted', (data) => {
-            document.getElementById('privateRoom').style.display = 'none';
+            // This class is what hides the lobby and shows the game screen.
+            // We need to remove it to go back.
             document.getElementById('privateMatch').classList.add('active');
-            document.getElementById('progressLeaderboard').style.display = 'block';
             
-            // Initialize and show everything immediately (but disable typing)
-            resetTypingVariables();
-            displayRandomWords(data.words);
-            
-            // Show keyboard immediately but disable it
-            setTimeout(() => {
-                const keyboard = document.getElementById('keyboard');
-                if (keyboard) {
-                    keyboard.style.display = 'block';
-                    keyboard.style.pointerEvents = 'none'; // Disable keyboard interactions
-                    keyboard.style.opacity = '0.6'; // Visual indication it's disabled
-                }
-            }, 100);
-            
-            // Disable typing during countdown
-            window.countdownActive = true;
-            
-            // Start countdown using the countdown component
-            const countdown = document.getElementById('private-countdown');
-            countdown.start(() => {
-                // Re-enable typing after countdown
-                window.countdownActive = false;
+            // Wait until the countdown component is fully defined and ready.
+            customElements.whenDefined('countdown-component').then(() => {
+                // Hide all non-gameplay screens
+                document.getElementById('privateRoom').style.display = 'none';
+                document.getElementById('finalLeaderboard').style.display = 'none';
                 
-                // Re-enable keyboard
-                const keyboard = document.getElementById('keyboard');
-                if (keyboard) {
-                    keyboard.style.pointerEvents = 'auto';
-                    keyboard.style.opacity = '1';
-                }
+                // Show the main match screen
+                document.getElementById('progressLeaderboard').style.display = 'block';
                 
-                // Start the progress timer for real-time leaderboard updates
-                startPrivateMatchProgressTimer();
+                // Initialize and show everything immediately (but disable typing)
+                resetTypingVariables();
+                displayRandomWords(data.words);
                 
-                // Start the 2-minute match timer
-                const timer = document.querySelector('match-timer-component');
-                if (timer) {
-                    timer.startTimer();
-                }
+                // Show keyboard immediately but disable it
+                setTimeout(() => {
+                    const keyboard = document.getElementById('keyboard');
+                    if (keyboard) {
+                        keyboard.style.display = 'block';
+                        keyboard.style.pointerEvents = 'none'; // Disable keyboard interactions
+                        keyboard.style.opacity = '0.6'; // Visual indication it's disabled
+                    }
+                }, 100);
+                
+                // Disable typing during countdown
+                window.countdownActive = true;
+                
+                // Start countdown using the countdown component
+                const countdown = document.getElementById('private-countdown');
+                countdown.start(() => {
+                    // Re-enable typing after countdown
+                    window.countdownActive = false;
+                    
+                    // Re-enable keyboard
+                    const keyboard = document.getElementById('keyboard');
+                    if (keyboard) {
+                        keyboard.style.pointerEvents = 'auto';
+                        keyboard.style.opacity = '1';
+                    }
+                    
+                    // Start the progress timer for real-time leaderboard updates
+                    startPrivateMatchProgressTimer();
+                    
+                    // Start the 2-minute match timer
+                    const timer = document.querySelector('match-timer-component');
+                    if (timer) {
+                        timer.startTimer();
+                    }
+                });
             });
         });
 
         socket.on('privateMatchEnded', (data) => {
-            showFinalLeaderboard(data.finalRankings);
+            showFinalLeaderboard(data.finalRankings, privateRoomId);
         });
 
         // Handle EXIT button

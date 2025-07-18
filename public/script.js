@@ -598,6 +598,7 @@ pvpButton.addEventListener('click', function() {
 
                 backToMenu(); // Use the robust backToMenu function
                 profileDiv.style.display = 'flex';
+                socket.emit('leaveQueue');
 
             });
         }
@@ -986,42 +987,18 @@ function updateLeaderboard(playerStats) {
     });
 }
 
+// This function is the "nuclear option" used ONLY when leaving the room completely.
 function cleanupPrivateMatchListeners() {
-    // Clear progress timer
-    if (privateMatchProgressInterval) {
-        clearInterval(privateMatchProgressInterval);
-        privateMatchProgressInterval = null;
-    }
-    
-    // Stop the match timer if it's running
-    const timer = document.querySelector('match-timer-component');
-    if (timer && timer.matchTimer) {
-        clearInterval(timer.matchTimer);
-    }
-    
-    // Clean up socket listeners that are specific to private matches
-    socket.off('privateMatchEnded');
     socket.off('privateMatchStarted');
+    socket.off('privateMatchEnded');
     socket.off('leaderboardUpdate');
     socket.off('playerJoined');
     socket.off('playerLeft');
-    
-    // Reset typing state
-    testComplete = true;
-    pvpRaceComplete = true;
-    
-    // Reset keyboard colors
-    document.querySelectorAll('.key').forEach(key => {
-        key.style.backgroundColor = '#ecdeaa';
-    });
-    
-    console.log('Private match listeners cleaned up');
+    socket.off('resetToLobby');
+    console.log('All private match listeners have been removed.');
 }
 
-function showFinalLeaderboard(playerStats) {
-    // Clean up private match listeners and state
-    cleanupPrivateMatchListeners();
-
+function showFinalLeaderboard(playerStats, privateRoomId) {
     const finalLeaderboard = document.getElementById('finalLeaderboard');
     const playerRankingsContainer = document.getElementById('playerRankings');
 
@@ -1078,14 +1055,11 @@ function showFinalLeaderboard(playerStats) {
         playerRankingsContainer.appendChild(playerCard);
     });
 
-    // Add back to menu button if it's not there already
-    if (!finalLeaderboard.querySelector('.final-back-button')) {
-        const backButton = document.createElement('button');
-        backButton.className = 'final-back-button';
-        backButton.textContent = 'Back to Menu';
-        backButton.onclick = () => { window.location.href = '/'; };
-        finalLeaderboard.appendChild(backButton);
-    }
+    // Make the HTML buttons visible
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    const finalMenuBtn = document.getElementById('finalMenuBtn');
+    if(playAgainBtn) playAgainBtn.style.display = 'block';
+    if(finalMenuBtn) finalMenuBtn.style.display = 'block';
 
     // Make the full-screen overlay visible
     finalLeaderboard.style.display = 'flex';

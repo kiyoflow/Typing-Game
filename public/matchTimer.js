@@ -121,17 +121,7 @@ class MatchTimerComponent extends HTMLElement {
             finished: true, // Mark as finished due to time limit
             reason: 'time_up'
         });
-        
-        // Show time's up message
-        const timeUpDiv = this.querySelector('#times-up');
-        if (timeUpDiv) {
-            timeUpDiv.style.display = 'block';
-            setTimeout(() => {
-                timeUpDiv.style.display = 'none';
-                // The server will emit matchEnded event when all players finish
-                // No need to call showFinalLeaderboard here
-            }, 3000);
-        }
+
     }
 
     stopTimer() {

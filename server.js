@@ -469,13 +469,18 @@ io.on('connection', (socket) => {
   socket.on('privateMatchStarted', (data) => {
     const privateRoomId = data.privateRoomId;
     const wordCount = data.wordCount || 25;
+    const room = privateRooms[privateRoomId];
     
-    if (privateRoomId) {
-      const privateRoom = privateRooms[privateRoomId];
+    if (room) {
+      // If a previous match exists, delete its data to reset the state.
+      if (room.matchData) {
+        delete room.matchData;
+      }
+
       const matchWords = getRandomWords(wordCount);
 
       // Initialize match data when the match STARTS (not when room is created)
-      privateRoom.matchData = {
+      room.matchData = {
         totalWords: wordCount,
         startTime: new Date(),  // ✅ Set when START button is pressed!
         playerStats: {},
@@ -483,8 +488,8 @@ io.on('connection', (socket) => {
       };
       
       // Add all players in the room to playerStats
-      privateRoom.players.forEach(username => {
-        privateRoom.matchData.playerStats[username] = {
+      room.players.forEach(username => {
+        room.matchData.playerStats[username] = {
           progress: 0,           // Characters typed correctly
           totalChars: 0,         // Total characters attempted
           wpm: 0,                // Current WPM
@@ -496,7 +501,7 @@ io.on('connection', (socket) => {
         };
       });
       
-      console.log(`Match started for room ${privateRoomId} with players:`, Object.keys(privateRoom.matchData.playerStats));
+      console.log(`Match started for room ${privateRoomId} with players:`, Object.keys(room.matchData.playerStats));
       
       // Store room ID in all sockets in this room for typing progress
       const socketsInRoom = io.sockets.adapter.rooms.get(privateRoomId);
@@ -509,11 +514,11 @@ io.on('connection', (socket) => {
         });
       }
       
-      io.to(privateRoomId).emit('privateMatchStarted', {words: matchWords, players: privateRoom.players});
+      io.to(privateRoomId).emit('privateMatchStarted', {words: matchWords, players: room.players});
       
       // Send initial leaderboard with all players at 0 WPM/accuracy
       io.to(privateRoomId).emit('leaderboardUpdate', {
-        playerStats: privateRoom.matchData.playerStats
+        playerStats: room.matchData.playerStats
       });
     }
   });
