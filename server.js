@@ -154,10 +154,69 @@ app.use(express.static(path.join(__dirname, 'public')));
 let playerQueue = [];
 let users = {};
 let matches = {}; // Track active matches and their rooms
-let privateRooms = {};
+let privateRooms = {}; // NOTE: room.players is now an array of {username, socketId} objects.
+
+function handlePlayerLeavingPrivateRoom(socket, privateRoomId) {
+    const room = privateRooms[privateRoomId];
+    if (!room || !socket.user) {
+        return;
+    }
+
+    // Find the player in the room by their specific, unique socket ID.
+    const playerIndex = room.players.findIndex(p => p.socketId === socket.id);
+
+    // If this specific connection isn't on the list, do nothing.
+    // This is the core fix that prevents stale disconnects from removing a reconnected player.
+    if (playerIndex === -1) {
+        return;
+    }
+
+    const username = room.players[playerIndex].username;
+    console.log(`${username} (socket ${socket.id}) left private room ${privateRoomId}`);
+
+    const wasOwner = room.creator === username;
+    // Remove the player from the list using their index.
+    room.players.splice(playerIndex, 1);
+    
+    socket.leave(privateRoomId);
+
+    if (room.players.length === 0) {
+        // Set a timer to delete the room, allowing for reconnections.
+        room.deletionTimer = setTimeout(() => {
+            if (privateRooms[privateRoomId] && privateRooms[privateRoomId].players.length === 0) {
+              delete privateRooms[privateRoomId];
+              console.log(`DELETED private room ${privateRoomId} after grace period.`);
+            }
+        }, 10000); // 10-second grace period.
+    } else {
+        const eventData = {
+            username: username,
+            players: room.players.map(p => p.username),
+            playerCount: room.players.length
+        };
+
+        if (wasOwner) {
+            const newOwner = room.players[0].username;
+            const newOwnerSocketId = room.players[0].socketId;
+            room.creator = newOwner;
+            console.log(`Promoting ${newOwner} to host of room ${privateRoomId}`);
+            
+            eventData.newOwner = newOwner;
+
+            if (newOwnerSocketId) {
+                io.to(newOwnerSocketId).emit('ownershipResult', { isOwner: true });
+            }
+        }
+
+        // Notify remaining players. newOwner is only attached if it changed.
+        io.to(privateRoomId).emit('playerLeft', eventData);
+    }
+}
 
 io.on('connection', (socket) => {
   socket.on('userData', (userData) => {
+    // We no longer store the full socket object, only the user's data.
+    // The socket.id is the key, which is all we need.
     users[socket.id] = userData;
     socket.user = userData; // Store user data directly on socket
     console.log(`${userData.displayName} connected`);
@@ -336,28 +395,20 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     const username = socket.user ? socket.user.displayName : socket.id;
     console.log('A user disconnected:', username);
-    
-    // Clean up match if player was in a room
-    if (socket.roomId) {
-      const roomId = socket.roomId;
-      const match = matches[roomId];
-      
-      if (match) {
-        console.log(`Player ${username} disconnected from room ${roomId}`);
-        
-        // Notify the other player that their opponent disconnected
+
+    const roomId = socket.roomId;
+    if (roomId) {
+      if (matches[roomId]) {
+        console.log(`Player ${username} disconnected from public match ${roomId}`);
         socket.to(roomId).emit('opponentDisconnected');
-        
-        // Clean up the match
         delete matches[roomId];
+      } else if (privateRooms[roomId]) {
+        // This is a private match. Let the handler figure out if the disconnect is stale.
+        handlePlayerLeavingPrivateRoom(socket, roomId);
       }
     }
     
-    // Don't remove players from private rooms on disconnect
-    // They stay in the room until they explicitly leave via EXIT button
-    // This prevents rooms from being deleted during page navigation
-    
-    // Remove the user from the player queue and users list
+    // Remove the user from the global users list and matchmaking queue
     delete users[socket.id];
     playerQueue = playerQueue.filter((id) => id !== socket.id);
   });
@@ -367,11 +418,12 @@ io.on('connection', (socket) => {
       privateRooms[privateRoomId] = {
         creator: socket.user.displayName,
         createdAt: new Date(),
-        players: [socket.user.displayName]
+        players: [{ username: socket.user.displayName, socketId: socket.id }] // Start with the new player object structure.
       };
       
       // Join the creator to the room
       socket.join(privateRoomId);
+      socket.roomId = privateRoomId; // Correctly track the room ID
       
       socket.emit('privateRoomCreated', privateRoomId);
   });
@@ -399,23 +451,11 @@ io.on('connection', (socket) => {
     const privateRoomId = data.privateRoomId;
     const roomInfo = privateRooms[privateRoomId];
 
+    // The ONLY responsibility of this event is to tell the client to navigate to the new page.
+    // The client will then emit 'getRoomPlayers' upon loading the new page,
+    // which is the single, reliable source of truth for adding a player.
     if (roomInfo && socket.user) {
-      // Add player to room players array
-      if (!roomInfo.players.includes(socket.user.displayName)) {
-        roomInfo.players.push(socket.user.displayName);
-      }
-
-      // Join the invited player to the room
-      socket.join(privateRoomId);
-      
-      // Send redirect to the accepting player
       socket.emit('redirectToRoom', privateRoomId);
-
-      // Update all players in the room
-      io.to(privateRoomId).emit('playerJoined', {
-        players: roomInfo.players,
-        playerCount: roomInfo.players.length
-      });
     }
   });
 
@@ -426,44 +466,43 @@ io.on('connection', (socket) => {
 
   socket.on('getRoomPlayers', (privateRoomId) => {
     const room = privateRooms[privateRoomId];
-    if (room) {
-      // Join the socket to the room so they receive future updates
-      socket.join(privateRoomId);
-      
-      socket.emit('playerJoined', {
-        players: room.players,
-        playerCount: room.players.length
-      });
+    if (room && socket.user) {
+        socket.join(privateRoomId);
+        socket.roomId = privateRoomId;
+
+        const username = socket.user.displayName;
+        const playerIndex = room.players.findIndex(p => p.username === username);
+
+        let justJoined = false;
+        // If player is already in the list, update their socketId. Otherwise, add them.
+        if (playerIndex !== -1) {
+            room.players[playerIndex].socketId = socket.id;
+        } else {
+            room.players.push({ username: username, socketId: socket.id });
+            justJoined = true; // Flag that this is a new player joining the room.
+        }
+
+        // If the room was about to be deleted, cancel the timer because someone rejoined.
+        if (room.deletionTimer) {
+            clearTimeout(room.deletionTimer);
+            delete room.deletionTimer;
+            console.log(`Cancelled room deletion for ${privateRoomId} because a player rejoined.`);
+        }
+
+        // We always send 'playerJoined' so the new person gets the list.
+        // If it was a new join, this also notifies everyone else.
+        io.to(privateRoomId).emit('playerJoined', {
+            players: room.players.map(p => p.username),
+            playerCount: room.players.length
+        });
     }
   });
 
   socket.on('leavePrivateRoom', (data) => {
     const privateRoomId = data.privateRoomId;
-    const username = data.username || (socket.user ? socket.user.displayName : socket.id);
-    const room = privateRooms[privateRoomId];
-    
-    if (room && room.players.includes(username)) {
-      // Remove player from room
-      room.players = room.players.filter(player => player !== username);
-      
-      // Leave the socket room
-      socket.leave(privateRoomId);
-      
-      console.log(`${username} left private room ${privateRoomId}`);
-      
-      // If room is empty, delete it
-      if (room.players.length === 0) {
-        delete privateRooms[privateRoomId];
-        console.log(`Private room ${privateRoomId} deleted (empty)`);
-      } else {
-        // Notify remaining players
-        io.to(privateRoomId).emit('playerLeft', {
-          username: username,
-          players: room.players,
-          playerCount: room.players.length
-        });
-      }
-    }
+    // The socket object itself provides all the context we need.
+    // Call the canonical handler to ensure logic is consistent.
+    handlePlayerLeavingPrivateRoom(socket, privateRoomId);
   });
 
   socket.on('privateMatchStarted', (data) => {
@@ -479,25 +518,25 @@ io.on('connection', (socket) => {
 
       const matchWords = getRandomWords(wordCount);
 
-      // Initialize match data when the match STARTS (not when room is created)
+      // Initialize match data when the match STARTS
       room.matchData = {
         totalWords: wordCount,
-        startTime: new Date(),  // ✅ Set when START button is pressed!
+        startTime: new Date(),
         playerStats: {},
-        isOver: false // Flag to ensure 'matchEnded' is emitted only once
+        isOver: false
       };
       
-      // Add all players in the room to playerStats
-      room.players.forEach(username => {
-        room.matchData.playerStats[username] = {
-          progress: 0,           // Characters typed correctly
-          totalChars: 0,         // Total characters attempted
-          wpm: 0,                // Current WPM
-          accuracy: 0,           // Current accuracy %
-          finished: false,       // Has completed the race
-          finishTime: null,      // When they finished
-          finalWpm: 0,           // Final WPM
-          finalAccuracy: 0       // Final accuracy
+      // Add all players in the room to playerStats by username.
+      room.players.forEach(player => {
+        room.matchData.playerStats[player.username] = {
+          progress: 0,
+          totalChars: 0,
+          wpm: 0,
+          accuracy: 0,
+          finished: false,
+          finishTime: null,
+          finalWpm: 0,
+          finalAccuracy: 0
         };
       });
       
@@ -514,7 +553,7 @@ io.on('connection', (socket) => {
         });
       }
       
-      io.to(privateRoomId).emit('privateMatchStarted', {words: matchWords, players: room.players});
+      io.to(privateRoomId).emit('privateMatchStarted', {words: matchWords, players: room.players.map(p => p.username)});
       
       // Send initial leaderboard with all players at 0 WPM/accuracy
       io.to(privateRoomId).emit('leaderboardUpdate', {

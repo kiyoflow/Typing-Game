@@ -244,6 +244,49 @@ function calculateStats(){
 
 }
 
+function updatePlayerList(players, playerCount) {
+    const playerListDiv = document.getElementById('playerList');
+    const playersHeader = document.querySelector('.players-header');
+
+    if (!playerListDiv || !playersHeader) return;
+
+    // --- Smart Update Logic ---
+    const existingPlayerUsernames = new Set(
+        Array.from(playerListDiv.querySelectorAll('.player-item')).map(div => div.dataset.username)
+    );
+    const newPlayerUsernames = new Set(players);
+
+    // 1. Remove players who are no longer in the list
+    existingPlayerUsernames.forEach(username => {
+        if (!newPlayerUsernames.has(username)) {
+            const playerToRemove = playerListDiv.querySelector(`[data-username="${username}"]`);
+            if (playerToRemove) {
+                playerToRemove.remove();
+            }
+        }
+    });
+
+    // 2. Add new players who are not already in the list
+    newPlayerUsernames.forEach(username => {
+        if (!existingPlayerUsernames.has(username)) {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-item newly-added'; // Add the animation class
+            playerDiv.textContent = username;
+            playerDiv.dataset.username = username; // Store username for tracking
+            playerListDiv.appendChild(playerDiv);
+
+            // Remove the class after the animation completes to prevent re-animating
+            setTimeout(() => {
+                playerDiv.classList.remove('newly-added');
+            }, 500); // Must match the animation duration in CSS
+        }
+    });
+    
+    // 3. Update the header count
+    playersHeader.textContent = `PLAYERS (${playerCount})`;
+}
+
+
 function showDisconnectOverlay() {
     const oppDisconnectScreen = document.getElementById('oppDisconnectScreen');
     oppDisconnectScreen.style.display = 'block';
@@ -1219,15 +1262,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const usernameDiv = document.getElementById('username');
                 const profilePicDiv = document.getElementById('profile-picture');
 
-                usernameDiv.textContent = data.user.displayName;
+                if (usernameDiv && data.user.displayName) {
+                    usernameDiv.textContent = data.user.displayName;
+                }
+                
                 // The correct property for Google OAuth picture is _json.picture
                 if (data.user._json && data.user._json.picture) {
                     const picUrl = data.user._json.picture;
                     // Use the server-side proxy to avoid potential cross-origin issues
-                    profilePicDiv.style.backgroundImage = `url('/proxy-image?url=${encodeURIComponent(picUrl)}')`;
+                    if (profilePicDiv) {
+                        profilePicDiv.style.backgroundImage = `url('/proxy-image?url=${encodeURIComponent(picUrl)}')`;
+                    }
                 }
 
-                profileDiv.style.display = 'flex'; // Show the profile section
+                if (profileDiv) {
+                    profileDiv.style.display = 'flex'; // Show the profile section
+                }
             }
         });
 });

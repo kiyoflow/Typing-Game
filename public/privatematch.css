@@ -41,6 +41,7 @@ body {
     border: 2px solid #2c3e50;
     box-shadow: 0 3px 10px rgba(44, 62, 80, 0.1);
     transition: transform 0.2s ease;
+    animation: slideIn 0.5s ease-out forwards;
 }
 
 .player-item:hover {
@@ -801,4 +802,20 @@ body {
 .disabled-control {
     cursor: not-allowed;
     opacity: 0.6;
+}
+
+/* This animation will ONLY apply to items that have just been added */
+.player-item.newly-added {
+    animation: slideIn 0.5s ease-out forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }

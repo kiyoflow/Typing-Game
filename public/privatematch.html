@@ -146,14 +146,13 @@
             .then(data => {
                 if (data.authenticated && data.user) {
                     myUsername = data.user.displayName;
-
                     socket.emit('userData', data.user);
-                    // Now that we have the username, ask the server if we are the owner
-                    setTimeout(() => {
-                        if (privateRoomId) {
-                            socket.emit('checkOwnership', { privateRoomId: privateRoomId });
-                        }
-                    }, 100);
+
+                    // Now that we have identified ourselves, we can ask for the room's data.
+                    if (privateRoomId) {
+                        socket.emit('getRoomPlayers', privateRoomId);
+                        socket.emit('checkOwnership', { privateRoomId: privateRoomId });
+                    }
                 }
             });
 
@@ -193,8 +192,6 @@
 
         } else if (privateRoomId) {
             document.getElementById('roomId').textContent = 'Room ID: ' + privateRoomId;
-            // Request current players in room
-            socket.emit('getRoomPlayers', privateRoomId);
         }
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -302,10 +299,16 @@
         socket.on('playerLeft', (data) => {
             updatePlayersList(data.players, data.playerCount);
             
-            // Show notification if someone leaves during a match
-            const privateMatch = document.getElementById('privateMatch');
-            if (privateMatch.classList.contains('active')) {
-                alert(`${data.username} left the match!`);
+            // This is a simple, informational alert for all players.
+            // The server is responsible for directly giving the new host their powers.
+            if (data.newOwner && data.username) {
+                alert(`${data.username} has left. ${data.newOwner} is now the host.`);
+            } else if (data.username) {
+                 // Standard notification if someone leaves during a match
+                const privateMatch = document.getElementById('privateMatch');
+                if (privateMatch.classList.contains('active')) {
+                    alert(`${data.username} left the match!`);
+                }
             }
         });
 
