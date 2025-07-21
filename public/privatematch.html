@@ -388,24 +388,36 @@
             if (playersHeader) {
                 playersHeader.textContent = `PLAYERS (${playerCount})`;
             }
-            
-            // Clear current list
-            if (playerList) {
-                playerList.innerHTML = '';
-                
-                // Add each player
-                players.forEach(playerName => {
+
+            const existingPlayers = new Set(Array.from(playerList.querySelectorAll('.player-item')).map(div => div.dataset.username));
+
+            const newPlayers = new Set(players);
+
+            existingPlayers.forEach(player => {
+                if (!newPlayers.has(player)) {
+                    playerToRemove = playerList.querySelector(`[data-username="${player}"]`);
+                    if (playerToRemove) {
+                        playerToRemove.classList.add('leaving');
+                        setTimeout(() => {
+                            playerToRemove.remove();
+                        }, 500);
+                    }
+                }
+            })
+
+            newPlayers.forEach(player => {
+                if (!existingPlayers.has(player)) {// Add each player
                     const playerItem = document.createElement('div');
-                    playerItem.className = 'player-item';
-                    
-                    const playerNameDiv = document.createElement('div');
-                    playerNameDiv.className = 'player-name';
-                    playerNameDiv.textContent = playerName;
-                    
-                    playerItem.appendChild(playerNameDiv);
+                    playerItem.className = 'player-item newly-added';
+                    playerItem.textContent = player;
+                    playerItem.dataset.username = player;
                     playerList.appendChild(playerItem);
-                });
-            }
+
+                    setTimeout(() => {
+                        playerItem.classList.remove('newly-added');
+                    }, 500)
+                }
+            });
         }
     </script>
 </body>
