@@ -251,7 +251,10 @@
             const playerItems = document.querySelectorAll('.player-item');
 
             playerItems.forEach(item => {
-                if (item.dataset.username === username) {
+                if (username === myUsername) {
+                    return;
+                }
+                else if (item.dataset.username === username){
                     alert('This player is already in the room');
                     return;
                 }
