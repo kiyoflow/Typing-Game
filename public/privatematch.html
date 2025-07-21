@@ -248,6 +248,19 @@
         inviteButton.addEventListener('click', () => {
             // The button is disabled for non-owners, so no check is needed here.
             const username = inviteInput.value.trim();
+            const playerItems = document.querySelectorAll('.player-item');
+
+            playerItems.forEach(item => {
+                if (item.dataset.username === username) {
+                    alert('This player is already in the room');
+                    return;
+                }
+            })
+            
+            if (username === myUsername) {
+                alert('You cannot invite yourself');
+                return;
+            }
             
             if (username.length >= 5 && myUsername) {
                 socket.emit('invitePlayer', {
@@ -301,7 +314,7 @@
 
         socket.on('privateRoomWordCountChanged', (wordCount) => {
             wordCountSelect.value = String(wordCount);
-            
+
         });
 
         // Handle player list updates
