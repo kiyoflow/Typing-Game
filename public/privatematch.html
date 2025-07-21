@@ -290,6 +290,20 @@
 
         })
 
+        wordCountSelect.addEventListener('change', ()=> {
+            if (isOwner) {
+                socket.emit('updatePrivateRoomWordCount', {
+                    privateRoomId: privateRoomId,
+                    wordCount: wordCountSelect.value
+                })
+            }
+        })
+
+        socket.on('privateRoomWordCountChanged', (wordCount) => {
+            wordCountSelect.value = String(wordCount);
+            
+        });
+
         // Handle player list updates
         socket.on('playerJoined', (data) => {
             updatePlayersList(data.players, data.playerCount);

@@ -498,6 +498,10 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('updatePrivateRoomWordCount', (data) => {
+    socket.to(data.privateRoomId).emit('privateRoomWordCountChanged', data.wordCount);
+  })
+
   socket.on('leavePrivateRoom', (data) => {
     const privateRoomId = data.privateRoomId;
     // The socket object itself provides all the context we need.
