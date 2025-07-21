@@ -252,18 +252,14 @@
 
             playerItems.forEach(item => {
                 if (username === myUsername) {
+                    alert('You cannot invite yourself');
                     return;
                 }
                 else if (item.dataset.username === username){
                     alert('This player is already in the room');
                     return;
                 }
-            })
-            
-            if (username === myUsername) {
-                alert('You cannot invite yourself');
-                return;
-            }
+            });
             
             if (username.length >= 5 && myUsername) {
                 socket.emit('invitePlayer', {
