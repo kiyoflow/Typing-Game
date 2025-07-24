@@ -6,6 +6,19 @@
     <title>Private Match Room</title>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="privatematch.css">
+    <script>
+        // --- IMMEDIATE REFRESH KICK ---
+        // This runs in the <head> before the body renders to prevent any flash of content.
+        // It checks session storage, NOT the URL, to see if the user is in a room.
+        (function() {
+            // A performance.navigation.type of 1 means the page was reloaded.
+            if (sessionStorage.getItem('currentRoomId') && performance.navigation.type === 1) {
+                sessionStorage.setItem('kickedOnRefresh', 'true'); // For the alert on the next page
+                sessionStorage.removeItem('currentRoomId'); // Clean up before leaving
+                window.location.href = '/';
+            }
+        })();
+    </script>
 </head>
 <body>
 
@@ -167,34 +180,17 @@
             }
         });
 
-        // Check URL for room ID and display it
+        // Check URL for room ID, display it, save it to session storage, and clean the URL.
         const urlParams = new URLSearchParams(window.location.search);
         const privateRoomId = urlParams.get('room');
         const isRedirected = urlParams.get('redirected') === 'true';
-        
-        // Check if page was refreshed
-        const isRefresh = performance.navigation.type === 1; // 1 means reload
-        
-        if (isRefresh && privateRoomId) {
-            // If refreshed, leave the room and redirect to menu
-            fetch('/auth/status')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.authenticated && data.user) {
-                        socket.emit('leavePrivateRoom', { 
-                            privateRoomId: privateRoomId, 
-                            username: data.user.displayName 
-                        });
-                    }
-                });
-            alert('You have been removed from the room because you refreshed the page.');
-            window.location.href = '/';
 
-        } else if (privateRoomId) {
+        if (privateRoomId) {
             document.getElementById('roomId').textContent = 'Room ID: ' + privateRoomId;
+            sessionStorage.setItem('currentRoomId', privateRoomId); // Save the room ID
         }
 
-        // Clean the URL by removing query parameters after they've been used
+        // Clean the URL by removing all query parameters after they've been used
         if (window.history.replaceState) {
             const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             window.history.replaceState({path: cleanUrl}, '', cleanUrl);
@@ -229,6 +225,7 @@
                     // Clean up all socket listeners before leaving the page
                     cleanupPrivateMatchListeners();
                     socket.emit('leavePrivateRoom', { privateRoomId });
+                    sessionStorage.removeItem('currentRoomId'); // Clean up on leave
                     if (window.onLeaveRoom) {
                         window.onLeaveRoom();
                     }
@@ -415,6 +412,7 @@
         document.getElementById('exitBtn').addEventListener('click', () => {
             if (confirm('Are you sure you want to leave the room?')) {
                 socket.emit('leavePrivateRoom', { privateRoomId: privateRoomId });
+                sessionStorage.removeItem('currentRoomId'); // Clean up on leave
                 if (window.onLeaveRoom) {
                     window.onLeaveRoom();
                 }

@@ -515,11 +515,10 @@ io.on('connection', (socket) => {
     socket.to(data.privateRoomId).emit('privateRoomWordCountChanged', data.wordCount);
   })
 
-  socket.on('leavePrivateRoom', (data) => {
-    const privateRoomId = data.privateRoomId;
+  socket.on('leavePrivateRoom', () => {
     // The socket object itself provides all the context we need.
-    // Call the canonical handler to ensure logic is consistent.
-    handlePlayerLeavingPrivateRoom(socket, privateRoomId);
+    // The roomId is attached to the socket when they join.
+    handlePlayerLeavingPrivateRoom(socket, socket.roomId);
   });
 
   socket.on('privateMatchStarted', (data) => {

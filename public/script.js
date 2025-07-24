@@ -1130,6 +1130,12 @@ function preventManualScrolling() {
 
 // Initialize game and set up word count selection
 window.onload = function() {
+    // Check if the user was kicked from a private room for refreshing
+    if (sessionStorage.getItem('kickedOnRefresh') === 'true') {
+        alert('You have been removed from the room because you refreshed the page.');
+        sessionStorage.removeItem('kickedOnRefresh'); // Clear the flag
+    }
+
     // Only call menu() on index.html (check if menu element exists)
     if (document.getElementById('menu')) {
         menu();
