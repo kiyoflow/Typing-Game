@@ -7,6 +7,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
 const axios = require('axios');
+const sql = require('mssql');
 const words = require('./public/words.js');
 
 // Validate required environment variables
@@ -21,6 +22,17 @@ if (missingEnvVars.length > 0) {
         process.exit(1);
     }
 }
+
+const sqlConfig = {
+  user: process.env.MSSQL_USER,
+  password: process.env.MSSQL_PASSWORD,
+  database: process.env.MSSQL_DATABASE,
+  server: process.env.MSSQL_SERVER,
+  options: {
+      encrypt: true, // for Azure
+      trustServerCertificate: false
+  }
+};
 
 const app = express();
 const server = http.createServer(app);
@@ -70,11 +82,11 @@ passport.deserializeUser((user, done) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    //callbackURL: "http://localhost:3000/auth/google/callback" 
-    callbackURL: "https://typing-game.azurewebsites.net/auth/google/callback"
+    callbackURL: "http://localhost:3000/auth/google/callback" 
+    //callbackURL: "https://typing-game.azurewebsites.net/auth/google/callback"
 },
 function(accessToken, refreshToken, profile, done) {
-    // Here you would typically save the user to your database
+    // No MSSQL logic, just pass profile
     return done(null, profile);
 }));
 
@@ -459,13 +471,14 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('rejectInvite', (data) => {
-    const privateRoomId = data.privateRoomId;
-    console.log(`Invite rejected for room ${privateRoomId}`);
-  });
-
   socket.on('getRoomPlayers', (privateRoomId) => {
     const room = privateRooms[privateRoomId];
+    
+    if (!room) {
+        console.log(`User ${socket.id} tried to join non-existent room: ${privateRoomId}`);
+        return;
+    }
+
     if (room && socket.user) {
         socket.join(privateRoomId);
         socket.roomId = privateRoomId;

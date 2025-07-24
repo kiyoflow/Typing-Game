@@ -193,6 +193,12 @@
         } else if (privateRoomId) {
             document.getElementById('roomId').textContent = 'Room ID: ' + privateRoomId;
         }
+
+        // Clean the URL by removing query parameters after they've been used
+        if (window.history.replaceState) {
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+        }
         
         document.addEventListener('DOMContentLoaded', function() {
             // Add click listeners for the end-of-game buttons
@@ -223,6 +229,9 @@
                     // Clean up all socket listeners before leaving the page
                     cleanupPrivateMatchListeners();
                     socket.emit('leavePrivateRoom', { privateRoomId });
+                    if (window.onLeaveRoom) {
+                        window.onLeaveRoom();
+                    }
                     window.location.href = '/';
                 };
             }
@@ -245,23 +254,31 @@
             }
         });
 
+        // The inviteButton click listener belongs here as it's specific to this page
+        // and needs access to myUsername and privateRoomId.
         inviteButton.addEventListener('click', () => {
-            // The button is disabled for non-owners, so no check is needed here.
             const username = inviteInput.value.trim();
             const playerItems = document.querySelectorAll('.player-item');
 
-            playerItems.forEach(item => {
-                if (username === myUsername) {
-                    alert('You cannot invite yourself');
-                    return;
+            let isAlreadyInRoom = false;
+            for (const item of playerItems) {
+                if (item.dataset.username === username) {
+                    isAlreadyInRoom = true;
+                    break;
                 }
-                else if (item.dataset.username === username){
-                    alert('This player is already in the room');
-                    return;
-                }
-            });
+            }
+
+            if (username === myUsername) {
+                alert('You cannot invite yourself');
+                return;
+            }
+
+            if (isAlreadyInRoom) {
+                alert('This player is already in the room');
+                return;
+            }
             
-            if (username.length >= 5 && myUsername !== username) {
+            if (username.length >= 5) {
                 socket.emit('invitePlayer', {
                     privateRoomId: privateRoomId,
                     inviter: myUsername,
@@ -269,14 +286,10 @@
                 });
                 alert('Invitation sent to ' + username);
                 inviteInput.value = '';
-            }
-
-            else if (username.length < 5 && username.length > 0) {
+            } else if (username.length > 0) {
                 alert('Please enter a valid username (at least 5 characters)');
-            }
-
-            else {
-                alert('Please enter a username');
+            } else {
+                alert('Please enter a username to invite.');
             }
         });
 
@@ -402,6 +415,9 @@
         document.getElementById('exitBtn').addEventListener('click', () => {
             if (confirm('Are you sure you want to leave the room?')) {
                 socket.emit('leavePrivateRoom', { privateRoomId: privateRoomId });
+                if (window.onLeaveRoom) {
+                    window.onLeaveRoom();
+                }
                 window.location.href = '/';
             }
         });

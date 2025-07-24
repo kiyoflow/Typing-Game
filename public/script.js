@@ -1208,49 +1208,88 @@ window.onload = function() {
         })
         .catch(err => console.error('Auth status error:', err));
 
-    // Listen for incoming invitations (works on all pages)
-    socket.on('inviteReceived', (data) => {
-        console.log('Received invite from:', data.inviter);
-        const popup = document.getElementById('invitePopup');
-        const header = document.getElementById('invitePopupHeader');
-        const acceptBtn = document.getElementById('acceptInvite');
-        const rejectBtn = document.getElementById('rejectInvite');
-        
-        if (popup && header) {
-            header.textContent = `${data.inviter} invited you to join their private room!`;
-            popup.classList.add('show');
-        } else {
-            console.log('Popup or header element not found!');
-        }
+    const invitePopup = document.getElementById('invitePopup');
 
-        if (acceptBtn) {
-            acceptBtn.onclick = () => {
-                if (popup) {
+    if (invitePopup) {
+        let inviteQueue = [];
+        let invitePopupOpen = false;
+        let inRoom = false;
+
+        // Shows the next invite in the queue
+        function showNextInvite() {
+            if (inviteQueue.length === 0 || inRoom) {
+                invitePopupOpen = false;
+                return;
+            }
+            
+            invitePopupOpen = true;
+            const data = inviteQueue.shift();
+            const popup = document.getElementById('invitePopup');
+            const header = document.getElementById('invitePopupHeader');
+            const acceptBtn = document.getElementById('acceptInvite');
+            const rejectBtn = document.getElementById('rejectInvite');
+
+            if (popup && header) {
+                header.textContent = `${data.inviter} invited you to join their private room!`;
+                popup.classList.add('show');
+            } else {
+                console.log('Popup or header element not found!');
+            }
+
+            if (acceptBtn) {
+                acceptBtn.onclick = () => {
+                    if (!popup) return;
+                    inRoom = true;
+                    inviteQueue = [];
+                    invitePopupOpen = false;
+
                     popup.classList.remove('show');
                     socket.emit('acceptInvite', {privateRoomId: data.privateRoomId});
                 }
             }
-        }
 
-        if (rejectBtn) {
-            rejectBtn.onclick = () => {
-                if (popup) {
+            if (rejectBtn) {
+                rejectBtn.onclick = () => {
+                    if (!popup) return;
+                    invitePopupOpen = false;
                     popup.classList.remove('show');
-                    socket.emit('rejectInvite', {privateRoomId: data.privateRoomId});
+                    showNextInvite(); 
                 }
             }
         }
-    });
 
-    // Handle redirect to private room after accepting invite
-    socket.on('redirectToRoom', (roomId) => {
-        window.location.href = `/privatematch.html?room=${roomId}&redirected=true`;
-                
-    });
+        socket.on('inviteReceived', (data) => {
+            console.log('Received invite from:', data.inviter);
+    
+            const pvpMatchContainer = document.getElementById('match');
+            const inPvpMatch = pvpMatchContainer && pvpMatchContainer.style.display !== 'none';
+            if (inPvpMatch || inRoom) {
+                return;
+            }
+            
+            const isAlreadyInQueue = inviteQueue.some(invite => invite.inviter === data.inviter);
+            if (!isAlreadyInQueue) {
+                inviteQueue.push(data);
+                if (!invitePopupOpen) {
+                    showNextInvite();
+                }
+            }
+        });
 
-    socket.on('leaderboardUpdate', (data) => {
-        updateLeaderboard(data.playerStats);
-    });
+        window.onLeaveRoom = function() {
+            inRoom = false;
+        }
+    }
+
+// Handle redirect to private room after accepting invite
+socket.on('redirectToRoom', (roomId) => {
+    window.location.href = `/privatematch.html?room=${roomId}&redirected=true`;
+            
+});
+
+socket.on('leaderboardUpdate', (data) => {
+    updateLeaderboard(data.playerStats);
+});
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1261,11 +1300,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const profileDiv = document.getElementById('profile');
                 const usernameDiv = document.getElementById('username');
                 const profilePicDiv = document.getElementById('profile-picture');
-
                 if (usernameDiv && data.user.displayName) {
                     usernameDiv.textContent = data.user.displayName;
                 }
-                
                 // The correct property for Google OAuth picture is _json.picture
                 if (data.user._json && data.user._json.picture) {
                     const picUrl = data.user._json.picture;
@@ -1274,7 +1311,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         profilePicDiv.style.backgroundImage = `url('/proxy-image?url=${encodeURIComponent(picUrl)}')`;
                     }
                 }
-
                 if (profileDiv) {
                     profileDiv.style.display = 'flex'; // Show the profile section
                 }
