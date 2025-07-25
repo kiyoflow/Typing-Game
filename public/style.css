@@ -341,6 +341,13 @@ body {
     border: 1px solid rgba(44, 62, 80, 0.2);
 }
 
+.typing-area-label span {
+    font-size: 14px;
+    color: #7f8c8d;
+    font-weight: normal;
+    margin-left: 10px;
+}
+
 .pvp-keyboard {
     transform: scale(0.7);
     position: static;
@@ -362,7 +369,7 @@ body {
     box-sizing: border-box;
 }
 
-#typing-container {
+#practice-container {
     text-align: left;
     font-family: 'Ubuntu', Courier, monospace;
     font-size: 24px;
@@ -385,25 +392,25 @@ body {
     -ms-overflow-style: none; /* IE/Edge */
 }
 
-#typing-container::-webkit-scrollbar {
+#practice-container::-webkit-scrollbar {
     display: none; /* Chrome/Safari */
 }
 
-#typing-container::-webkit-scrollbar {
+#practice-container::-webkit-scrollbar {
     width: 8px;
 }
 
-#typing-container::-webkit-scrollbar-track {
+#practice-container::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.1);
     border-radius: 4px;
 }
 
-#typing-container::-webkit-scrollbar-thumb {
+#practice-container::-webkit-scrollbar-thumb {
     background: rgba(44, 62, 80, 0.3);
     border-radius: 4px;
 }
 
-#typing-container::-webkit-scrollbar-thumb:hover {
+#practice-container::-webkit-scrollbar-thumb:hover {
     background: rgba(44, 62, 80, 0.5);
 }
 

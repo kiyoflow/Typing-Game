@@ -271,7 +271,7 @@ io.on('connection', (socket) => {
       const roomId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       // Generate random words for this match
-      const matchWords = getRandomWords(25); // Generate 25 random words for the match
+      const matchWords = getRandomWords(150); // Generate 150 random words for the pvp match
       
       // Store match information
       matches[roomId] = {

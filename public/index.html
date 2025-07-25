@@ -65,13 +65,13 @@
  
 
         <div id="playerTypingArea" class="typingArea">
-            <div class="typing-area-label">You</div>
-            <div id="player-typing-container" class="pvp-typing-container"></div>
+            <div class="typing-area-label">You <span id="player-progress">0/50</span></div>
+            <div id="pvp-player-container" class="pvp-typing-container"></div>
             <keyboard-component keyboard-id="player-keyboard"></keyboard-component>
         </div>
         <div id="oppTypingArea" class="typingArea">
-            <div class="typing-area-label">Opponent</div>
-            <div id="opp-typing-container" class="pvp-typing-container"></div>
+            <div class="typing-area-label">Opponent <span id="opponent-progress">0/50</span></div>
+            <div id="pvp-opponent-container" class="pvp-typing-container"></div>
             <keyboard-component keyboard-id="opp-keyboard"></keyboard-component>
         </div>
 
@@ -99,7 +99,7 @@
             <span class="word-count" data-count="50">50 words</span> 
         </div>
 
-        <div id="typing-container">
+        <div id="practice-container">
         </div>
 
         <div id="results-screen">
