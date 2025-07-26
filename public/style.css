@@ -57,13 +57,10 @@ body {
 }
 
 #queueMenu {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    opacity: 0;
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    opacity: 1;
+    transform: none;
+    display: block;
 }
 
 #queueMenu.active {
@@ -181,32 +178,13 @@ body {
     }
 }
 
+/* Old queue back button - now handled in pvpmenu */
 #queueBackBtn {
-    position: fixed;
-    top: 30px;
-    left: 30px;
-    font-family: 'Ubuntu', Courier, monospace;
-    font-size: 24px;
-    padding: 15px 30px;
-    background-color: transparent;
-    border: 2px solid #2c3e50;
-    color: #2c3e50;
-    border-radius: 15px;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    display: none; /* Hidden by default */
-    z-index: 1001;
+    display: none;
 }
 
-#queueBackBtn.active {
-    display: block;
-}
-
-#queueBackBtn:hover {
-    background-color: #2c3e50;
-    color: #ecdda5;
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
+#pvpmenu #queueBackBtn {
+    display: none;
 }
 
 #match {
@@ -534,11 +512,11 @@ body {
     position: relative;
     display: inline-block;
     width: 2px;
-    height: 28px;
+    height: 20px;
     background-color: #2c3e50;
     animation: blink 1s infinite;
     margin-right: -2px;
-    vertical-align: text-bottom;
+    vertical-align: baseline;
 }
 
 @keyframes blink {
@@ -809,6 +787,102 @@ body {
 .button-container {
     display: flex;
     flex-direction: column;
+}
+
+/* PvP Menu */
+#pvpmenu {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ecdda5;
+    border: 3px solid #2c3e50;
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    font-family: 'Ubuntu', Courier, monospace;
+    box-shadow: 0 10px 30px rgba(44, 62, 80, 0.2);
+    z-index: 1000;
+}
+
+#pvpmenu #queueMenu {
+    position: relative;
+    opacity: 1;
+    transform: none;
+    display: block;
+}
+
+.pvp-info {
+    margin-bottom: 30px;
+}
+
+.pvp-info h2 {
+    font-size: 32px;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.pvp-info p {
+    font-size: 16px;
+    color: #2c3e50;
+    line-height: 1.5;
+    margin: 0;
+}
+
+#queueBackBtn {
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    font-family: 'Ubuntu', Courier, monospace;
+    font-size: 24px;
+    padding: 15px 30px;
+    background-color: transparent;
+    border: 2px solid #2c3e50;
+    color: #2c3e50;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: none; /* Hidden by default */
+    z-index: 1001;
+}
+
+#queueBackBtn.active {
+    display: block;
+}
+
+#queueBackBtn:hover {
+    background-color: #2c3e50;
+    color: #ecdda5;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
+}
+
+#pvpmenu #queueBtn {
+    font-family: 'Ubuntu', Courier, monospace;
+    font-size: 24px;
+    padding: 15px 30px;
+    background-color: #f0e8ca;
+    border: 2px solid #2c3e50;
+    border-radius: 12px;
+    color: #2c3e50;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+#pvpmenu #queueBtn:hover {
+    background-color: #2c3e50;
+    color: #f0e8ca;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
+}
+
+#pvpmenu #queueBtn.finding-match {
+    background-image: linear-gradient(to right, #e5d590 0%, #fffde4 50%, #e5d590 100%);
+    animation: pulsing-gradient 2s ease-in-out infinite;
+    background-size: 200% 100%;
 }
 
 

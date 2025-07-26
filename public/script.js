@@ -334,19 +334,14 @@ function finishAnimation(isWinner = false, opponentName = 'Opponent'){
 function backToMenu() {
     const resultsScreen = document.getElementById('results-screen');
     const match = document.getElementById('match');
-    const queueMenu = document.getElementById('queueMenu');
+    const pvpmenu = document.getElementById('pvpmenu');
     
     // Hide all PvP-related elements
     resultsScreen.style.display = 'none';
     resultsScreen.style.position = '';
     resultsScreen.style.zIndex = '';
     match.style.display = 'none';
-    
-    // Hide queue menu and reset its state
-    if (queueMenu) {
-        queueMenu.style.display = 'none';
-        queueMenu.classList.remove('active');
-    }
+    pvpmenu.style.display = 'none';
 
     const queueButton = document.getElementById('queueBtn');
     if (queueButton) {
@@ -421,18 +416,12 @@ function setupPvPSocketEvents() {
             
             if (oppCursor) {
                 const containerRect = pvpOpponentContainer.getBoundingClientRect();
-                const oppCursorRect = oppCursor.getBoundingClientRect();
-
-                // Check if the cursor is below the visible area of the container
-                if (oppCursorRect.bottom + 40 > containerRect.bottom) {
-                    // Scroll down to bring the cursor into view
-                    pvpOpponentContainer.scrollTop += 20;
-                }
-                // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
-                else if (oppCursorRect.top < containerRect.top + 40) {
-                    // Scroll up to bring the cursor into view
-                    pvpOpponentContainer.scrollTop -= 20;
-                }
+                const cursorRect = oppCursor.getBoundingClientRect();
+                // Calculate desired offset (1/3 from the top)
+                const desiredOffset = containerRect.height / 3;
+                const cursorOffset = cursorRect.top - containerRect.top;
+                const newScrollTop = pvpOpponentContainer.scrollTop + cursorOffset - desiredOffset;
+                pvpOpponentContainer.scrollTop = newScrollTop;
             }
         }
 
@@ -494,6 +483,10 @@ function setupPvPSocketEvents() {
 
 socket.on('queueJoined', () => {
     console.log('Successfully joined the queue');
+    const queueBtn = document.getElementById('queueBtn');
+    if (queueBtn) {
+        queueBtn.textContent = 'Leave Queue';
+    }
 });
 
 socket.on('matchFound', (data) => {
@@ -574,7 +567,7 @@ function createGrid() {
 }
 
 const queueClickHandler = function() {
-    if (this.textContent !== "Finding Match..."){
+    if (this.textContent !== "Finding Match..." && this.textContent !== "Leave Queue"){
         this.textContent = 'Finding Match...';
         this.classList.add('finding-match'); // Add button animation class
         
@@ -623,8 +616,10 @@ if (pvpButton) {
 pvpButton.addEventListener('click', function() {
     const menu = document.getElementById('menu');
     const profileDiv = document.getElementById('profile');
+    const pvpmenu = document.getElementById('pvpmenu');
+    const queueBackBtn = document.getElementById('queueBackBtn');
 
-    // Hide profile when entering queue
+    // Hide profile when entering PvP mode
     if (profileDiv) {
         profileDiv.style.display = 'none';
     }
@@ -634,39 +629,40 @@ pvpButton.addEventListener('click', function() {
     setTimeout(() => {
         menu.style.display = 'none';
         menuContent.style.display = 'none';
-        
-        // Get the buttons
-        const queueButton = document.getElementById('queueBtn');
-        const queueBackBtn = document.getElementById('queueBackBtn');
-        queueButton.textContent = 'Find Match';
-        
-        // Show the queue menu AND the back button together
-        queueMenu.classList.add('active');
+        pvpmenu.style.display = 'block';
         if (queueBackBtn) queueBackBtn.classList.add('active');
-        
-        queueMenu.style.display = 'block';
-        queueMenu.style.opacity = '1';
-        queueMenu.style.transform = 'translate(-50%, -50%) scale(1)';
-
-        // Add click event listener to the queue button    
-        if (queueButton) {
-            queueButton.addEventListener('click', queueClickHandler);
-        }
-
-        if (queueBackBtn) {
-            queueBackBtn.addEventListener('click', () => {
-                // Hide the menu and back button
-                queueMenu.classList.remove('active');
-                queueBackBtn.classList.remove('active');
-
-                backToMenu(); // Use the robust backToMenu function
-                profileDiv.style.display = 'flex';
-                socket.emit('leaveQueue');
-
-            });
-        }
     }, 300);
 });
+}
+
+// Update back button handler for PvP menu
+const queueBackBtn = document.getElementById('queueBackBtn');
+if (queueBackBtn) {
+    queueBackBtn.addEventListener('click', function() {
+        const pvpmenu = document.getElementById('pvpmenu');
+        const profileDiv = document.getElementById('profile');
+        const queueBtn = document.getElementById('queueBtn');
+        
+        // Leave queue if we're in queue
+        if (queueBtn && (queueBtn.textContent === 'Leave Queue' || queueBtn.textContent === 'Finding Match...')) {
+            socket.emit('leaveQueue');
+            queueBtn.textContent = 'Find Match';
+            queueBtn.classList.remove('finding-match');
+        }
+        
+        pvpmenu.style.display = 'none';
+        if(queueBackBtn) queueBackBtn.classList.remove('active');
+        if (profileDiv) {
+            profileDiv.style.display = 'flex';
+        }
+        menu();
+    });
+}
+
+// Update queue button handler
+const queueBtn = document.getElementById('queueBtn');
+if (queueBtn) {
+    queueBtn.addEventListener('click', queueClickHandler);
 }
 
 const animationContainer = document.getElementById('animationContainer');
@@ -725,12 +721,6 @@ document.addEventListener('keydown', function(event) {
     // If the test is complete, don't process any key presses
     if (!startTime) {
         startTime = new Date();
-    }
-    
-    // Check if we're in PvP mode to disable backspace
-    if (pvpPlayerContainer && activeContainer === pvpPlayerContainer && event.key === 'Backspace') {
-        event.preventDefault();
-        return;
     }
     
     if (event.key.length === 1) {
@@ -819,22 +809,15 @@ document.addEventListener('keydown', function(event) {
     // Progress updates for private matches are now handled by the timer function
     // No need to send on every keypress since we send every second
 
-    // Scroll handling: Keep the cursor visible
+    // Scroll handling: Keep the cursor visible and higher up (about 1/3 from the top)
     if (cursor) {
         const containerRect = activeContainer.getBoundingClientRect();
         const cursorRect = cursor.getBoundingClientRect();
-
-        // Check if the cursor is below the visible area of the container
-        const buffer = activeContainer.id === 'pvp-player-container' ? 40 : 80;
-        if (cursorRect.bottom + buffer > containerRect.bottom) {
-            // Scroll down to bring the cursor into view (smaller scroll amount)
-            activeContainer.scrollTop += 20; // Smaller scroll increment
-        }
-        // Check if the cursor moved above the visible area (e.g., due to backspace near the top)
-        else if (cursorRect.top < containerRect.top + buffer) {
-            // Scroll up to bring the cursor into view (smaller scroll amount)
-            activeContainer.scrollTop -= 20; // Smaller scroll increment
-        }
+        // Calculate desired offset (1/3 from the top)
+        const desiredOffset = containerRect.height / 3;
+        const cursorOffset = cursorRect.top - containerRect.top;
+        const newScrollTop = activeContainer.scrollTop + cursorOffset - desiredOffset;
+        activeContainer.scrollTop = newScrollTop;
     }
 
                 // Check if we're in PvP mode or private match mode
