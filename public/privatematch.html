@@ -395,6 +395,9 @@
                     // Start the progress timer for real-time leaderboard updates
                     startPrivateMatchProgressTimer();
                     
+                    // Start typing time tracking
+                    trackTimeTyped();
+                    
                     // Start the 2-minute match timer
                     const timer = document.querySelector('match-timer-component');
                     if (timer) {

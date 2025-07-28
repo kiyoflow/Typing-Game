@@ -2,14 +2,15 @@ function menu(){
     const menu = document.getElementById('menu');
     const menuContent = document.getElementById('menu-content');
     const practiceContainer = document.getElementById('practice-container');
-const keyboard = document.getElementById('keyboard');
-const wordSettings = document.getElementById('word-settings');
-const app = document.getElementById('app');
-const match = document.getElementById('match');
-const resultsScreen = document.getElementById('results-screen');
-const pvpButton = document.getElementById('pvp');
-const practiceButton = document.getElementById('practice');
-const privateMatchButton = document.getElementById('privateMatch')
+    const keyboard = document.getElementById('keyboard');
+    const wordSettings = document.getElementById('word-settings');
+    const app = document.getElementById('app');
+    const match = document.getElementById('match');
+    const resultsScreen = document.getElementById('results-screen');
+    const pvpButton = document.getElementById('pvp');
+    const practiceButton = document.getElementById('practice');
+    const privateMatchButton = document.getElementById('privateMatch')
+    const profile = document.getElementById('profile');
     
     // All these elements should exist on index.html - if they don't, something's wrong
     if (menu) menu.style.display = 'block';
@@ -61,6 +62,83 @@ const practiceContainer = document.getElementById('practice-container');
 const pvpPlayerContainer = document.getElementById('pvp-player-container');
 const pvpOpponentContainer = document.getElementById('pvp-opponent-container');
 const privatePlayerContainer = document.getElementById('private-player-container');
+
+function showProfilePopup() {
+    const profilePopupOverlay = document.getElementById('profilePopupOverlay');
+    profilePopupOverlay.style.display = 'flex';
+    
+    // Trigger animation after display is set
+    setTimeout(() => {
+        profilePopupOverlay.classList.add('show');
+    }, 10);
+
+    fetch('/api/profileDashboard')
+        .then(response => response.json())
+        .then(data => {
+            const playerUsername = document.getElementById('playerUsername');
+            const creationDate = document.getElementById('creationDate');
+            const playerProfilePicture = document.getElementById('playerProfilePicture');
+            const aboutMe = document.getElementById('aboutMe');
+
+            const totalTypingTime = document.getElementById('totalTypingTime');
+
+            playerUsername.textContent = data.username;
+            creationDate.textContent = `JOINED ${new Date(data.creationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`.toUpperCase();
+            playerProfilePicture.innerHTML = `<img src="${data.profilePicture}" alt="Profile Picture">`;
+            aboutMe.textContent = `About ${data.username}`;
+            
+            // Format and display total typing time
+            function formatTime(totalSeconds) {
+                let hours = Math.floor(totalSeconds / 3600);
+                let minutes = Math.floor((totalSeconds % 3600) / 60);
+                let seconds = totalSeconds % 60;
+                
+                // Add leading zeros
+                hours = hours.toString().padStart(2, '0');
+                minutes = minutes.toString().padStart(2, '0');
+                seconds = seconds.toString().padStart(2, '0');
+                
+                return `${hours}:${minutes}:${seconds}`;
+            }
+            
+            totalTypingTime.textContent = `Total Typing Time: ${formatTime(data.totalTypingTime || 0)}`;
+        })
+        .catch(error => {
+            console.error('Error loading profile data:', error);
+        });
+}
+
+function hideProfilePopup() {
+    const profilePopupOverlay = document.getElementById('profilePopupOverlay');
+    profilePopupOverlay.classList.remove('show');
+    
+    // Hide after animation completes
+    setTimeout(() => {
+        profilePopupOverlay.style.display = 'none';
+    }, 300);
+}
+
+profile.addEventListener('click', () => {
+    showProfilePopup();
+});
+
+// Profile close button
+const profileCloseBtn = document.getElementById('profileCloseBtn');
+if (profileCloseBtn) {
+    profileCloseBtn.addEventListener('click', () => {
+        hideProfilePopup();
+    });
+}
+
+// Close popup when clicking outside
+const profilePopupOverlay = document.getElementById('profilePopupOverlay');
+if (profilePopupOverlay) {
+    profilePopupOverlay.addEventListener('click', (e) => {
+        if (e.target === profilePopupOverlay) {
+            hideProfilePopup();
+        }
+    });
+}
 
 // Function to display words in the typing container
 function displayRandomWords(words) {
@@ -157,6 +235,9 @@ function endTest(){
     
     // Set the test complete flag to prevent further key presses
     testComplete = true;
+    
+    // Stop typing time tracking
+    stopTypingTimeTracking();
     
     // Clear progress timer if running
     if (privateMatchProgressInterval) {
@@ -383,6 +464,9 @@ function setupPvPSocketEvents() {
         pvpRaceComplete = true; // Stop typing for both players
         calculateStats();
         
+        // Stop typing time tracking
+        stopTypingTimeTracking();
+        
         // Reset all keyboard key colors
         document.querySelectorAll('.key').forEach(key => {
             key.style.backgroundColor = '#ecdeaa';
@@ -536,6 +620,7 @@ socket.on('matchFound', (data) => {
                     // Initialize the player's typing session after countdown
         resetTypingVariables();
         displayRandomWords(data.words);
+        trackTimeTyped();
 
         // Send initial words to opponent (without key data)
         if (pvpPlayerContainer) {
@@ -700,9 +785,37 @@ socket.on('queueRejected', () => {
     alert('You are already in queue from another tab/window');
 });
 
+let typingStarted = null;
+let lastKeystroke = null;
+let timeTyped = 0;
+
+function trackTimeTyped() {
+    typingStarted = new Date();
+    lastKeystroke = new Date();
+    timeTyped = 0;
+    isTyping = true;
+
+}
+
+function stopTypingTimeTracking() {
+    isTyping = false;
+
+    updateTypingTime(timeTyped);
+}
+
+function updateTypingTime(timeTyped) {
+    fetch('/api/updateTypingTime', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ timeTyped: timeTyped })
+    });
+}
+
 // Event listener for typing and backspace handling
 document.addEventListener('keydown', function(event) {
-    
+
     // Allow space key to work in input fields
     if (event.key === ' ' && event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
         event.preventDefault(); // Prevent space bar from scrolling
@@ -734,6 +847,13 @@ document.addEventListener('keydown', function(event) {
     }
     
     isTyping = true;
+
+    // Track typing time (after isTyping is set to true)
+    let keystroke = new Date();
+    if (lastKeystroke && (keystroke - lastKeystroke) < 1000) {
+        timeTyped += (keystroke - lastKeystroke) / 1000;
+    }
+    lastKeystroke = keystroke;
 
     if (event.key === 'Backspace') {
         if (keysPressed > 0) {
@@ -855,6 +975,9 @@ document.addEventListener('keydown', function(event) {
 
                 // Mark as complete to stop typing and the timer
                 testComplete = true; 
+                
+                // Stop typing time tracking
+                stopTypingTimeTracking();
                 
                 // Reset all keyboard colors
                 document.querySelectorAll('.key').forEach(key => {
@@ -1193,6 +1316,7 @@ window.onload = function() {
         // Initialize the typing session
         resetTypingVariables();
         displayRandomWords(getPracticeWords(25));
+        trackTimeTyped();
     });
     }
     

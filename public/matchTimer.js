@@ -103,6 +103,9 @@ class MatchTimerComponent extends HTMLElement {
         testComplete = true;
         pvpRaceComplete = true;
         
+        // Stop typing time tracking
+        stopTypingTimeTracking();
+        
         // Reset all keyboard colors
         document.querySelectorAll('.key').forEach(key => {
             key.style.backgroundColor = '#ecdeaa';

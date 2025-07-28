@@ -34,9 +34,23 @@ const sqlConfig = {
   }
 };
 
+async function connectToDatabase() {
+  try {
+    await sql.connect(sqlConfig);
+    console.log('Connected to database');
+  } catch (error) {
+    console.error('Error connecting to database:', error);
+  }
+}
+
+connectToDatabase();
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+
+// Add JSON body parsing middleware
+app.use(express.json());
 
 const PORT = process.env.PORT || process.env.WEBSITES_PORT || 3000;
 
@@ -85,10 +99,88 @@ passport.use(new GoogleStrategy({
     callbackURL: "http://localhost:3000/auth/google/callback" 
     //callbackURL: "https://typing-game.azurewebsites.net/auth/google/callback"
 },
-function(accessToken, refreshToken, profile, done) {
-    // No MSSQL logic, just pass profile
+async function(accessToken, refreshToken, profile, done) {
+    // No MSSQL logic, just pass 
+    const email = profile.emails[0].value;
+    const username = profile.displayName;
+    const googleId = profile.id
+
+    const emailRequest = new sql.Request();
+    emailRequest.input('email', sql.NVarChar, email);
+    const emailResult = await emailRequest.query(`SELECT * FROM Users WHERE Email = @email`);
+
+    if (emailResult.recordset.length > 0) {
+      console.log('Logging in with existing account');
+    } else {
+      console.log('Creating new account');
+      const createRequest = new sql.Request();
+      createRequest.input('email', sql.NVarChar, email);
+      createRequest.input('username', sql.NVarChar, username);
+      createRequest.input('googleId', sql.NVarChar, googleId)
+      await createRequest.query(`INSERT INTO Users (Email, Username, Creation_Date, googleId) VALUES (@email, @username, GETDATE(), @googleId)`);
+      
+    }
     return done(null, profile);
 }));
+
+app.get('/api/profileDashboard', async function loadProfile(req, res) {
+  if (req.isAuthenticated()) {
+    try {
+      const email = req.user.emails[0].value;
+      const profilePicture = req.user.photos[0].value;
+
+      // get user data based on their email
+      const dataRequest = new sql.Request();
+      dataRequest.input('email', sql.NVarChar, email);
+      const dataResult = await dataRequest.query(`SELECT * FROM Users WHERE Email = @email`);
+      const userData = dataResult.recordset[0];
+
+      res.json({
+        username: userData.Username,
+        creationDate: userData.Creation_Date,
+        profilePicture: profilePicture,
+        totalTypingTime: userData.total_seconds_typed || 0
+      });
+    } catch (error) {
+      console.error('Error getting profile data:', error);
+      res.status(500).json({ error: 'Error getting profile data' });
+    }
+  } else {
+    res.status(401).json({ error: 'Not logged in' });
+  }
+});
+
+app.post('/api/updateTypingTime', async (req, res) => {
+  console.log('updateTypingTime endpoint hit');
+  console.log('Request body:', req.body);
+  console.log('Is authenticated:', req.isAuthenticated());
+  
+  if (req.isAuthenticated()) {
+    try {
+      const timeTyped = req.body.timeTyped;
+      const email = req.user.emails[0].value;
+      
+      console.log('Updating typing time:', timeTyped, 'seconds for email:', email);
+
+      const updateTypingTimeRequest = new sql.Request();
+      updateTypingTimeRequest.input('email', sql.NVarChar, email);
+      updateTypingTimeRequest.input('timeTyped', sql.Int, timeTyped);
+      
+      console.log('About to run SQL query...');
+      await updateTypingTimeRequest.query(`UPDATE Users SET total_seconds_typed = ISNULL(total_seconds_typed, 0) + @timeTyped WHERE Email = @email`);
+      
+      console.log('SQL query completed successfully');
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating typing time:', error);
+      console.error('Error details:', error.message);
+      res.status(500).json({ error: 'Error updating typing time', details: error.message });
+    }
+  } else {
+    console.log('User not authenticated');
+    res.status(401).json({ error: 'Not logged in' });
+  }
+})
 
 app.get('/', (req, res) => {
     if (req.isAuthenticated()) {
