@@ -417,7 +417,8 @@ io.on('connection', (socket) => {
         player1: player1,
         player2: player2,
         words: matchWords,
-        createdAt: new Date()
+        createdAt: new Date(),
+        winnerDeclared: false
       };
       
       // Join both players to the room
@@ -480,7 +481,7 @@ io.on('connection', (socket) => {
     const privateRoomId = socket.roomId;
     const room = privateRooms[privateRoomId];
     const username = socket.user.displayName;
-    
+   
     if (room && room.matchData && room.matchData.playerStats[username]) {
       const currentStats = room.matchData.playerStats[username];
       

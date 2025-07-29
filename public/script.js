@@ -613,9 +613,10 @@ socket.on('matchFound', (data) => {
     console.log('Match found!');
     console.log('Your opponent is:', data.opponent);
     console.log('Room ID:', data.roomId);
-    const queueMenu = document.getElementById('queueMenu');
+    const pvpMenu = document.getElementById('pvpmenu');
     const animationOverlay = document.getElementById('queue-animation-overlay');
     const match = document.getElementById('match');
+    
 
     const oppLabel = document.querySelector('#oppTypingArea .typing-area-label');
     
@@ -625,7 +626,7 @@ socket.on('matchFound', (data) => {
     if (match) {
         // Hide the queue menu and show the match container
         if (animationOverlay) animationOverlay.classList.remove('active');
-        queueMenu.style.display = 'none';
+        pvpMenu.style.display = 'none';
         const queueBackBtn = document.getElementById('queueBackBtn');
         if (queueBackBtn) queueBackBtn.classList.remove('active');
         match.style.display = 'block';
@@ -866,36 +867,24 @@ document.addEventListener('keydown', function(event) {
     if (!activeContainer || activeContainer.style.display === 'none') {
         return; // Don't process keys if not in typing mode
     }
+
+    // --- FIX: Define currentSpan here so it's always available in the function's scope ---
+    let currentSpan;
     
     // If the test is complete, don't process any key presses
     if (!startTime) {
         startTime = new Date();
     }
     
-    if (event.key.length === 1) {
-        userTyped += event.key;
-    }
-    else if (event.key === 'Backspace') {
-        userTyped = userTyped.slice(0, -1);
-    }
-    else if (event.key === ' ') {
-        userTyped += ' ';
-    }
-    
-    isTyping = true;
-
-    // Track typing time (after isTyping is set to true)
-    let keystroke = new Date();
-    if (lastKeystroke && (keystroke - lastKeystroke) < 1000) {
-        timeTyped += (keystroke - lastKeystroke) / 1000;
-    }
-    lastKeystroke = keystroke;
-
     if (event.key === 'Backspace') {
         if (keysPressed > 0) {
             keysPressed--;
             const prevSpan = activeContainer.querySelector(`#char-${keysPressed}`);
             if (prevSpan) {
+                // If the deleted character was correct, decrement the character count.
+                if (prevSpan.classList.contains('matched')) {
+                    correctChars--;
+                }
                 prevSpan.classList.remove("matched", "unmatched");
                 const cursor = activeContainer.querySelector('.cursor');
                 if (cursor && prevSpan.parentNode) {
@@ -903,39 +892,51 @@ document.addEventListener('keydown', function(event) {
                 }
             }
         }
-        return;
-    }
-    
-    const currentSpan = activeContainer.querySelector(`#char-${keysPressed}`);
-    if (!currentSpan) return;
-    
-    let currentLetter = currentSpan.textContent;
-    if (currentLetter.charCodeAt(0) === 160) { // 160 is the char code for &nbsp;
-        currentLetter = ' ';
-    }
-    
-    // Debug logging for spaces
-    if (event.key === ' ' || currentLetter === ' ') {
-        console.log('Space detected:', {
-            eventKey: `"${event.key}"`,
-            currentLetter: `"${currentLetter}"`,
-            eventKeyLength: event.key.length,
-            currentLetterLength: currentLetter.length,
-            isMatch: event.key === currentLetter
-        });
-    }
-    
-    if (event.key === currentLetter) {
-        currentSpan.classList.add("matched");
-        colorKey('#4CAF50', event.key);
-        correctChars++; // Increment correctChars for accurate typing
-    } else {
-        currentSpan.classList.add("unmatched");
-        colorKey('#F44336', event.key);
+        // By removing the 'return' statement here, the code will now
+        // fall through to the word recalculation logic at the end of the function.
+    } else if (event.key.length === 1) { // Regular character press
+        // Re-assign currentSpan here for a regular key press.
+        currentSpan = activeContainer.querySelector(`#char-${keysPressed}`);
+        if (!currentSpan) {
+            return;
+        }
+        
+        let currentLetter = currentSpan.textContent;
+        if (currentLetter.charCodeAt(0) === 160) {
+            currentLetter = ' ';
+        }
+        
+        if (event.key === currentLetter) {
+            currentSpan.classList.add("matched");
+            colorKey('#4CAF50', event.key);
+            correctChars++;
+        } else {
+            currentSpan.classList.add("unmatched");
+            colorKey('#F44336', event.key);
+        }
+
+        keysPressed++;
     }
 
-    keysPressed++;
-    
+    // THIS IS THE SINGLE SOURCE OF TRUTH. IT NOW RUNS AFTER BACKSPACE.
+    const words = activeContainer.querySelectorAll('.word');
+    correctWords = 0;
+    words.forEach(word => {
+        const chars = word.querySelectorAll('.char:not(.space)');
+        if (chars.length === 0) return;
+
+        let allCharsMatched = true;
+        chars.forEach(char => {
+            if (!char.classList.contains('matched')) {
+                allCharsMatched = false;
+            }
+        });
+        
+        if (allCharsMatched) {
+            correctWords++;
+        }
+    });
+
     const nextSpan = activeContainer.querySelector(`#char-${keysPressed}`);
     const cursor = activeContainer.querySelector('.cursor');
     if (nextSpan && cursor && nextSpan.parentNode) {
@@ -944,7 +945,8 @@ document.addEventListener('keydown', function(event) {
 
     // Send current typing progress to opponent (only in PvP mode)
     if (pvpPlayerContainer && activeContainer === pvpPlayerContainer) {
-        const wasCorrect = currentSpan.classList.contains('matched');
+        // This check now works safely even after a backspace, where currentSpan will be undefined.
+        const wasCorrect = currentSpan && currentSpan.classList.contains('matched');
         
         // Update player's progress counter
         const playerProgressElement = document.getElementById('player-progress');
