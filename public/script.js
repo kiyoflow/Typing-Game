@@ -84,8 +84,22 @@ function showProfilePopup() {
 
             playerUsername.textContent = data.username;
             creationDate.textContent = `JOINED ${new Date(data.creationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`.toUpperCase();
-            playerProfilePicture.innerHTML = `<img src="${data.profilePicture}" alt="Profile Picture">`;
-            aboutMe.textContent = `About ${data.username}`;
+            // Use the proxy route for the profile picture to avoid CORS issues
+            const profileImg = document.createElement('img');
+            profileImg.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            profileImg.alt = 'Profile Picture';
+            profileImg.onerror = function() {
+                // Fallback: try loading the original URL directly if proxy fails
+                this.src = data.profilePicture;
+                this.onerror = function() {
+                    // If both fail, hide the image container or show a placeholder
+                    console.warn('Failed to load profile picture');
+                    this.style.display = 'none';
+                };
+            };
+            playerProfilePicture.innerHTML = '';
+            playerProfilePicture.appendChild(profileImg);
+            aboutMe.textContent = `About me`;
             
             // Format and display total typing time
             function formatTime(totalSeconds) {
@@ -127,6 +141,14 @@ const profileCloseBtn = document.getElementById('profileCloseBtn');
 if (profileCloseBtn) {
     profileCloseBtn.addEventListener('click', () => {
         hideProfilePopup();
+    });
+}
+
+// View full profile button
+const viewFullProfileBtn = document.getElementById('viewFullProfileBtn');
+if (viewFullProfileBtn) {
+    viewFullProfileBtn.addEventListener('click', () => {
+        window.location.href = 'fullProfile.html';
     });
 }
 
@@ -247,6 +269,20 @@ function endTest(){
 
     // Show practice results overlay
     showPracticeResultsOverlay();
+
+    fetch('api/incrementPracticeTestsCompleted', {
+        method: 'POST'
+        // No headers or body are needed. The server knows who the user is
+        // from their session cookie.
+    })
+    .then(response => {
+        if (!response.ok) {
+            console.error('Failed to increment practice tests completed');
+        }
+    })
+    .catch(error => {
+        console.error('Error incrementing practice tests completed:', error);
+    });
 }
 
 function showPracticeResultsOverlay() {

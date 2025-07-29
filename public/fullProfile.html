@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Username • Something</title>
+    <link rel="stylesheet" href="fullProfile.css">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="nav">
+        <div id="playerSearch">
+            <input type="text" placeholder="enter a username to view their profile...">
+        </div>
+    </div>
+    
+    <div id="profile-container">
+        <div id="center-wrapper">
+
+            <div id="main-content">
+                <!-- LEFT COLUMN -->
+                <div id="left-column">
+                    <div id="username"></div>
+                    <div id="creationDate"></div>
+                    <div id="pfp">
+                        <img id="profile-picture" alt="profile picture">
+                    </div>
+                </div>
+
+                <!-- CENTER COLUMN for summary stats -->
+                <div id="summary-stats">
+                    <div class="stat">
+                        <div class="stat-label">time typing</div>
+                        <div id="timeTyping" class="stat-value">--:--:--</div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="stat">
+                        <div class="stat-label">tests completed</div>
+                        <div id="practiceTestsCompleted" class="stat-value"">--</div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="stat">
+                        <div class="stat-label">pvp matches won</div>
+                        <div class="stat-value" id="summary-pvp-wins">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN (now below main content) -->
+            <div id="bottom-content">
+                <div id="aboutme">
+                    <div class="section-header">★ ABOUT ME</div>
+                    <div class="about-content"></div>
+                </div>
+                <div id="practiceStats">
+                    <div class="section-header">📝 PRACTICE STATS</div>
+                    <div class="stats-content"></div>
+                </div>
+                <div id="pvpStats">
+                    <div class="section-header">⚔️ PVP STATS</div>
+                    <div class="stats-content"></div>
+                </div>
+                <div id="matchhistory">
+                    <div class="section-header">📋 LATEST NEWS</div>
+                    <div class="stats-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        function formatTime(totalSeconds) {
+            let hours = Math.floor(totalSeconds / 3600);
+            let minutes = Math.floor((totalSeconds % 3600) / 60);
+            let seconds = totalSeconds % 60;
+                            // Add leading zeros
+            hours = hours.toString().padStart(2, '0');
+            minutes = minutes.toString().padStart(2, '0');
+            seconds = seconds.toString().padStart(2, '0');                
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        fetch('/api/userprofile')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('username').textContent = data.username;
+            document.getElementById('profile-picture').src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            document.getElementById('creationDate').textContent = `JOINED ${new Date(data.creationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`.toUpperCase();
+            document.getElementById('timeTyping').textContent = formatTime(data.totalTypingTime || 0);
+            document.getElementById('practiceTestsCompleted').textContent = data.practiceTestsCompleted || 0;
+        })
+    </script>
+</body>
+</html>

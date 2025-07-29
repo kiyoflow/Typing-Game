@@ -139,7 +139,8 @@ app.get('/api/profileDashboard', async function loadProfile(req, res) {
         username: userData.Username,
         creationDate: userData.Creation_Date,
         profilePicture: profilePicture,
-        totalTypingTime: userData.total_seconds_typed || 0
+        totalTypingTime: userData.total_seconds_typed || '--:--:--',
+        practiceTestsCompleted: userData.practiceTestsCompleted || '-'
       });
     } catch (error) {
       console.error('Error getting profile data:', error);
@@ -250,6 +251,52 @@ app.get('/proxy-image', async (req, res) => {
         console.error('Error proxying image:', error);
         res.status(500).send('Error loading image');
     }
+});
+
+ app.get(`/api/userprofile`, async (req, res) => {  
+  const email = req.user.emails[0].value;
+  let profilePicture = req.user.photos[0].value;
+
+  // Modify the URL to request a larger image size (e.g., 512px)
+  if (profilePicture.includes('googleusercontent.com')) {
+    profilePicture = profilePicture.replace(/=s\d+.*$/, '=s512');
+  }
+
+  const usersRequest = new sql.Request();
+  usersRequest.input('email', sql.NVarChar, email);
+  // Make sure to select the correct column from your database
+  const usersResult = await usersRequest.query(`SELECT * FROM Users WHERE Email = @email`);
+    
+  if (usersResult.recordset.length === 0) {
+    res.status(404).json({ error: 'User not found' });
+   }
+  
+  const userData = usersResult.recordset[0];
+  res.json({
+    username: userData.Username,
+    profilePicture: profilePicture,
+    creationDate: userData.Creation_Date,
+    totalTypingTime: userData.total_seconds_typed || '--:--:--',
+    practiceTestsCompleted: userData.practiceTestsCompleted || '-' // Use the correct property name
+  });
+})
+
+
+app.post('/api/incrementPracticeTestsCompleted', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: 'Not logged in' });
+    return;
+  }
+  try {
+    const email = req.user.emails[0].value;
+    const updateTestsCompletedRequest = new sql.Request();
+    updateTestsCompletedRequest.input('email', sql.NVarChar, email);
+    await updateTestsCompletedRequest.query('UPDATE Users SET practiceTestsCompleted = ISNULL(practiceTestsCompleted, 0) + 1 WHERE Email = @email');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error incrementing practice tests completed:', error);
+    res.status(500).json({ error: 'Error incrementing practice tests completed' });
+  }
 });
 
 // Serve static files from public directory (moved after routes to prevent bypassing route handlers)

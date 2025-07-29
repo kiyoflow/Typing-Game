@@ -1,0 +1,154 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f0e8ca;
+    color: #2c3e50;
+    font-family: 'Ubuntu Mono', monospace;
+}
+
+#nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end; /* Align search bar to the right */
+    align-items: center;
+    height: 60px;
+    padding: 0 30px;
+    border-bottom: 3px solid #2c3e50;
+    background-color: #f0e8ca;
+}
+
+#playerSearch input {
+    min-width: 350px;
+    background-color: #ecdda5;
+    border: 3px solid #2c3e50;
+    border-radius: 8px;
+    padding: 10px 15px;
+    color: #2c3e50;
+    font-family: 'Ubuntu Mono', monospace;
+}
+
+#profile-container {
+    padding-top: 120px;
+}
+
+#center-wrapper {
+    max-width: 1200px; /* Set a max-width for the content */
+    margin: 0 auto; /* This centers the wrapper horizontally */
+}
+
+#main-content {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* LEFT COLUMN */
+#left-column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    flex-basis: 250px; 
+    flex-shrink: 0;
+}
+
+#username {
+    font-size: 28px;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding-left: 5px;
+    color: #2c3e50;
+}
+
+#pfp {
+    width: 100%;
+    padding-top: 100%; /* This maintains a 1:1 aspect ratio */
+    position: relative; /* Needed for absolute positioning of the image */
+    background-color: #4CAF50;
+    border-radius: 15px;
+    border: 4px solid #2c3e50;
+    overflow: hidden; /* Important: crops the image within the container */
+}
+
+#profile-picture {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* This is the key: scales image to fill the container without distortion */
+}
+
+
+#bottom-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+#summary-stats {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #ecdda5;
+    border-radius: 12px;
+    padding: 20px 40px;
+    border: 3px solid #2c3e50;
+    width: 100%;
+    min-height: 150px; /* Increased height */
+    margin-top: 70px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+    text-transform: lowercase;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 36px;
+    font-weight: bold;
+    color: #2c3e50;
+    line-height: 1;
+}
+
+.divider {
+    width: 3px;
+    height: 60px;
+    background-color: #d3c8a9;
+    border-radius: 2px;
+}
+
+#right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+#aboutme, #practiceStats, #pvpStats, #matchhistory {
+    background-color: #ecdda5;
+    border-radius: 12px;
+    padding: 20px;
+    border: 3px solid #2c3e50;
+}
+
+.section-header {
+    font-weight: bold;
+    margin-bottom: 100px;
+} 
