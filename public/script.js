@@ -132,9 +132,12 @@ function hideProfilePopup() {
     }, 300);
 }
 
-profile.addEventListener('click', () => {
-    showProfilePopup();
-});
+const profile = document.getElementById('profile');
+if (profile) {
+    profile.addEventListener('click', () => {
+        showProfilePopup();
+    });
+}
 
 // Profile close button
 const profileCloseBtn = document.getElementById('profileCloseBtn');
@@ -552,16 +555,16 @@ function setupPvPSocketEvents() {
         
         if (data.correctWords !== undefined) {
             if (opponentProgressElement) {
-                opponentProgressElement.textContent = `${data.correctWords}/50`;
+                opponentProgressElement.textContent = `${data.correctWords}/25`;
                 console.log('Updated opponent progress to:', data.correctWords);
             } else {
                 console.log('Opponent progress element not found');
             }
         } else {
             console.log('No correctWords in opponent data');
-            // Set to 0/50 as fallback
+            // Set to 0/25 as fallback
             if (opponentProgressElement) {
-                opponentProgressElement.textContent = '0/50';
+                opponentProgressElement.textContent = '0/25';
             }
         }
         
@@ -633,7 +636,11 @@ socket.on('matchFound', (data) => {
         
         // Update opponent label with their name
         if (oppLabel) {
-            oppLabel.innerHTML = `${data.opponent} <span id="opponent-progress">0/50</span>`;
+            oppLabel.innerHTML = `${data.opponent} <span id="opponent-progress">0/25</span>`;
+        }
+        const playerProgressElement = document.getElementById('player-progress');
+        if (playerProgressElement) {
+            playerProgressElement.textContent = '0/25';
         }
         
         // Hide practice mode elements
@@ -951,7 +958,7 @@ document.addEventListener('keydown', function(event) {
         // Update player's progress counter
         const playerProgressElement = document.getElementById('player-progress');
         if (playerProgressElement) {
-            playerProgressElement.textContent = `${correctWords}/50`;
+            playerProgressElement.textContent = `${correctWords}/25`;
         }
         
         const progressData = {
@@ -983,7 +990,7 @@ document.addEventListener('keydown', function(event) {
     const isPrivateMode = privatePlayerContainer && activeContainer === privatePlayerContainer;
 
     // --- PvP WIN CONDITION (check first) ---
-    if (isPvPMode && correctWords >= 50) {
+    if (isPvPMode && correctWords >= 25) {
         handlePlayerFinish();
         return; // Exit early, don't check the last word logic
     }
@@ -1040,8 +1047,12 @@ document.addEventListener('keydown', function(event) {
                     privateMatchProgressInterval = null;
                 }
             } else {
-                // This handles practice mode
-                endTest();
+                // This handles practice mode or a finished PvP match
+                if (isPvPMode) {
+                    handlePlayerFinish();
+                } else {
+                    endTest();
+                }
             }
         }
     }
@@ -1424,12 +1435,14 @@ window.onload = function() {
 
             if (acceptBtn) {
                 acceptBtn.onclick = () => {
+                    console.log('Accept button clicked for room:', data.privateRoomId);
                     if (!popup) return;
                     inRoom = true;
                     inviteQueue = [];
                     invitePopupOpen = false;
 
                     popup.classList.remove('show');
+                    console.log('Sending acceptInvite event');
                     socket.emit('acceptInvite', {privateRoomId: data.privateRoomId});
                 }
             }
@@ -1469,6 +1482,7 @@ window.onload = function() {
 
 // Handle redirect to private room after accepting invite
 socket.on('redirectToRoom', (roomId) => {
+    console.log('Received redirectToRoom event for room:', roomId);
     window.location.href = `/privatematch.html?room=${roomId}&redirected=true`;
             
 });

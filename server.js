@@ -139,7 +139,7 @@ app.get('/api/profileDashboard', async function loadProfile(req, res) {
         username: userData.Username,
         creationDate: userData.Creation_Date,
         profilePicture: profilePicture,
-        totalTypingTime: userData.total_seconds_typed || '--:--:--',
+        totalTypingTime: userData.total_seconds_typed || 0,
         practiceTestsCompleted: userData.practiceTestsCompleted || '-'
       });
     } catch (error) {
@@ -276,8 +276,9 @@ app.get('/proxy-image', async (req, res) => {
     username: userData.Username,
     profilePicture: profilePicture,
     creationDate: userData.Creation_Date,
-    totalTypingTime: userData.total_seconds_typed || '--:--:--',
-    practiceTestsCompleted: userData.practiceTestsCompleted || '-' // Use the correct property name
+    totalTypingTime: userData.total_seconds_typed || 0, // FIX: Send a number (0) as the default
+    practiceTestsCompleted: userData.practiceTestsCompleted || 0,
+    pvpWins: userData.pvp_wins || 0
   });
 })
 
@@ -409,8 +410,8 @@ io.on('connection', (socket) => {
       // Create a unique room for this match
       const roomId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Generate random words for this match
-      const matchWords = getRandomWords(100); // Generate 100 random words for the pvp match
+      // Generate 50 random words for this PvP match.
+      const matchWords = getRandomWords(50);
       
       // Store match information
       matches[roomId] = {
@@ -450,11 +451,31 @@ io.on('connection', (socket) => {
   });
 
   // Handle a player finishing the race
-  socket.on('playerFinished', () => {
+  socket.on('playerFinished', async () => {
     const roomId = socket.roomId;
     if (!roomId || !matches[roomId]) return;
 
     const match = matches[roomId];
+
+    // --- Winner Stat Update Logic ---
+    if (!match.winnerDeclared) {
+        match.winnerDeclared = true; // Set the lock.
+        try {
+            const email = socket.user.emails[0].value;
+            const updateRequest = new sql.Request();
+            updateRequest.input('email', sql.NVarChar, email);
+            await updateRequest.query(`
+                UPDATE Users 
+                SET pvp_wins = ISNULL(pvp_wins, 0) + 1 
+                WHERE Email = @email
+            `);
+            console.log(`Incremented pvp_wins for ${socket.user.displayName}`);
+        } catch (error) {
+            console.error('Error updating pvp_wins:', error);
+        }
+    }
+    // --- End of Stat Update Logic ---
+
     const winnerId = socket.id;
     
     // Determine the loser's ID
@@ -570,13 +591,10 @@ io.on('connection', (socket) => {
       privateRooms[privateRoomId] = {
         creator: socket.user.displayName,
         createdAt: new Date(),
-        players: [{ username: socket.user.displayName, socketId: socket.id }] // Start with the new player object structure.
+        players: [] // Empty players list - creator will be added when the new page loads
       };
       
-      // Join the creator to the room
-      socket.join(privateRoomId);
-      socket.roomId = privateRoomId; // Correctly track the room ID
-      
+      // Don't join the creator to the room here - they'll join when the new page loads
       socket.emit('privateRoomCreated', privateRoomId);
   });
 
@@ -600,6 +618,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('acceptInvite', (data) => {
+    console.log('acceptInvite received from:', socket.user?.displayName, 'for room:', data.privateRoomId);
     const privateRoomId = data.privateRoomId;
     const roomInfo = privateRooms[privateRoomId];
 
@@ -607,7 +626,10 @@ io.on('connection', (socket) => {
     // The client will then emit 'getRoomPlayers' upon loading the new page,
     // which is the single, reliable source of truth for adding a player.
     if (roomInfo && socket.user) {
+      console.log('Sending redirectToRoom event to:', socket.user.displayName);
       socket.emit('redirectToRoom', privateRoomId);
+    } else {
+      console.log('Room not found or user not authenticated. Room exists:', !!roomInfo, 'User exists:', !!socket.user);
     }
   });
 

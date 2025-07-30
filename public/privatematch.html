@@ -235,19 +235,28 @@
 
             const animationContainer = document.querySelector('.animationContainer');
             
+            console.log('Animation container found:', animationContainer);
+            console.log('isRedirected:', isRedirected);
+            
             if (animationContainer) {
                 if (isRedirected) {
                     // Skip animation if redirected from accepting invite
+                    console.log('Skipping animation - redirected from invite');
                     animationContainer.style.display = 'none';
                 } else {
                     // Hide animation after 3 seconds with fade out (for room creators)
+                    console.log('Starting 3-second timer for animation fadeout');
                     setTimeout(() => {
+                        console.log('Adding fade-out class');
                         animationContainer.classList.add('fade-out');
                         setTimeout(() => {
+                            console.log('Hiding animation container');
                             animationContainer.style.display = 'none';
                         }, 1000); // Wait for fade transition to complete
                     }, 3000);
                 }
+            } else {
+                console.log('Animation container not found!');
             }
         });
 
