@@ -12,6 +12,8 @@ function menu(){
     const privateMatchButton = document.getElementById('privateMatch')
     const profile = document.getElementById('profile');
     
+    if (profile) profile.style.display = 'flex';
+    
     // All these elements should exist on index.html - if they don't, something's wrong
     if (menu) menu.style.display = 'block';
     if (menuContent) {
@@ -322,6 +324,7 @@ function restartTest() {
 
 // PvP-specific end race function
 function handlePlayerFinish() {
+    console.log('handlePlayerFinish called - player won!');
     calculateStats();
 
     // Set the PvP race complete flag to prevent further key presses
@@ -329,6 +332,7 @@ function handlePlayerFinish() {
     
     // Notify the server that this player has finished.
     // The server will then broadcast the 'raceOver' event to all players.
+    console.log('Sending playerFinished event to server');
     socket.emit('playerFinished');
 } 
 
@@ -991,6 +995,7 @@ document.addEventListener('keydown', function(event) {
 
     // --- PvP WIN CONDITION (check first) ---
     if (isPvPMode && correctWords >= 25) {
+        console.log('PvP win condition met! Correct words:', correctWords);
         handlePlayerFinish();
         return; // Exit early, don't check the last word logic
     }

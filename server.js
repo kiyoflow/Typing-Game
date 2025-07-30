@@ -452,27 +452,35 @@ io.on('connection', (socket) => {
 
   // Handle a player finishing the race
   socket.on('playerFinished', async () => {
+    console.log(`playerFinished received from ${socket.user?.displayName}`);
     const roomId = socket.roomId;
-    if (!roomId || !matches[roomId]) return;
+    if (!roomId || !matches[roomId]) {
+        console.log('No room ID or match found:', roomId, !!matches[roomId]);
+        return;
+    }
 
     const match = matches[roomId];
 
     // --- Winner Stat Update Logic ---
     if (!match.winnerDeclared) {
+        console.log('Declaring winner and updating pvp_wins for:', socket.user.displayName);
         match.winnerDeclared = true; // Set the lock.
         try {
             const email = socket.user.emails[0].value;
+            console.log('Updating database for email:', email);
             const updateRequest = new sql.Request();
             updateRequest.input('email', sql.NVarChar, email);
-            await updateRequest.query(`
+            const result = await updateRequest.query(`
                 UPDATE Users 
                 SET pvp_wins = ISNULL(pvp_wins, 0) + 1 
                 WHERE Email = @email
             `);
-            console.log(`Incremented pvp_wins for ${socket.user.displayName}`);
+            console.log(`Successfully incremented pvp_wins for ${socket.user.displayName}. Rows affected:`, result.rowsAffected);
         } catch (error) {
             console.error('Error updating pvp_wins:', error);
         }
+    } else {
+        console.log('Winner already declared for this match');
     }
     // --- End of Stat Update Logic ---
 
