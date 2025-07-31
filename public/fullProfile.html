@@ -27,40 +27,59 @@
                     </div>
                 </div>
 
-                <!-- CENTER COLUMN for summary stats -->
-                <div id="summary-stats">
-                    <div class="stat">
-                        <div class="stat-label">time typing</div>
-                        <div id="timeTyping" class="stat-value">--:--:--</div>
+                <!-- RIGHT COLUMN -->
+                <div id="right-column">
+                    <!-- CENTER COLUMN for summary stats -->
+                    <div id="summary-stats">
+                        <div class="stat">
+                            <div class="stat-label">time typing</div>
+                            <div id="timeTyping" class="stat-value">--:--:--</div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="stat">
+                            <div class="stat-label">tests completed</div>
+                            <div id="practiceTestsCompleted" class="stat-value"">--</div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="stat">
+                            <div class="stat-label">pvp matches won</div>
+                            <div class="stat-value" id="pvpWins">--</div>
+                        </div>
                     </div>
-                    <div class="divider"></div>
-                    <div class="stat">
-                        <div class="stat-label">tests completed</div>
-                        <div id="practiceTestsCompleted" class="stat-value"">--</div>
-                    </div>
-                    <div class="divider"></div>
-                    <div class="stat">
-                        <div class="stat-label">pvp matches won</div>
-                        <div class="stat-value" id="pvpWins">--</div>
+
+                    <!-- ABOUT ME SECTION -->
+                    <div id="aboutme">
+                        <div class="section-header">★ ABOUT ME</div>
+                        <div class="about-content"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN (now below main content) -->
+            <!-- BOTTOM CONTENT -->
             <div id="bottom-content">
-                <div id="aboutme">
-                    <div class="section-header">★ ABOUT ME</div>
-                    <div class="about-content"></div>
+                <div class="wpm-grid">
+                    <div class="wpm-square">
+                        <div class="wpm-label">5 Words</div>
+                        <div class="wpm-value" id="best5WordWpm">--</div>
+                    </div>
+                    <div class="wpm-square">
+                        <div class="wpm-label">10 Words</div>
+                        <div class="wpm-value" id="best10WordWpm">--</div>
+                    </div>
+                    <div class="wpm-square">
+                        <div class="wpm-label">25 Words</div>
+                        <div class="wpm-value" id="best25WordWpm">--</div>
+                    </div>
+                    <div class="wpm-square">
+                        <div class="wpm-label">50 Words</div>
+                        <div class="wpm-value" id="best50WordWpm">--</div>
+                    </div>
+                    <div class="wpm-square">
+                        <div class="wpm-label">PvP</div>
+                        <div class="wpm-value" id="bestPvpWpm">--</div>
+                    </div>
                 </div>
-                <div id="practiceStats">
-                    <div class="section-header">📝 PRACTICE STATS</div>
-                    <div class="stats-content"></div>
-                </div>
-                <div id="pvpStats">
-                    <div class="section-header">⚔️ PVP WINS</div>
-                    <div id="pvpWins" class="stats-content"></div>
-                </div>
-                <div id="matchhistory">
+                <div id="news">
                     <div class="section-header">📋 LATEST NEWS</div>
                     <div class="stats-content"></div>
                 </div>
@@ -90,7 +109,22 @@
             document.getElementById('timeTyping').textContent = formatTime(data.totalTypingTime || 0);
             document.getElementById('practiceTestsCompleted').textContent = data.practiceTestsCompleted || '-';
             document.getElementById('pvpWins').textContent = data.pvpWins || '-';
+            
+            // Update best WPM values
+            document.getElementById('best5WordWpm').textContent = data.best5WordWpm || '--';
+            document.getElementById('best10WordWpm').textContent = data.best10WordWpm || '--';
+            document.getElementById('best25WordWpm').textContent = data.best25WordWpm || '--';
+            document.getElementById('best50WordWpm').textContent = data.best50WordWpm || '--';
+            document.getElementById('bestPvpWpm').textContent = data.bestPvpWpm || '--';
+            
+            // Show content after everything is loaded
+            document.body.classList.add('loaded');
         })
+        .catch(error => {
+            console.error('Error loading profile:', error);
+            // Show content even if there's an error
+            document.body.classList.add('loaded');
+        });
     </script>
 </body>
 </html>

@@ -278,7 +278,12 @@ app.get('/proxy-image', async (req, res) => {
     creationDate: userData.Creation_Date,
     totalTypingTime: userData.total_seconds_typed || 0, // FIX: Send a number (0) as the default
     practiceTestsCompleted: userData.practiceTestsCompleted || 0,
-    pvpWins: userData.pvp_wins || 0
+    pvpWins: userData.pvp_wins || 0,
+    best5WordWpm: userData['5_words_wpm'] || '-',
+    best10WordWpm: userData['10_words_wpm'] || '-',
+    best25WordWpm: userData['25_words_wpm'] || '-',
+    best50WordWpm: userData['50_words_wpm'] || '-',
+    bestPvpWpm: userData['pvp_best_wpm'] || '-'
   });
 })
 
@@ -297,6 +302,62 @@ app.post('/api/incrementPracticeTestsCompleted', async (req, res) => {
   } catch (error) {
     console.error('Error incrementing practice tests completed:', error);
     res.status(500).json({ error: 'Error incrementing practice tests completed' });
+  }
+});
+
+app.post('/api/updateBestWpm', async (req, res) => {
+  console.log('updateBestWpm endpoint hit');
+  console.log('Request body:', req.body);
+  console.log('Is authenticated:', req.isAuthenticated());
+  
+  if (!req.isAuthenticated()) {
+    console.log('User not authenticated');
+    res.status(401).json({ error: 'Not logged in' });
+    return;
+  }
+  
+  try {
+    const email = req.user.emails[0].value;
+    const {mode, wordCount, wpm} = req.body;
+    
+    console.log('Updating best WPM:', mode, wordCount, wpm, 'for email:', email);
+
+    let columnName;
+    if (mode === 'practice') {
+      if (wordCount === 5) {
+        columnName = '5_words_wpm';
+      } else if (wordCount === 10) {
+        columnName = '10_words_wpm';
+      } else if (wordCount === 25) {
+        columnName = '25_words_wpm';
+      } else if (wordCount === 50) {
+        columnName = '50_words_wpm';
+      }
+    } else if (mode === 'pvp') {
+      columnName = 'pvp_best_wpm';
+    }
+
+    console.log('Column name determined:', columnName);
+
+    const updateBestWpmRequest = new sql.Request();
+    updateBestWpmRequest.input('email', sql.NVarChar, email);
+    updateBestWpmRequest.input('wpm', sql.Int, req.body.wpm);
+    updateBestWpmRequest.input('wordCount', sql.Int, req.body.wordCount);
+
+    console.log('About to run SQL query for column:', columnName);
+    console.log('SQL query:', `UPDATE Users SET [${columnName}] = CASE WHEN ISNULL([${columnName}], 0) < @wpm THEN @wpm ELSE [${columnName}] END WHERE Email = @email`);
+    
+    const result = await updateBestWpmRequest.query(`UPDATE Users SET [${columnName}] = CASE WHEN ISNULL([${columnName}], 0) < @wpm THEN @wpm ELSE [${columnName}] END WHERE Email = @email`);
+    
+    console.log('SQL query completed successfully');
+    console.log('Rows affected:', result.rowsAffected);
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('Error updating best WPM:', error);
+    console.error('Error details:', error.message);
+    console.error('Full error object:', error);
+    res.status(500).json({ error: 'Error updating best WPM', details: error.message });
   }
 });
 

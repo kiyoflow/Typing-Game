@@ -243,6 +243,7 @@ function startPrivateMatchProgressTimer() {
 
 // end of test function (Practice Mode Only)
 function endTest(){
+    
     const endTime = new Date();
 
     typingTime = endTime - startTime;
@@ -253,6 +254,28 @@ function endTest(){
     accuracy = Math.floor((correctChars / (totalChars - 1)) * 100);
     accuracy = Math.min(accuracy, 100); // Cap accuracy at 100%     
     
+    fetch('/api/updateBestWpm', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            mode: 'practice',
+            wordCount: currentWordCount,
+            wpm: typingSpeed
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            console.error('Failed to update best WPM');
+        } else {
+            console.log('Best WPM updated successfully');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating best WPM:', error);
+    });
+
     // Reset all keyboard key colors
     document.querySelectorAll('.key').forEach(key => {
         key.style.backgroundColor = '#ecdeaa';
@@ -303,6 +326,10 @@ function showPracticeResultsOverlay() {
     if (practiceResults) {
         practiceResults.style.display = 'flex';
     }
+    
+    // Hide back button on results screen
+    const practiceBackBtn = document.getElementById('practice-back-btn');
+    if (practiceBackBtn) practiceBackBtn.style.display = 'none';
 }
 
 //Prac Mode Only
@@ -315,6 +342,10 @@ function restartTest() {
     practiceContainer.style.display = 'block';
     keyboard.style.display = 'block';
     
+    // Show back button again when restarting
+    const practiceBackBtn = document.getElementById('practice-back-btn');
+    if (practiceBackBtn) practiceBackBtn.style.display = 'block';
+    
     // Scroll back to top
     practiceContainer.scrollTop = 0;
     
@@ -326,6 +357,29 @@ function restartTest() {
 function handlePlayerFinish() {
     console.log('handlePlayerFinish called - player won!');
     calculateStats();
+
+    // Update best PvP WPM
+    fetch('/api/updateBestWpm', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            mode: 'pvp',
+            wordCount: 25,
+            wpm: typingSpeed
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            console.error('Failed to update best PvP WPM');
+        } else {
+            console.log('Best PvP WPM updated successfully');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating best PvP WPM:', error);
+    });
 
     // Set the PvP race complete flag to prevent further key presses
     pvpRaceComplete = true;
@@ -354,9 +408,24 @@ function calculateStats(){
         typingTime = endTime - startTime;
     }
 
-    typingSpeed = Math.floor((correctWords / typingTime) * 60000);
-    accuracy = Math.floor((correctChars / keysPressed) * 100);
-    accuracy = Math.min(accuracy, 100); // Cap accuracy at 100%
+    // Calculate WPM, handle edge cases
+    if (typingTime > 0 && correctWords >= 0) {
+        typingSpeed = Math.floor((correctWords / typingTime) * 60000);
+        // Ensure WPM is not NaN or Infinity
+        if (isNaN(typingSpeed) || !isFinite(typingSpeed)) {
+            typingSpeed = 0;
+        }
+    } else {
+        typingSpeed = 0;
+    }
+    
+    // Calculate accuracy, handle edge cases
+    if (keysPressed > 0 && correctChars >= 0) {
+        accuracy = Math.floor((correctChars / keysPressed) * 100);
+        accuracy = Math.min(accuracy, 100); // Cap accuracy at 100%
+    } else {
+        accuracy = 0;
+    }
 
     // Update the typing speed and accuracy in the PvP results overlay (only if elements exist)
     const typingSpeedElement = document.getElementById('typingSpeed');
@@ -471,8 +540,13 @@ function backToMenu() {
     if (queueButton) {
         queueButton.removeEventListener('click', queueClickHandler);
     }
-    // Leave queue
-    socket.emit('leaveQueue');
+    
+    // Only leave queue if we're actually in PvP mode
+    const matchElement = document.getElementById('match');
+    const pvpmenuElement = document.getElementById('pvpmenu');
+    if (matchElement && matchElement.style.display !== 'none' || pvpmenuElement && pvpmenuElement.style.display !== 'none') {
+        socket.emit('leaveQueue');
+    }
     
 
     
@@ -506,6 +580,29 @@ function setupPvPSocketEvents() {
         // This event is now received by both the winner and the loser at the same time.
         pvpRaceComplete = true; // Stop typing for both players
         calculateStats();
+        
+        // Update best PvP WPM for both winner and loser
+        fetch('/api/updateBestWpm', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                mode: 'pvp',
+                wordCount: 25,
+                wpm: typingSpeed
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.error('Failed to update best PvP WPM');
+            } else {
+                console.log('Best PvP WPM updated successfully');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating best PvP WPM:', error);
+        });
         
         // Stop typing time tracking
         stopTypingTimeTracking();
@@ -886,6 +983,15 @@ document.addEventListener('keydown', function(event) {
     if (!startTime) {
         startTime = new Date();
     }
+    
+    isTyping = true;
+
+    // Track typing time (after isTyping is set to true)
+    let keystroke = new Date();
+    if (lastKeystroke && (keystroke - lastKeystroke) < 1000) {
+        timeTyped += (keystroke - lastKeystroke) / 1000;
+    }
+    lastKeystroke = keystroke;
     
     if (event.key === 'Backspace') {
         if (keysPressed > 0) {
@@ -1366,6 +1472,14 @@ window.onload = function() {
         const oppKeyboard = document.getElementById('opp-keyboard');
         if (playerKeyboard) playerKeyboard.style.display = 'none';
         if (oppKeyboard) oppKeyboard.style.display = 'none';
+        
+        // Hide profile div in practice mode
+        const profileDiv = document.getElementById('profile');
+        if (profileDiv) profileDiv.style.display = 'none';
+        
+        // Show back button in practice mode
+        const practiceBackBtn = document.getElementById('practice-back-btn');
+        if (practiceBackBtn) practiceBackBtn.style.display = 'block';
         
         // Initialize the typing session
         resetTypingVariables();
