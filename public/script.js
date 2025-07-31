@@ -153,7 +153,17 @@ if (profileCloseBtn) {
 const viewFullProfileBtn = document.getElementById('viewFullProfileBtn');
 if (viewFullProfileBtn) {
     viewFullProfileBtn.addEventListener('click', () => {
-        window.location.href = 'fullProfile.html';
+        // Get the username from the profile data and redirect to the new URL format
+        fetch('/api/userprofile')
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = `/profile/${data.username}`;
+            })
+            .catch(error => {
+                console.error('Error getting username for profile URL:', error);
+                // Fallback to old URL if there's an error
+                window.location.href = 'fullProfile.html';
+            });
     });
 }
 
@@ -577,7 +587,6 @@ const socket = io();
 
 // Listen for queue count updates
 socket.on('queueCountUpdate', (data) => {
-    console.log('Received queue count update:', data.count);
     const queueCounter = document.getElementById('queue-counter');
     const pvpmenu = document.getElementById('pvpmenu');
     const match = document.getElementById('match');
@@ -590,7 +599,6 @@ socket.on('queueCountUpdate', (data) => {
         } else {
             queueCounter.style.display = 'none';
         }
-        console.log('Updated queue counter to:', data.count);
     }
 });
 

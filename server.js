@@ -259,6 +259,15 @@ app.get('/auth/status', async (req, res) => {
     }
 });
 
+// Profile route with username in URL
+app.get('/profile/:username', (req, res) => {
+    if (req.isAuthenticated()) {
+        res.sendFile(path.join(__dirname, 'public', 'fullProfile.html'));
+    } else {
+        res.redirect('/login');
+    }
+});
+
 // Protected route for private match page
 app.get('/privatematch.html', (req, res) => {
     if (req.isAuthenticated()) {
@@ -487,7 +496,6 @@ let privateRooms = {}; // NOTE: room.players is now an array of {username, socke
 function broadcastQueueCount() {
     const queueCount = playerQueue.length;
     io.emit('queueCountUpdate', { count: queueCount });
-    console.log(`Broadcasting queue count: ${queueCount}`);
 }
 
 // Periodically broadcast queue count every 3 seconds

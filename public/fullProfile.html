@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Username • Something</title>
-    <link rel="stylesheet" href="fullProfile.css">
+    <link rel="stylesheet" href="/fullProfile.css">
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -100,9 +100,14 @@
             return `${hours}:${minutes}:${seconds}`;
         }
 
+        // Get username from URL parameter
+        const usernameFromUrl = window.location.pathname.split('/').pop();
+        
         fetch('/api/userprofile')
         .then(response => response.json())
         .then(data => {
+            // Update page title with username from URL
+            document.title = `${usernameFromUrl} • Typing Game`;
             document.getElementById('username').textContent = data.username;
             document.getElementById('profile-picture').src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
             document.getElementById('creationDate').textContent = `JOINED ${new Date(data.creationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`.toUpperCase();
