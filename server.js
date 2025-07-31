@@ -111,14 +111,19 @@ async function(accessToken, refreshToken, profile, done) {
 
     if (emailResult.recordset.length > 0) {
       console.log('Logging in with existing account');
+      // Check if existing user needs setup
+      const existingUser = emailResult.recordset[0];
+      if (!existingUser.account_setup_complete) {
+        profile.needsSetup = true;
+      }
     } else {
       console.log('Creating new account');
       const createRequest = new sql.Request();
       createRequest.input('email', sql.NVarChar, email);
       createRequest.input('username', sql.NVarChar, username);
       createRequest.input('googleId', sql.NVarChar, googleId)
-      await createRequest.query(`INSERT INTO Users (Email, Username, Creation_Date, googleId) VALUES (@email, @username, GETDATE(), @googleId)`);
-      
+      await createRequest.query(`INSERT INTO Users (Email, Username, Creation_Date, googleId, account_setup_complete) VALUES (@email, @username, GETDATE(), @googleId, 0)`);
+      profile.needsSetup = true;
     }
     return done(null, profile);
 }));
@@ -150,6 +155,8 @@ app.get('/api/profileDashboard', async function loadProfile(req, res) {
     res.status(401).json({ error: 'Not logged in' });
   }
 });
+
+
 
 app.post('/api/updateTypingTime', async (req, res) => {
   console.log('updateTypingTime endpoint hit');
@@ -185,7 +192,13 @@ app.post('/api/updateTypingTime', async (req, res) => {
 
 app.get('/', (req, res) => {
     if (req.isAuthenticated()) {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+        if (req.user.needsSetup) {
+            // User needs setup, redirect to setup page
+            res.sendFile(path.join(__dirname, 'public', 'setup.html'));
+        } else {
+            // Normal game page
+            res.sendFile(path.join(__dirname, 'public', 'index.html'));
+        }
     } else {
         res.redirect('/login');
     }
@@ -218,11 +231,32 @@ app.get('/auth/logout', (req, res) => {
 });
 
 // Check auth status
-app.get('/auth/status', (req, res) => {
-    res.json({ 
-        authenticated: req.isAuthenticated(),
-        user: req.user
-    });
+app.get('/auth/status', async (req, res) => {
+    if (req.isAuthenticated()) {
+        try {
+            const email = req.user.emails[0].value;
+            const dataRequest = new sql.Request();
+            dataRequest.input('email', sql.NVarChar, email);
+            const dataResult = await dataRequest.query(`SELECT Username FROM Users WHERE Email = @email`);
+            const userData = dataResult.recordset[0];
+            
+            res.json({ 
+                authenticated: true,
+                user: {
+                    username: userData.Username,
+                    profilePicture: req.user.photos[0].value
+                }
+            });
+        } catch (error) {
+            console.error('Error getting user data for auth status:', error);
+            res.status(500).json({ error: 'Failed to get user data' });
+        }
+    } else {
+        res.json({ 
+            authenticated: false,
+            user: null
+        });
+    }
 });
 
 // Protected route for private match page
@@ -305,6 +339,86 @@ app.post('/api/incrementPracticeTestsCompleted', async (req, res) => {
   }
 });
 
+app.post('/api/checkUsername', async (req, res) => {
+  console.log('checkUsername endpoint hit');
+  console.log('Request body:', req.body);
+  
+  if (!req.isAuthenticated()) {
+    console.log('User not authenticated');
+    res.status(401).json({ error: 'Not logged in' });
+    return;
+  }
+  
+  try {
+    const { username } = req.body;
+    
+    if (!username || username.trim() === '') {
+      res.json({ available: false, error: 'Username cannot be empty' });
+      return;
+    }
+
+    // Check if username already exists (check Username column only)
+    const checkRequest = new sql.Request();
+    checkRequest.input('username', sql.NVarChar, username);
+    checkRequest.input('email', sql.NVarChar, req.user.emails[0].value);
+    
+    const result = await checkRequest.query(`
+      SELECT COUNT(*) as count 
+      FROM Users 
+      WHERE Username = @username AND Email != @email
+    `);
+    
+    const isTaken = result.recordset[0].count > 0;
+    const available = !isTaken;
+    
+    console.log(`Username "${username}" availability: ${available}`);
+    res.json({ available: available });
+    
+  } catch (error) {
+    console.error('Error checking username availability:', error);
+    res.status(500).json({ error: 'Error checking username availability', details: error.message });
+  }
+});
+
+app.post('/api/setUsername', async (req, res) => {
+  console.log('setUsername endpoint hit');
+  console.log('Request body:', req.body);
+  console.log('Is authenticated:', req.isAuthenticated());
+  
+  if (!req.isAuthenticated()) {
+    console.log('User not authenticated');
+    res.status(401).json({ error: 'Not logged in' });
+    return;
+  }
+  
+  try {
+    const email = req.user.emails[0].value;
+    const { username } = req.body;
+
+    // Set the custom username (availability already checked by client)
+    const updateRequest = new sql.Request();
+    updateRequest.input('email', sql.NVarChar, email);
+    updateRequest.input('username', sql.NVarChar, username);
+    
+    await updateRequest.query(`
+      UPDATE Users 
+      SET Username = @username, account_setup_complete = 1 
+      WHERE Email = @email
+    `);
+    
+    // Update the session to mark setup as complete
+    req.user.needsSetup = false;
+    
+    console.log(`Set custom username "${username}" for email: ${email}`);
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('Error setting username:', error);
+    console.error('Error details:', error.message);
+    res.status(500).json({ error: 'Error setting username', details: error.message });
+  }
+});
+
 app.post('/api/updateBestWpm', async (req, res) => {
   console.log('updateBestWpm endpoint hit');
   console.log('Request body:', req.body);
@@ -369,6 +483,20 @@ let users = {};
 let matches = {}; // Track active matches and their rooms
 let privateRooms = {}; // NOTE: room.players is now an array of {username, socketId} objects.
 
+// Function to broadcast queue count to all connected clients
+function broadcastQueueCount() {
+    const queueCount = playerQueue.length;
+    io.emit('queueCountUpdate', { count: queueCount });
+    console.log(`Broadcasting queue count: ${queueCount}`);
+}
+
+// Periodically broadcast queue count every 3 seconds
+setInterval(() => {
+    broadcastQueueCount();
+}, 3000);
+
+
+
 function handlePlayerLeavingPrivateRoom(socket, privateRoomId) {
     const room = privateRooms[privateRoomId];
     if (!room || !socket.user) {
@@ -432,20 +560,24 @@ io.on('connection', (socket) => {
     // The socket.id is the key, which is all we need.
     users[socket.id] = userData;
     socket.user = userData; // Store user data directly on socket
-    console.log(`${userData.displayName} connected`);
+    console.log(`${userData.username || userData.displayName} connected`);
     
     // No need to check queue status on connection anymore
     // Let the queueMatch handler deal with duplicates
   });
 
+
+
+
+
   // Handle queue requests
   socket.on('queueMatch', () => {
-    const username = socket.user ? socket.user.displayName : socket.id;
+    const username = socket.user ? (socket.user.username || socket.user.displayName) : socket.id;
     
-    // Check if player is already in queue by display name
+    // Check if player is already in queue by username
     const isAlreadyInQueue = playerQueue.some(socketId => {
       const queuedUser = users[socketId];
-      return queuedUser && queuedUser.displayName === username;
+      return queuedUser && (queuedUser.username || queuedUser.displayName) === username;
     });
     
     if (isAlreadyInQueue) {
@@ -457,6 +589,7 @@ io.on('connection', (socket) => {
     console.log(`${username} joined the queue`);
     playerQueue.push(socket.id);
     socket.emit('queueJoined');
+    broadcastQueueCount();
     
 
     // Check if we have enough players for a match
@@ -464,9 +597,10 @@ io.on('connection', (socket) => {
       console.log('Match found!');
       const player1 = playerQueue.shift();
       const player2 = playerQueue.shift();
+      broadcastQueueCount();
       
-      const player1Name = users[player1] ? users[player1].displayName : player1;
-      const player2Name = users[player2] ? users[player2].displayName : player2;
+      const player1Name = users[player1] ? (users[player1].username || users[player1].displayName) : player1;
+      const player2Name = users[player2] ? (users[player2].username || users[player2].displayName) : player2;
       
       // Create a unique room for this match
       const roomId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -505,15 +639,16 @@ io.on('connection', (socket) => {
 
 
   socket.on('leaveQueue', () => {
-    const username = socket.user ? socket.user.displayName : socket.id;
+    const username = socket.user ? (socket.user.username || socket.user.displayName) : socket.id;
     
     console.log(`${username} left the queue`);
     playerQueue = playerQueue.filter((id) => id !== socket.id);
+    broadcastQueueCount();
   });
 
   // Handle a player finishing the race
   socket.on('playerFinished', async () => {
-    console.log(`playerFinished received from ${socket.user?.displayName}`);
+    console.log(`playerFinished received from ${socket.user?.username || socket.user?.displayName}`);
     const roomId = socket.roomId;
     if (!roomId || !matches[roomId]) {
         console.log('No room ID or match found:', roomId, !!matches[roomId]);
@@ -524,7 +659,7 @@ io.on('connection', (socket) => {
 
     // --- Winner Stat Update Logic ---
     if (!match.winnerDeclared) {
-        console.log('Declaring winner and updating pvp_wins for:', socket.user.displayName);
+        console.log('Declaring winner and updating pvp_wins for:', socket.user.username || socket.user.displayName);
         match.winnerDeclared = true; // Set the lock.
         try {
             const email = socket.user.emails[0].value;
@@ -536,7 +671,7 @@ io.on('connection', (socket) => {
                 SET pvp_wins = ISNULL(pvp_wins, 0) + 1 
                 WHERE Email = @email
             `);
-            console.log(`Successfully incremented pvp_wins for ${socket.user.displayName}. Rows affected:`, result.rowsAffected);
+            console.log(`Successfully incremented pvp_wins for ${socket.user.username || socket.user.displayName}. Rows affected:`, result.rowsAffected);
         } catch (error) {
             console.error('Error updating pvp_wins:', error);
         }
@@ -551,7 +686,7 @@ io.on('connection', (socket) => {
     const loserId = (winnerId === match.player1) ? match.player2 : match.player1;
 
     // Get winner's name
-    const winnerName = users[winnerId] ? users[winnerId].displayName : 'Winner';
+            const winnerName = users[winnerId] ? (users[winnerId].username || users[winnerId].displayName) : 'Winner';
 
     // Notify both players that the race is over, and who won.
     io.to(roomId).emit('raceOver', { winnerId: winnerId, winnerName: winnerName });
@@ -570,7 +705,7 @@ io.on('connection', (socket) => {
   socket.on('privateMatchProgress', (data) => {
     const privateRoomId = socket.roomId;
     const room = privateRooms[privateRoomId];
-    const username = socket.user.displayName;
+    const username = socket.user.username || socket.user.displayName;
    
     if (room && room.matchData && room.matchData.playerStats[username]) {
       const currentStats = room.matchData.playerStats[username];
@@ -635,7 +770,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    const username = socket.user ? socket.user.displayName : socket.id;
+    const username = socket.user ? (socket.user.username || socket.user.displayName) : socket.id;
     console.log('A user disconnected:', username);
 
     const roomId = socket.roomId;
@@ -658,7 +793,7 @@ io.on('connection', (socket) => {
     socket.on('createPrivateRoom', () => {
       const privateRoomId = generatePrivateRoomId();
       privateRooms[privateRoomId] = {
-        creator: socket.user.displayName,
+        creator: socket.user.username || socket.user.displayName,
         createdAt: new Date(),
         players: [] // Empty players list - creator will be added when the new page loads
       };
@@ -671,13 +806,13 @@ io.on('connection', (socket) => {
   socket.on('checkOwnership', (data) => {
     const privateRoomId= data.privateRoomId;
     if (privateRoomId && socket.user) {
-      const isOwner = privateRooms[privateRoomId].creator === socket.user.displayName;
+      const isOwner = privateRooms[privateRoomId].creator === (socket.user.username || socket.user.displayName);
       socket.emit('ownershipResult', { isOwner: isOwner });
     }
   });
   socket.on('invitePlayer', (data) => {
     for (user in users){
-      if (users[user].displayName === data.invitee){
+      if ((users[user].username || users[user].displayName) === data.invitee){
         io.to(user).emit('inviteReceived', {
           inviter: data.inviter, 
           privateRoomId: data.privateRoomId
@@ -687,7 +822,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('acceptInvite', (data) => {
-    console.log('acceptInvite received from:', socket.user?.displayName, 'for room:', data.privateRoomId);
+    console.log('acceptInvite received from:', socket.user?.username || socket.user?.displayName, 'for room:', data.privateRoomId);
     const privateRoomId = data.privateRoomId;
     const roomInfo = privateRooms[privateRoomId];
 
@@ -695,7 +830,7 @@ io.on('connection', (socket) => {
     // The client will then emit 'getRoomPlayers' upon loading the new page,
     // which is the single, reliable source of truth for adding a player.
     if (roomInfo && socket.user) {
-      console.log('Sending redirectToRoom event to:', socket.user.displayName);
+      console.log('Sending redirectToRoom event to:', socket.user.username || socket.user.displayName);
       socket.emit('redirectToRoom', privateRoomId);
     } else {
       console.log('Room not found or user not authenticated. Room exists:', !!roomInfo, 'User exists:', !!socket.user);
@@ -714,7 +849,7 @@ io.on('connection', (socket) => {
         socket.join(privateRoomId);
         socket.roomId = privateRoomId;
 
-        const username = socket.user.displayName;
+        const username = socket.user.username || socket.user.displayName;
         const playerIndex = room.players.findIndex(p => p.username === username);
 
         let justJoined = false;

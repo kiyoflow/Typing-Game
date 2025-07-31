@@ -573,6 +573,27 @@ function backToMenu() {
 // Initialize Socket.IO connection
 const socket = io();
 
+
+
+// Listen for queue count updates
+socket.on('queueCountUpdate', (data) => {
+    console.log('Received queue count update:', data.count);
+    const queueCounter = document.getElementById('queue-counter');
+    const pvpmenu = document.getElementById('pvpmenu');
+    const match = document.getElementById('match');
+    
+    if (queueCounter) {
+        queueCounter.textContent = `PLAYERS IN QUEUE: ${data.count}`;
+        // Only show queue counter if PvP menu is visible AND match is not visible
+        if (pvpmenu && pvpmenu.style.display !== 'none' && match && match.style.display === 'none') {
+            queueCounter.style.display = 'block';
+        } else {
+            queueCounter.style.display = 'none';
+        }
+        console.log('Updated queue counter to:', data.count);
+    }
+});
+
 // Function to setup PvP-specific socket event listeners
 function setupPvPSocketEvents() {
 
@@ -775,6 +796,12 @@ socket.on('matchFound', (data) => {
         }
 
         });
+        
+        // Hide queue counter immediately when match starts
+        const queueCounter = document.getElementById('queue-counter');
+        if (queueCounter) {
+            queueCounter.style.display = 'none';
+        }
     }
 });
 
@@ -861,6 +888,14 @@ pvpButton.addEventListener('click', function() {
         menuContent.style.display = 'none';
         pvpmenu.style.display = 'block';
         if (queueBackBtn) queueBackBtn.classList.add('active');
+        
+        // Show queue counter when PvP menu is shown
+        const queueCounter = document.getElementById('queue-counter');
+        if (queueCounter) {
+            queueCounter.style.display = 'block';
+        }
+        
+
     }, 300);
 });
 }
@@ -1516,7 +1551,7 @@ window.onload = function() {
         .then(data => {
             console.log('Auth check result:', data);
             if (data.authenticated && data.user) {
-                console.log('Sending userData for:', data.user.displayName);
+                console.log('Sending userData for:', data.user.username || data.user.displayName);
                 socket.emit('userData', data.user);
             } else {
                 console.log('Not authenticated or no user data');
@@ -1619,12 +1654,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const profileDiv = document.getElementById('profile');
                 const usernameDiv = document.getElementById('username');
                 const profilePicDiv = document.getElementById('profile-picture');
-                if (usernameDiv && data.user.displayName) {
-                    usernameDiv.textContent = data.user.displayName;
+                if (usernameDiv && data.user.username) {
+                    usernameDiv.textContent = data.user.username;
                 }
-                // The correct property for Google OAuth picture is _json.picture
-                if (data.user._json && data.user._json.picture) {
-                    const picUrl = data.user._json.picture;
+                // Use the profile picture from the server
+                if (data.user.profilePicture) {
+                    const picUrl = data.user.profilePicture;
                     // Use the server-side proxy to avoid potential cross-origin issues
                     if (profilePicDiv) {
                         profilePicDiv.style.backgroundImage = `url('/proxy-image?url=${encodeURIComponent(picUrl)}')`;

@@ -158,7 +158,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.authenticated && data.user) {
-                    myUsername = data.user.displayName;
+                    myUsername = data.user.username || data.user.displayName;
                     socket.emit('userData', data.user);
 
                     // Now that we have identified ourselves, we can ask for the room's data.

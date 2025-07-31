@@ -20,10 +20,13 @@
         </div>
     </div>
 
-    <div id="profile">
+    <div id="profile" style="display:none;">
         <div id="profile-picture"></div>
         <div id="username"></div>
     </div>
+
+    <!-- Username Setup Component for New Users -->
+    <username-setup-component id="usernameSetup" style="display:none;"></username-setup-component>
 
     <!-- Profile Popup Overlay -->
     <div id="profilePopupOverlay">
@@ -45,7 +48,7 @@
     </div>
     
 
-    <div id="menu">
+    <div id="menu" style="display:none;">
         <div id="menu-content">
             <button id="practice" class="modes">PRACTICE</button>
             <button id="pvp" class="modes">PVP</button>
@@ -56,11 +59,14 @@
     <div id="queue-animation-overlay"></div>
     <button id="queueBackBtn">Back</button>
 
+    <!-- Queue Counter - Outside PvP Menu -->
+    <div id="queue-counter" style="display:none;">PLAYERS IN QUEUE: 0</div>
+
     <!-- PvP Menu -->
     <div id="pvpmenu" style="display:none;">
         <div class="pvp-info">
             <h2>PVP RACE</h2>
-            <p>Race another player to 50 words. Fastest wins!</p>
+            <p>Race another player to 25 words. Fastest wins!</p>
         </div>
         <div id="queueMenu">
             <button id="queueBtn">Find Match</button>
@@ -145,6 +151,7 @@
     <script src="script.js"></script>
     <script src="keyboardComponent.js"></script>
     <script src="countdownComponent.js"></script>
+    <script src="usernameSetupComponent.js"></script>
 
 </body>
 </html>

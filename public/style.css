@@ -1008,6 +1008,24 @@ body {
     box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
 }
 
+#queue-counter {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Ubuntu', Courier, monospace;
+    font-size: 24px;
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: center;
+    z-index: 999;
+    background-color: #ecdda5;
+    border: 3px solid #2c3e50;
+    border-radius: 12px;
+    padding: 15px 25px;
+    box-shadow: 0 4px 8px rgba(44, 62, 80, 0.2);
+}
+
 #pvpmenu #queueBtn {
     font-family: 'Ubuntu', Courier, monospace;
     font-size: 24px;
@@ -1113,4 +1131,9 @@ body {
         width: 80px;
         height: 80px;
     }
+}
+
+/* Hide all game content by default - only show when JavaScript determines it should be visible */
+#menu, #profile, #app, #pvpmenu, #match, #queue-counter {
+    display: none;
 }
