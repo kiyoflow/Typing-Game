@@ -983,6 +983,15 @@ privateMatchButton.addEventListener('click', function() {
 });
 }
 
+// Community button handler
+const communityButton = document.getElementById('community');
+if (communityButton && communityButton.tagName === 'BUTTON') {
+    communityButton.addEventListener('click', function() {
+        console.log('Community button clicked!');
+        window.location.href = '/community';
+    });
+}
+
 socket.on('privateRoomCreated', (privateRoomId) => {
     window.location.href = `/privatematch.html?room=${privateRoomId}`;
 });
