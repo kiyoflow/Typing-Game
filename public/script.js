@@ -124,6 +124,28 @@ function showProfilePopup() {
         });
 }
 
+const userSearch = document.getElementById('searchInput');
+
+if (userSearch) {
+    console.log('Search input found, adding event listener');
+    userSearch.addEventListener('keypress', (e) => {
+        console.log('Key pressed:', e.key);
+        if (e.key === ' ') {
+            e.preventDefault();
+        }
+        if (e.key === 'Enter') {
+            const searchValue = userSearch.value.trim();
+            console.log('Search value:', searchValue);
+            if (searchValue.length > 0) {
+                console.log('Redirecting to:', `/profile/${searchValue}`);
+                window.location.href = `/profile/${searchValue}`;
+            }
+        }
+    });
+} else {
+    console.log('Search input NOT found!');
+}
+
 function hideProfilePopup() {
     const profilePopupOverlay = document.getElementById('profilePopupOverlay');
     profilePopupOverlay.classList.remove('show');
@@ -151,12 +173,22 @@ if (profileCloseBtn) {
 
 // View full profile button
 const viewFullProfileBtn = document.getElementById('viewFullProfileBtn');
+console.log('viewFullProfileBtn found:', viewFullProfileBtn);
 if (viewFullProfileBtn) {
     viewFullProfileBtn.addEventListener('click', () => {
+        console.log('View full profile button clicked!');
         // Get the username from the profile data and redirect to the new URL format
+        console.log('About to fetch /api/userprofile');
         fetch('/api/userprofile')
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Got user data:', data);
                 window.location.href = `/profile/${data.username}`;
             })
             .catch(error => {
@@ -165,6 +197,9 @@ if (viewFullProfileBtn) {
                 window.location.href = 'fullProfile.html';
             });
     });
+    console.log('Event listener added to viewFullProfileBtn');
+} else {
+    console.log('viewFullProfileBtn NOT FOUND!');
 }
 
 // Close popup when clicking outside

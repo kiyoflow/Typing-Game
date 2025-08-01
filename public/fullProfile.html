@@ -10,7 +10,7 @@
 <body>
     <div id="nav">
         <div id="playerSearch">
-            <input type="text" placeholder="enter a username to view their profile...">
+            <input type="text" id="searchInput" placeholder="enter a username to view their profile...">
         </div>
     </div>
     
@@ -103,12 +103,14 @@
         // Get username from URL parameter
         const usernameFromUrl = window.location.pathname.split('/').pop();
         
-        fetch('/api/userprofile')
+        fetch(`/api/userprofile/${usernameFromUrl}`)
         .then(response => response.json())
         .then(data => {
+            console.log('Profile data received:', data);
             // Update page title with username from URL
             document.title = `${usernameFromUrl} • Typing Game`;
             document.getElementById('username').textContent = data.username;
+            console.log('Setting profile picture to:', data.profilePicture);
             document.getElementById('profile-picture').src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
             document.getElementById('creationDate').textContent = `JOINED ${new Date(data.creationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`.toUpperCase();
             document.getElementById('timeTyping').textContent = formatTime(data.totalTypingTime || 0);
@@ -131,5 +133,6 @@
             document.body.classList.add('loaded');
         });
     </script>
+    <script src="/script.js"></script>
 </body>
 </html>

@@ -122,7 +122,8 @@ async function(accessToken, refreshToken, profile, done) {
       createRequest.input('email', sql.NVarChar, email);
       createRequest.input('username', sql.NVarChar, username);
       createRequest.input('googleId', sql.NVarChar, googleId)
-      await createRequest.query(`INSERT INTO Users (Email, Username, Creation_Date, googleId, account_setup_complete) VALUES (@email, @username, GETDATE(), @googleId, 0)`);
+      createRequest.input('pfpUrl', sql.NVarChar, profile.photos[0].value);
+      await createRequest.query(`INSERT INTO Users (Email, Username, Creation_Date, googleId, account_setup_complete, pfpUrl) VALUES (@email, @username, GETDATE(), @googleId, 0, @pfpUrl)`);
       profile.needsSetup = true;
     }
     return done(null, profile);
@@ -143,7 +144,7 @@ app.get('/api/profileDashboard', async function loadProfile(req, res) {
       res.json({
         username: userData.Username,
         creationDate: userData.Creation_Date,
-        profilePicture: profilePicture,
+        profilePicture: userData.pfpUrl,
         totalTypingTime: userData.total_seconds_typed || 0,
         practiceTestsCompleted: userData.practiceTestsCompleted || '-'
       });
@@ -261,11 +262,7 @@ app.get('/auth/status', async (req, res) => {
 
 // Profile route with username in URL
 app.get('/profile/:username', (req, res) => {
-    if (req.isAuthenticated()) {
-        res.sendFile(path.join(__dirname, 'public', 'fullProfile.html'));
-    } else {
-        res.redirect('/login');
-    }
+    res.sendFile(path.join(__dirname, 'public', 'fullProfile.html'));
 });
 
 // Protected route for private match page
@@ -296,39 +293,91 @@ app.get('/proxy-image', async (req, res) => {
     }
 });
 
- app.get(`/api/userprofile`, async (req, res) => {  
-  const email = req.user.emails[0].value;
-  let profilePicture = req.user.photos[0].value;
-
-  // Modify the URL to request a larger image size (e.g., 512px)
-  if (profilePicture.includes('googleusercontent.com')) {
-    profilePicture = profilePicture.replace(/=s\d+.*$/, '=s512');
-  }
-
-  const usersRequest = new sql.Request();
-  usersRequest.input('email', sql.NVarChar, email);
-  // Make sure to select the correct column from your database
-  const usersResult = await usersRequest.query(`SELECT * FROM Users WHERE Email = @email`);
+app.get(`/api/userprofile/:username?`, async (req, res) => {
+  console.log('API call received:', req.params.username ? `username: ${req.params.username}` : 'no username (logged-in user)');
+  // If username parameter is provided, get that user's data
+  if (req.params.username) {
+    const username = req.params.username;
     
-  if (usersResult.recordset.length === 0) {
-    res.status(404).json({ error: 'User not found' });
-   }
-  
-  const userData = usersResult.recordset[0];
-  res.json({
-    username: userData.Username,
-    profilePicture: profilePicture,
-    creationDate: userData.Creation_Date,
-    totalTypingTime: userData.total_seconds_typed || 0, // FIX: Send a number (0) as the default
-    practiceTestsCompleted: userData.practiceTestsCompleted || 0,
-    pvpWins: userData.pvp_wins || 0,
-    best5WordWpm: userData['5_words_wpm'] || '-',
-    best10WordWpm: userData['10_words_wpm'] || '-',
-    best25WordWpm: userData['25_words_wpm'] || '-',
-    best50WordWpm: userData['50_words_wpm'] || '-',
-    bestPvpWpm: userData['pvp_best_wpm'] || '-'
-  });
+    const usersRequest = new sql.Request();
+    usersRequest.input('username', sql.NVarChar, username);
+    const usersResult = await usersRequest.query(`SELECT * FROM Users WHERE Username = @username`);
+    
+    if (usersResult.recordset.length === 0) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    
+    const userData = usersResult.recordset[0];
+    
+    // Ensure we use high-resolution profile picture
+    let profilePicture = userData.pfpUrl || 'default-pic-url';
+    if (profilePicture.includes('googleusercontent.com')) {
+      profilePicture = profilePicture.replace(/=s\d+.*$/, '=s512');
+    }
+    
+    res.json({
+      username: userData.Username,
+      profilePicture: profilePicture,
+      creationDate: userData.Creation_Date,
+      totalTypingTime: userData.total_seconds_typed || 0,
+      practiceTestsCompleted: userData.practiceTestsCompleted || 0,
+      pvpWins: userData.pvp_wins || 0,
+      best5WordWpm: userData['5_words_wpm'] || '-',
+      best10WordWpm: userData['10_words_wpm'] || '-',
+      best25WordWpm: userData['25_words_wpm'] || '-',
+      best50WordWpm: userData['50_words_wpm'] || '-',
+      bestPvpWpm: userData['pvp_best_wpm'] || '-'
+    });
+  } else {
+    // Original logic for logged-in user (needs auth)
+    if (!req.isAuthenticated()) {
+      res.status(401).json({ error: 'Not logged in' });
+      return;
+    }
+    
+    const email = req.user.emails[0].value;
+    let profilePicture = req.user.photos[0].value;
+
+    // Modify the URL to request a larger image size (e.g., 512px)
+    if (profilePicture.includes('googleusercontent.com')) {
+      profilePicture = profilePicture.replace(/=s\d+.*$/, '=s512');
+    }
+
+    const usersRequest = new sql.Request();
+    usersRequest.input('email', sql.NVarChar, email);
+    const usersResult = await usersRequest.query(`SELECT * FROM Users WHERE Email = @email`);
+      
+    if (usersResult.recordset.length === 0) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    
+    const userData = usersResult.recordset[0];
+    
+    // Save the profile picture URL to database
+    const updatePfpRequest = new sql.Request();
+    updatePfpRequest.input('email', sql.NVarChar, email);
+    updatePfpRequest.input('pfpUrl', sql.NVarChar, profilePicture);
+    await updatePfpRequest.query('UPDATE Users SET pfpUrl = @pfpUrl WHERE Email = @email');
+    
+    res.json({
+      username: userData.Username,
+      email: userData.Email,
+      profilePicture: profilePicture,
+      creationDate: userData.Creation_Date,
+      totalTypingTime: userData.total_seconds_typed || 0,
+      practiceTestsCompleted: userData.practiceTestsCompleted || 0,
+      pvpWins: userData.pvp_wins || 0,
+      best5WordWpm: userData['5_words_wpm'] || '-',
+      best10WordWpm: userData['10_words_wpm'] || '-',
+      best25WordWpm: userData['25_words_wpm'] || '-',
+      best50WordWpm: userData['50_words_wpm'] || '-',
+      bestPvpWpm: userData['pvp_best_wpm'] || '-'
+    });
+  }
 })
+
 
 
 app.post('/api/incrementPracticeTestsCompleted', async (req, res) => {
