@@ -14,6 +14,13 @@
         </div>
     </div>
     
+    <!-- User Not Found Error Screen -->
+    <div id="userNotFoundScreen" style="display: none; text-align: center; padding: 100px 20px; background-color: #f0e8ca; min-height: 100vh;">
+        <div style="font-size: 64px; margin-bottom: 30px; color: #2c3e50;">🤔</div>
+        <h1 style="color: #2c3e50; font-size: 32px; margin-bottom: 15px; font-family: 'Ubuntu Mono', monospace; text-transform: uppercase;">No such user!</h1>
+        <p style="color: #7f8c8d; font-size: 18px; font-family: 'Ubuntu Mono', monospace;">Either you mistyped something, or the account no longer exists.</p>
+    </div>
+    
     <div id="profile-container">
         <div id="center-wrapper">
 
@@ -104,7 +111,16 @@
         const usernameFromUrl = window.location.pathname.split('/').pop();
         
         fetch(`/api/userprofile/${usernameFromUrl}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('User not found');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('Profile data received:', data);
             // Update page title with username from URL
@@ -129,7 +145,13 @@
         })
         .catch(error => {
             console.error('Error loading profile:', error);
-            // Show content even if there's an error
+            
+            // Hide the profile container
+            document.getElementById('profile-container').style.display = 'none';
+            
+            // Show the error screen
+            document.getElementById('userNotFoundScreen').style.display = 'block';
+            
             document.body.classList.add('loaded');
         });
     </script>
