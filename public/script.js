@@ -363,12 +363,15 @@ function loadFriendsList() {
             let friendsHTML = '';
             data.friends.forEach(friend => {
                 friendsHTML += `
-                    <div class="friend-item" onclick="showProfilePopup('${friend.friendUsername}')">
-                        <img src="/proxy-image?url=${encodeURIComponent(friend.pfpUrl || 'default-pic-url')}" alt="Profile" class="friend-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
-                        <div class="friend-details">
-                            <div class="friend-name">${friend.friendUsername}</div>
-                            <div class="friend-stats">Friend since ${new Date(friend.dateAdded).toLocaleDateString()}</div>
+                    <div class="friend-item">
+                        <div class="friend-content" onclick="showProfilePopup('${friend.friendUsername}')">
+                            <img src="/proxy-image?url=${encodeURIComponent(friend.pfpUrl || 'default-pic-url')}" alt="Profile" class="friend-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
+                            <div class="friend-details">
+                                <div class="friend-name">${friend.friendUsername}</div>
+                                <div class="friend-stats">Friend since ${new Date(friend.dateAdded).toLocaleDateString()}</div>
+                            </div>
                         </div>
+                        <button class="remove-friend-btn" onclick="removeFriend('${friend.friendUsername}')">Remove</button>
                     </div>
                 `;
             });
@@ -383,6 +386,36 @@ function loadFriendsList() {
         const friendsList = document.getElementById('friendsList');
         friendsList.innerHTML = '<div class="no-friends">Error loading friends</div>';
     });
+}
+
+// Remove friend function
+function removeFriend(friendUsername) {
+    if (confirm(`Are you sure you want to remove ${friendUsername} as a friend?`)) {
+        fetch('/api/removeFriend', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ friendUsername })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.error || 'Failed to remove friend');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Friend removed:', data.message);
+            // Reload the friends list
+            loadFriendsList();
+        })
+        .catch(error => {
+            console.error('Error removing friend:', error);
+            alert(error.message);
+        });
+    }
 }
 
 // Respond to friend request

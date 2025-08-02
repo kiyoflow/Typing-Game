@@ -638,7 +638,6 @@ body {
     border-radius: 8px;
     padding: 12px;
     margin-bottom: 10px;
-    cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -648,6 +647,36 @@ body {
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     border-color: #3498db;
+}
+
+.friend-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.remove-friend-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ubuntu Mono', monospace;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 10px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.remove-friend-btn:hover {
+    background-color: #c0392b;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
 }
 
 .friend-avatar {

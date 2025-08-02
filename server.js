@@ -574,6 +574,52 @@ app.post('/api/respondToFriendRequest', async (req, res) => {
   }
 });
 
+app.post('/api/removeFriend', async (req, res) => {
+  if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+      const { friendUsername } = req.body;
+      
+      if (!friendUsername) {
+          return res.status(400).json({ error: 'Friend username is required' });
+      }
+
+      // Get the current user's username from database
+      const getCurrentUserRequest = new sql.Request();
+      getCurrentUserRequest.input('email', sql.NVarChar, req.user.emails[0].value);
+      const getCurrentUserResult = await getCurrentUserRequest.query(`SELECT Username FROM Users WHERE Email = @email`);
+      
+      if (getCurrentUserResult.recordset.length === 0) {
+          res.status(404).json({ error: 'Current user not found' });
+          return;
+      }
+      
+      const currentUsername = getCurrentUserResult.recordset[0].Username;
+
+      // Remove the friendship from the Friends table
+      const removeFriendRequest = new sql.Request();
+      removeFriendRequest.input('user1', sql.NVarChar, currentUsername);
+      removeFriendRequest.input('user2', sql.NVarChar, friendUsername);
+      
+      const result = await removeFriendRequest.query(`
+          DELETE FROM Friends 
+          WHERE (user1 = @user1 AND user2 = @user2) 
+             OR (user1 = @user2 AND user2 = @user1)
+      `);
+
+      if (result.rowsAffected[0] === 0) {
+          return res.status(404).json({ error: 'Friendship not found' });
+      }
+
+      res.json({ success: true, message: 'Friend removed successfully' });
+  } catch (error) {
+      console.error('Error removing friend:', error);
+      res.status(500).json({ error: 'Failed to remove friend' });
+  }
+});
+
 app.post('/api/incrementPracticeTestsCompleted', async (req, res) => {
   if (!req.isAuthenticated()) {
     res.status(401).json({ error: 'Not logged in' });
