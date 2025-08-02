@@ -14,25 +14,16 @@ function menu(){
     
     if (profile) profile.style.display = 'flex';
     
-    // Hide other sections with animation
-    if (app) {
-        app.classList.remove('show');
-        setTimeout(() => app.style.display = 'none', 400);
-    }
-    if (match) {
-        match.classList.remove('show');
-        setTimeout(() => match.style.display = 'none', 400);
-    }
+    // Hide other sections
+    if (app) app.style.display = 'none';
+    if (match) match.style.display = 'none';
     if (wordSettings) wordSettings.style.display = 'none';
     if (practiceContainer) practiceContainer.style.display = 'none';
     if (keyboard) keyboard.style.display = 'none';
     if (resultsScreen) resultsScreen.style.display = 'none';
     
-    // Show menu with animation
-    if (menu) {
-        menu.style.display = 'block';
-        setTimeout(() => menu.classList.add('show'), 10);
-    }
+    // Show menu
+    if (menu) menu.style.display = 'block';
     if (menuContent) {
         menuContent.style.display = 'flex';
         menuContent.style.opacity = '1';
@@ -850,14 +841,12 @@ function backToMenu() {
     resultsScreen.style.position = '';
     resultsScreen.style.zIndex = '';
     
-    // Hide match and pvpmenu with animation
+    // Hide match and pvpmenu
     if (match) {
-        match.classList.remove('show');
-        setTimeout(() => match.style.display = 'none', 400);
+        match.style.display = 'none';
     }
     if (pvpmenu) {
-        pvpmenu.classList.remove('show');
-        setTimeout(() => pvpmenu.style.display = 'none', 400);
+        pvpmenu.style.display = 'none';
     }
 
     const queueButton = document.getElementById('queueBtn');
@@ -1079,9 +1068,8 @@ socket.on('matchFound', (data) => {
         const queueBackBtn = document.getElementById('queueBackBtn');
         if (queueBackBtn) queueBackBtn.classList.remove('active');
         
-        // Show match with animation
+        // Show match
         match.style.display = 'block';
-        setTimeout(() => match.classList.add('show'), 10);
         
         // Update opponent label with their name
         if (oppLabel) {
@@ -1208,25 +1196,19 @@ pvpButton.addEventListener('click', function() {
         profileDiv.style.display = 'none';
     }
 
-    // Hide menu with animation
-    menu.classList.remove('show');
-    menuContent.style.opacity = '0';
-    menuContent.style.transform = 'scale(0.8)';
-    setTimeout(() => {
-        menu.style.display = 'none';
-        menuContent.style.display = 'none';
-        
-        // Show PvP menu with animation
-        pvpmenu.style.display = 'block';
-        setTimeout(() => pvpmenu.classList.add('show'), 10);
-        if (queueBackBtn) queueBackBtn.classList.add('active');
-        
-        // Show queue counter when PvP menu is shown
-        const queueCounter = document.getElementById('queue-counter');
-        if (queueCounter) {
-            queueCounter.style.display = 'block';
-        }
-    }, 300);
+    // Hide menu
+    menu.style.display = 'none';
+    menuContent.style.display = 'none';
+    
+    // Show PvP menu
+    pvpmenu.style.display = 'block';
+    if (queueBackBtn) queueBackBtn.classList.add('active');
+    
+    // Show queue counter when PvP menu is shown
+    const queueCounter = document.getElementById('queue-counter');
+    if (queueCounter) {
+        queueCounter.style.display = 'block';
+    }
 });
 }
 
@@ -1245,9 +1227,8 @@ if (queueBackBtn) {
             queueBtn.classList.remove('finding-match');
         }
         
-        // Hide PvP menu with animation
-        pvpmenu.classList.remove('show');
-        setTimeout(() => pvpmenu.style.display = 'none', 400);
+        // Hide PvP menu
+        pvpmenu.style.display = 'none';
         if(queueBackBtn) queueBackBtn.classList.remove('active');
         
         // Hide queue counter immediately when going back
@@ -1981,14 +1962,12 @@ window.onload = function() {
         const menuContent = document.getElementById('menu-content');
         const app = document.getElementById('app');
         
-        // Hide menu with animation
-        menu.classList.remove('show');
-        setTimeout(() => menu.style.display = 'none', 400);
+        // Hide menu
+        menu.style.display = 'none';
         menuContent.style.display = 'none';
         
-        // Show app with animation
+        // Show app
         app.style.display = 'block';
-        setTimeout(() => app.classList.add('show'), 10);
         wordSettings.style.display = 'block';
         practiceContainer.style.display = 'block';
         keyboard.style.display = 'block';
