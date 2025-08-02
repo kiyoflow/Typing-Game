@@ -14,8 +14,25 @@ function menu(){
     
     if (profile) profile.style.display = 'flex';
     
-    // All these elements should exist on index.html - if they don't, something's wrong
-    if (menu) menu.style.display = 'block';
+    // Hide other sections with animation
+    if (app) {
+        app.classList.remove('show');
+        setTimeout(() => app.style.display = 'none', 400);
+    }
+    if (match) {
+        match.classList.remove('show');
+        setTimeout(() => match.style.display = 'none', 400);
+    }
+    if (wordSettings) wordSettings.style.display = 'none';
+    if (practiceContainer) practiceContainer.style.display = 'none';
+    if (keyboard) keyboard.style.display = 'none';
+    if (resultsScreen) resultsScreen.style.display = 'none';
+    
+    // Show menu with animation
+    if (menu) {
+        menu.style.display = 'block';
+        setTimeout(() => menu.classList.add('show'), 10);
+    }
     if (menuContent) {
         menuContent.style.display = 'flex';
         menuContent.style.opacity = '1';
@@ -24,12 +41,6 @@ function menu(){
     if (pvpButton) pvpButton.style.display = 'block';
     if (practiceButton) practiceButton.style.display = 'block';
     if (privateMatchButton) privateMatchButton.style.display = 'block';
-    if (app) app.style.display = 'none';
-    if (match) match.style.display = 'none';
-    if (wordSettings) wordSettings.style.display = 'none';
-    if (practiceContainer) practiceContainer.style.display = 'none';
-    if (keyboard) keyboard.style.display = 'none';
-    if (resultsScreen) resultsScreen.style.display = 'none';
 }
 
 // Function to get random words for practice mode only
@@ -834,12 +845,20 @@ function backToMenu() {
     const match = document.getElementById('match');
     const pvpmenu = document.getElementById('pvpmenu');
     
-    // Hide all PvP-related elements
+    // Hide all PvP-related elements with animation
     resultsScreen.style.display = 'none';
     resultsScreen.style.position = '';
     resultsScreen.style.zIndex = '';
-    match.style.display = 'none';
-    pvpmenu.style.display = 'none';
+    
+    // Hide match and pvpmenu with animation
+    if (match) {
+        match.classList.remove('show');
+        setTimeout(() => match.style.display = 'none', 400);
+    }
+    if (pvpmenu) {
+        pvpmenu.classList.remove('show');
+        setTimeout(() => pvpmenu.style.display = 'none', 400);
+    }
 
     const queueButton = document.getElementById('queueBtn');
     if (queueButton) {
@@ -1054,10 +1073,15 @@ socket.on('matchFound', (data) => {
     if (match) {
         // Hide the queue menu and show the match container
         if (animationOverlay) animationOverlay.classList.remove('active');
-        pvpMenu.style.display = 'none';
+        // Hide PvP menu with animation
+        pvpMenu.classList.remove('show');
+        setTimeout(() => pvpMenu.style.display = 'none', 400);
         const queueBackBtn = document.getElementById('queueBackBtn');
         if (queueBackBtn) queueBackBtn.classList.remove('active');
+        
+        // Show match with animation
         match.style.display = 'block';
+        setTimeout(() => match.classList.add('show'), 10);
         
         // Update opponent label with their name
         if (oppLabel) {
@@ -1184,12 +1208,17 @@ pvpButton.addEventListener('click', function() {
         profileDiv.style.display = 'none';
     }
 
+    // Hide menu with animation
+    menu.classList.remove('show');
     menuContent.style.opacity = '0';
     menuContent.style.transform = 'scale(0.8)';
     setTimeout(() => {
         menu.style.display = 'none';
         menuContent.style.display = 'none';
+        
+        // Show PvP menu with animation
         pvpmenu.style.display = 'block';
+        setTimeout(() => pvpmenu.classList.add('show'), 10);
         if (queueBackBtn) queueBackBtn.classList.add('active');
         
         // Show queue counter when PvP menu is shown
@@ -1197,8 +1226,6 @@ pvpButton.addEventListener('click', function() {
         if (queueCounter) {
             queueCounter.style.display = 'block';
         }
-        
-
     }, 300);
 });
 }
@@ -1218,7 +1245,9 @@ if (queueBackBtn) {
             queueBtn.classList.remove('finding-match');
         }
         
-        pvpmenu.style.display = 'none';
+        // Hide PvP menu with animation
+        pvpmenu.classList.remove('show');
+        setTimeout(() => pvpmenu.style.display = 'none', 400);
         if(queueBackBtn) queueBackBtn.classList.remove('active');
         
         // Hide queue counter immediately when going back
@@ -1952,10 +1981,14 @@ window.onload = function() {
         const menuContent = document.getElementById('menu-content');
         const app = document.getElementById('app');
         
-        // Hide menu and show app
-        menu.style.display = 'none';
+        // Hide menu with animation
+        menu.classList.remove('show');
+        setTimeout(() => menu.style.display = 'none', 400);
         menuContent.style.display = 'none';
+        
+        // Show app with animation
         app.style.display = 'block';
+        setTimeout(() => app.classList.add('show'), 10);
         wordSettings.style.display = 'block';
         practiceContainer.style.display = 'block';
         keyboard.style.display = 'block';

@@ -166,6 +166,14 @@ body {
 
 #menu {
     display: none;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#menu.show {
+    opacity: 1;
+    transform: scale(1);
 }
 
 #menu-content {
@@ -859,12 +867,20 @@ body {
 
 #match {
     display: none;
+    opacity: 0;
+    transform: scale(0.95);
     width: 100%;
     height: 100vh;
     position: fixed;
     top: 0;
     left: 0;
     background-color: #f0e8ca;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#match.show {
+    opacity: 1;
+    transform: scale(1);
 }
 
 /* Match Overlays */
@@ -1010,11 +1026,19 @@ body {
 
 #app {
     display: none;
+    opacity: 0;
+    transform: scale(0.95);
     width: 100%;
     height: 100vh;
     position: relative;
     padding: 20px;
     box-sizing: border-box;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#app.show {
+    opacity: 1;
+    transform: scale(1);
 }
 
 #practice-container {
@@ -1462,10 +1486,11 @@ body {
 /* PvP Menu */
 #pvpmenu {
     display: none;
+    opacity: 0;
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(0.8);
     background-color: #ecdda5;
     border: 3px solid #2c3e50;
     border-radius: 20px;
@@ -1474,6 +1499,12 @@ body {
     font-family: 'Ubuntu', Courier, monospace;
     box-shadow: 0 10px 30px rgba(44, 62, 80, 0.2);
     z-index: 1000;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#pvpmenu.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
 }
 
 #pvpmenu #queueMenu {
