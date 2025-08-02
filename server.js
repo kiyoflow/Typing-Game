@@ -289,25 +289,29 @@ app.get(`/api/userprofile/:username?`, async (req, res) => {
     
     const userData = usersResult.recordset[0];
     
-    // Ensure we use high-resolution profile picture
-    let profilePicture = userData.pfpUrl || 'default-pic-url';
+    // Use the profile picture from database if it exists, otherwise use Google profile
+    let profilePicture = userData.pfpUrl || req.user.photos[0].value;
+    
+    // If using Google profile, modify the URL to request a larger image size
     if (profilePicture.includes('googleusercontent.com')) {
       profilePicture = profilePicture.replace(/=s\d+.*$/, '=s512');
     }
     
-    res.json({
-      username: userData.Username,
-      profilePicture: profilePicture,
-      creationDate: userData.Creation_Date,
+  res.json({
+    username: userData.Username,
+      email: userData.Email,
+    profilePicture: profilePicture,
+    aboutMe: userData.aboutMe || '',
+    creationDate: userData.Creation_Date,
       totalTypingTime: userData.total_seconds_typed || 0,
-      practiceTestsCompleted: userData.practiceTestsCompleted || 0,
-      pvpWins: userData.pvp_wins || 0,
-      best5WordWpm: userData['5_words_wpm'] || '-',
-      best10WordWpm: userData['10_words_wpm'] || '-',
-      best25WordWpm: userData['25_words_wpm'] || '-',
-      best50WordWpm: userData['50_words_wpm'] || '-',
-      bestPvpWpm: userData['pvp_best_wpm'] || '-'
-    });
+    practiceTestsCompleted: userData.practiceTestsCompleted || 0,
+    pvpWins: userData.pvp_wins || 0,
+    best5WordWpm: userData['5_words_wpm'] || '-',
+    best10WordWpm: userData['10_words_wpm'] || '-',
+    best25WordWpm: userData['25_words_wpm'] || '-',
+    best50WordWpm: userData['50_words_wpm'] || '-',
+    bestPvpWpm: userData['pvp_best_wpm'] || '-'
+  });
   } else {
     // Original logic for logged-in user (needs auth)
     if (!req.isAuthenticated()) {
@@ -334,16 +338,14 @@ app.get(`/api/userprofile/:username?`, async (req, res) => {
   
   const userData = usersResult.recordset[0];
     
-    // Save the profile picture URL to database
-    const updatePfpRequest = new sql.Request();
-    updatePfpRequest.input('email', sql.NVarChar, email);
-    updatePfpRequest.input('pfpUrl', sql.NVarChar, profilePicture);
-    await updatePfpRequest.query('UPDATE Users SET pfpUrl = @pfpUrl WHERE Email = @email');
+    // Use the profile picture from database if it exists, otherwise use Google profile
+    profilePicture = userData.pfpUrl || profilePicture;
     
   res.json({
     username: userData.Username,
       email: userData.Email,
     profilePicture: profilePicture,
+    aboutMe: userData.aboutMe || '',
     creationDate: userData.Creation_Date,
       totalTypingTime: userData.total_seconds_typed || 0,
     practiceTestsCompleted: userData.practiceTestsCompleted || 0,
@@ -617,6 +619,73 @@ app.post('/api/removeFriend', async (req, res) => {
   } catch (error) {
       console.error('Error removing friend:', error);
       res.status(500).json({ error: 'Failed to remove friend' });
+  }
+});
+
+app.post('/api/updatePlayerSettings', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    console.log('updatePlayerSettings - Request body:', req.body);
+    const { profilePicture, aboutMe } = req.body;
+    
+    if (!profilePicture && !aboutMe) {
+      return res.status(400).json({ error: 'At least one field is required' });
+    }
+    
+    // Get the current user's email
+    const email = req.user.emails[0].value;
+    console.log('updatePlayerSettings - User email:', email);
+    
+    // Update profile picture and/or about me in database
+    const updateRequest = new sql.Request();
+    updateRequest.input('email', sql.NVarChar, email);
+    
+    if (profilePicture && aboutMe !== undefined) {
+      // Update both
+      updateRequest.input('profilePicture', sql.NText, profilePicture);
+      updateRequest.input('aboutMe', sql.NVarChar, aboutMe);
+      const result = await updateRequest.query(`
+        UPDATE Users 
+        SET pfpUrl = @profilePicture, aboutMe = @aboutMe
+        WHERE Email = @email
+      `);
+    } else if (profilePicture) {
+      // Update only profile picture
+      updateRequest.input('profilePicture', sql.NText, profilePicture);
+      const result = await updateRequest.query(`
+        UPDATE Users 
+        SET pfpUrl = @profilePicture
+        WHERE Email = @email
+      `);
+    } else if (aboutMe !== undefined) {
+      // Update only about me
+      updateRequest.input('aboutMe', sql.NVarChar, aboutMe);
+      const result = await updateRequest.query(`
+        UPDATE Users 
+        SET aboutMe = @aboutMe
+        WHERE Email = @email
+      `);
+    }
+    
+    console.log('updatePlayerSettings - Query result:', result);
+
+    let message = 'Settings updated successfully';
+    if (profilePicture && aboutMe !== undefined) {
+      message = 'Profile picture and about me updated successfully';
+    } else if (profilePicture) {
+      message = 'Profile picture updated successfully';
+    } else if (aboutMe !== undefined) {
+      message = 'About me updated successfully';
+    }
+
+    res.json({ success: true, message: message });
+  } catch (error) {
+    console.error('Error updating player settings:', error);
+    console.error('Error details:', error.message);
+    res.status(500).json({ error: 'Failed to update settings', details: error.message });
   }
 });
 

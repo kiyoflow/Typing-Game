@@ -128,8 +128,26 @@
             document.title = `${usernameFromUrl} • Typing Game`;
             document.getElementById('username').textContent = data.username;
             console.log('Setting profile picture to:', data.profilePicture);
-            document.getElementById('profile-picture').src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            const profilePicture = document.getElementById('profile-picture');
+            if (data.profilePicture && data.profilePicture.startsWith('data:image/')) {
+                // Handle base64 data directly
+                profilePicture.src = data.profilePicture;
+            } else {
+                // Handle URL data with proxy
+                profilePicture.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            }
             document.getElementById('creationDate').textContent = `JOINED ${new Date(data.creationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`.toUpperCase();
+            
+            // Display about me text
+            const aboutContent = document.querySelector('.about-content');
+            if (aboutContent) {
+                if (data.aboutMe && data.aboutMe.trim() !== '') {
+                    aboutContent.textContent = data.aboutMe;
+                } else {
+                    aboutContent.textContent = 'No about me text yet.';
+                }
+            }
+            
             document.getElementById('timeTyping').textContent = formatTime(data.totalTypingTime || 0);
             document.getElementById('practiceTestsCompleted').textContent = data.practiceTestsCompleted || '-';
             document.getElementById('pvpWins').textContent = data.pvpWins || '-';

@@ -40,7 +40,10 @@
                         <div id="creationDate"></div>
                     </div>
                 </div>
-                <div id="aboutMe"></div>
+                <div class="about-me-section">
+                    <div class="about-me-label">About Me</div>
+                    <div id="aboutMeContent">No about me text yet.</div>
+                </div>
                 <div id="totalTypingTime">Total Typing Time: 00:00:00</div>
                 <button id="viewFullProfileBtn">View Full Profile</button>
             </div>
@@ -55,6 +58,7 @@
             <button id="pvp" class="modes">PVP</button>
             <button id="privateMatch" class="modes">PRIVATE MATCH</button>
             <button id="community" class="modes">COMMUNITY</button>
+            <button id="settings" class="modes">SETTINGS</button>
         </div>
     </div>
 
@@ -100,6 +104,23 @@
                     <div class="no-friends">No friend requests</div>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- Settings Panel -->
+    <div id="settingsPanel" style="display:none;">
+        <div class="settings-content">
+            <h2>Settings</h2>
+            <div class="setting-group">
+                <h3>Profile Picture</h3>
+                <input type="file" id="profilePictureInput" accept="image/*">
+            </div>
+            <div class="setting-group">
+                <h3>About Me</h3>
+                <textarea id="aboutMeInput" placeholder="Tell us about yourself..." maxlength="200"></textarea>
+                <div class="char-count">0/200</div>
+            </div>
+            <button id="closeSettings">Close</button>
         </div>
     </div>
     

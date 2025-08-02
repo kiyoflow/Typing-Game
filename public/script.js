@@ -77,6 +77,9 @@ function showMyProfilePopup() {
     fetch('/api/userprofile')
         .then(response => response.json())
         .then(data => {
+            console.log('Profile data received:', data);
+            console.log('Profile picture URL:', data.profilePicture);
+            
             const playerUsername = document.getElementById('playerUsername');
             const creationDate = document.getElementById('creationDate');
             const playerProfilePicture = document.getElementById('playerProfilePicture');
@@ -88,7 +91,13 @@ function showMyProfilePopup() {
             creationDate.textContent = `JOINED ${new Date(data.creationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`.toUpperCase();
             // Use the proxy route for the profile picture to avoid CORS issues
             const profileImg = document.createElement('img');
-            profileImg.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            if (data.profilePicture && data.profilePicture.startsWith('data:image/')) {
+                // Handle base64 data directly
+                profileImg.src = data.profilePicture;
+            } else {
+                // Handle URL data with proxy
+                profileImg.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            }
             profileImg.alt = 'Profile Picture';
             profileImg.onerror = function() {
                 // Fallback: try loading the original URL directly if proxy fails
@@ -101,7 +110,16 @@ function showMyProfilePopup() {
             };
             playerProfilePicture.innerHTML = '';
             playerProfilePicture.appendChild(profileImg);
-            aboutMe.textContent = `About me`;
+            
+            // Display about me text
+            const aboutMeContent = document.getElementById('aboutMeContent');
+            if (aboutMeContent) {
+                if (data.aboutMe && data.aboutMe.trim() !== '') {
+                    aboutMeContent.textContent = data.aboutMe;
+                } else {
+                    aboutMeContent.textContent = 'No about me text yet.';
+                }
+            }
             
             totalTypingTime.textContent = `Total Typing Time: ${formatTime(data.totalTypingTime || 0)}`;
         })
@@ -234,7 +252,13 @@ function showProfilePopup(username) {
             creationDate.textContent = `JOINED ${new Date(data.creationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`.toUpperCase();
             // Use the proxy route for the profile picture to avoid CORS issues
             const profileImg = document.createElement('img');
-            profileImg.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            if (data.profilePicture && data.profilePicture.startsWith('data:image/')) {
+                // Handle base64 data directly
+                profileImg.src = data.profilePicture;
+            } else {
+                // Handle URL data with proxy
+                profileImg.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            }
             profileImg.alt = 'Profile Picture';
             profileImg.onerror = function() {
                 // Fallback: try loading the original URL directly if proxy fails
@@ -318,7 +342,7 @@ function loadFriendRequests() {
                 requestsHTML += `
                     <div class="friend-request-item">
                         <div class="friend-request-info">
-                            <img src="/proxy-image?url=${encodeURIComponent(request.pfpUrl)}" alt="Profile" class="friend-request-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
+                            <img src="${getProfilePictureUrl(request.pfpUrl)}" alt="Profile" class="friend-request-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
                             <div class="friend-request-details">
                                 <div class="friend-request-name">${request.fromUser}</div>
                                 <div class="friend-request-date">${new Date(request.dateSent).toLocaleDateString()}</div>
@@ -365,7 +389,7 @@ function loadFriendsList() {
                 friendsHTML += `
                     <div class="friend-item">
                         <div class="friend-content" onclick="showProfilePopup('${friend.friendUsername}')">
-                            <img src="/proxy-image?url=${encodeURIComponent(friend.pfpUrl || 'default-pic-url')}" alt="Profile" class="friend-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
+                            <img src="${getProfilePictureUrl(friend.pfpUrl)}" alt="Profile" class="friend-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
                             <div class="friend-details">
                                 <div class="friend-name">${friend.friendUsername}</div>
                                 <div class="friend-stats">Friend since ${new Date(friend.dateAdded).toLocaleDateString()}</div>
@@ -1342,7 +1366,7 @@ function showFriendSearchResult(userData) {
             friendsSearchResults.innerHTML = `
                 <div class="friend-search-result">
                     <div class="friend-search-content" onclick="showProfilePopup('${userData.username}')">
-                        <img src="/proxy-image?url=${encodeURIComponent(userData.profilePicture)}" alt="Profile" class="friend-search-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
+                        <img src="${getProfilePictureUrl(userData.profilePicture)}" alt="Profile" class="friend-search-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
                         <div class="friend-search-info">
                             <div class="friend-search-name">${userData.username}</div>
                         </div>
@@ -1356,7 +1380,7 @@ function showFriendSearchResult(userData) {
             friendsSearchResults.innerHTML = `
                 <div class="friend-search-result">
                     <div class="friend-search-content" onclick="showProfilePopup('${userData.username}')">
-                        <img src="/proxy-image?url=${encodeURIComponent(userData.profilePicture)}" alt="Profile" class="friend-search-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
+                        <img src="${getProfilePictureUrl(userData.profilePicture)}" alt="Profile" class="friend-search-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
                         <div class="friend-search-info">
                             <div class="friend-search-name">${userData.username}</div>
                         </div>
@@ -2071,6 +2095,116 @@ socket.on('redirectToRoom', (roomId) => {
 socket.on('leaderboardUpdate', (data) => {
     updateLeaderboard(data.playerStats);
 });
+
+const settingsButton = document.getElementById('settings');
+const settingsPanel = document.getElementById('settingsPanel');
+const closeSettingsButton = document.getElementById('closeSettings');
+const profilePictureInput = document.getElementById('profilePictureInput');
+
+if (settingsButton) {
+    settingsButton.addEventListener('click', function() {
+        settingsPanel.style.display = 'block';
+        setTimeout(() => {
+            settingsPanel.classList.add('show');
+        }, 10);
+    });
+}
+
+if (closeSettingsButton) {
+    closeSettingsButton.addEventListener('click', function() {
+        // Save about me text when closing
+        const aboutMeInput = document.getElementById('aboutMeInput');
+        if (aboutMeInput) {
+            const aboutMeText = aboutMeInput.value;
+            
+            fetch('/api/updatePlayerSettings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ aboutMe: aboutMeText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('About me saved:', data.message);
+            })
+            .catch(error => {
+                console.error('Error saving about me:', error);
+            });
+        }
+        
+        settingsPanel.classList.remove('show');
+        setTimeout(() => {
+            settingsPanel.style.display = 'none';
+        }, 300);
+    });
+}
+
+// Character counter for about me
+const aboutMeInput = document.getElementById('aboutMeInput');
+const charCount = document.querySelector('.char-count');
+if (aboutMeInput && charCount) {
+    aboutMeInput.addEventListener('input', function() {
+        const currentLength = this.value.length;
+        charCount.textContent = `${currentLength}/200`;
+    });
+}
+
+// Profile picture upload
+if (profilePictureInput) {
+    profilePictureInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                return;
+            }
+            
+            // Convert to base64
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+                
+                // Update profile picture in database
+                fetch('/api/updatePlayerSettings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ profilePicture: base64Image })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || 'Failed to update profile picture');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Profile picture updated:', data.message);
+                    alert('Profile picture updated successfully!');
+                })
+                .catch(error => {
+                    console.error('Error updating profile picture:', error);
+                    alert(error.message);
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+
+
+// Friends button functionality
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2080,23 +2214,44 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.authenticated && data.user) {
                 const profileDiv = document.getElementById('profile');
                 const usernameDiv = document.getElementById('username');
-                const profilePicDiv = document.getElementById('profile-picture');
+                
                 if (usernameDiv && data.user.username) {
                     usernameDiv.textContent = data.user.username;
                 }
-                // Use the profile picture from the server
-                if (data.user.profilePicture) {
-                    const picUrl = data.user.profilePicture;
-                    // Use the server-side proxy to avoid potential cross-origin issues
-                    if (profilePicDiv) {
-                        profilePicDiv.style.backgroundImage = `url('/proxy-image?url=${encodeURIComponent(picUrl)}')`;
-                    }
-                }
+                
                 if (profileDiv) {
                     profileDiv.style.display = 'flex'; // Show the profile section
                 }
+                
+                // Get the latest profile picture from the userprofile endpoint
+                fetch('/api/userprofile')
+                    .then(response => response.json())
+                    .then(profileData => {
+                        const profilePicDiv = document.getElementById('profile-picture');
+                        if (profilePicDiv && profileData.profilePicture) {
+                            if (profileData.profilePicture.startsWith('data:image/')) {
+                                // Handle base64 data directly
+                                profilePicDiv.style.backgroundImage = `url('${profileData.profilePicture}')`;
+                            } else {
+                                // Handle URL data with proxy
+                                profilePicDiv.style.backgroundImage = `url('/proxy-image?url=${encodeURIComponent(profileData.profilePicture)}')`;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading profile picture:', error);
+                    });
             }
         });
 });
+
+// Helper function to get proper profile picture URL
+function getProfilePictureUrl(profilePicture) {
+    if (profilePicture && profilePicture.startsWith('data:image/')) {
+        return profilePicture; // Return base64 data directly
+    } else {
+        return `/proxy-image?url=${encodeURIComponent(profilePicture || 'default-pic-url')}`; // Use proxy for URLs
+    }
+}
 
 
