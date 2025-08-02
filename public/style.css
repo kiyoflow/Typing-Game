@@ -92,7 +92,19 @@ body {
 
 .profile-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
+
+#playerUsername {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+
 
 #playerUsername {
     font-size: 28px;
@@ -170,6 +182,497 @@ body {
     transition: all 0.3s ease-in-out;
     flex-direction: column;
     gap: 30px;
+}
+
+#friends {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    background-color: #f0e8ca;
+    color: #2c3e50;
+    border: 2px solid #2c3e50;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    z-index: 10;
+}
+
+#friends:hover {
+    background-color: #e5d590;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Friends Panel */
+#friendsPanel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background-color: #f0e8ca;
+    border-left: 3px solid #2c3e50;
+    z-index: 1000;
+    transition: right 0.3s ease-in-out;
+}
+
+#friendsPanel.open {
+    right: 0;
+}
+
+#friendsPanelContent {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #f8f9fa;
+    overflow: hidden;
+}
+
+.friends-header {
+    background-color: #ecdda5;
+    border-bottom: 3px solid #2c3e50;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.friends-header h2 {
+    color: #2c3e50;
+    margin: 0;
+    font-family: 'Ubuntu Mono', monospace;
+    text-transform: uppercase;
+    font-size: 24px;
+}
+
+/* Friends Tabs */
+.friends-tabs {
+    display: flex;
+    background-color: #2c3e50;
+    border-bottom: 2px solid #34495e;
+}
+
+.friends-tab {
+    flex: 1;
+    background-color: #34495e;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    border-right: 1px solid #2c3e50;
+}
+
+.friends-tab:last-child {
+    border-right: none;
+}
+
+.friends-tab:hover {
+    background-color: #4a5f7a;
+    transform: translateY(-1px);
+}
+
+.friends-tab.active {
+    background-color: #3498db;
+    box-shadow: inset 0 -3px 0 #2980b9;
+}
+
+.friends-tab-content {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+}
+
+.friends-tab-content.active {
+    display: flex;
+    flex-direction: column;
+}
+
+#closeFriends {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+#closeFriends:hover {
+    background-color: #c0392b;
+    transform: scale(1.1);
+}
+
+#friendsList {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+}
+
+#friendsSearchResults {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    min-height: 200px;
+}
+
+/* Friends Section Styling - No longer needed with tabs */
+/* .friends-section {
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 20px;
+}
+
+.friends-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.section-header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 12px 20px;
+    margin: 0;
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 6px 6px 0 0;
+}
+
+.friends-section:first-of-type .section-header {
+    background-color: #3498db;
+}
+
+.friends-section:last-of-type .section-header {
+    background-color: #27ae60;
+} */
+
+.friends-search-section {
+    padding: 20px;
+    padding-left: 10px;
+    border-bottom: 2px solid #2c3e50;
+    background-color: #ecdda5;
+    flex-shrink: 0;
+}
+
+.friends-search-section input {
+    width: 70%;
+    background-color: #f0e8ca;
+    border: 2px solid #2c3e50;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #2c3e50;
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.friends-search-section input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+#friendsSearchBtn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ubuntu Mono', monospace;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+}
+
+#friendsSearchBtn:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+.friend-search-result {
+    background-color: #ffffff;
+    border: 2px solid #3498db;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.1);
+}
+
+.friend-search-result:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+    border-color: #2980b9;
+}
+
+.friend-search-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.friend-add-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ubuntu Mono', monospace;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 10px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.friend-add-btn:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.friend-add-btn:disabled {
+    background-color: #7f8c8d;
+    cursor: default;
+}
+
+.friend-add-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Add Friend button in popup */
+.add-friend-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ubuntu Mono', monospace;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.add-friend-btn:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.add-friend-btn:disabled {
+    background-color: #7f8c8d;
+    cursor: default;
+}
+
+.add-friend-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.friend-search-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #2c3e50;
+}
+
+.friend-search-info {
+    flex: 1;
+}
+
+.friend-search-name {
+    color: #2c3e50;
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.friend-search-stats {
+    color: #7f8c8d;
+    font-size: 12px;
+}
+
+.no-friends {
+    text-align: center;
+    color: #7f8c8d;
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 16px;
+    margin-top: 50px;
+}
+
+/* Friend Requests Section */
+.friend-requests-section h3,
+.friends-section h3 {
+    color: #2c3e50;
+    font-size: 18px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 5px;
+}
+
+.friend-request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.friend-request-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.friend-request-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.friend-request-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.friend-request-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.friend-request-name {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.friend-request-date {
+    color: #7f8c8d;
+    font-size: 12px;
+}
+
+.friend-request-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.accept-friend-btn,
+.reject-friend-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.accept-friend-btn {
+    background-color: #27ae60;
+    color: white;
+}
+
+.accept-friend-btn:hover {
+    background-color: #229954;
+    transform: translateY(-1px);
+}
+
+.reject-friend-btn {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.reject-friend-btn:hover {
+    background-color: #c0392b;
+    transform: translateY(-1px);
+}
+
+/* Friends List Section */
+.friend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.friend-item:hover {
+    background: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    border-color: #3498db;
+}
+
+.friend-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.friend-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.friend-name {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.friend-stats {
+    color: #7f8c8d;
+    font-size: 12px;
 }
 
 #textContainer {
@@ -1134,4 +1637,11 @@ body {
 /* Hide all game content by default - only show when JavaScript determines it should be visible */
 #menu, #profile, #app, #pvpmenu, #match, #queue-counter {
     display: none;
+}
+
+#friendRequestsList {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
 }

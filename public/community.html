@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community • Typing Game</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/community.css">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="header">
+        <h1>Typing Game</h1>
+        <button class="play-button" onclick="window.location.href='/'">Play</button>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('home')">Home</button>
+        <button class="tab" onclick="switchTab('leaderboards')">Leaderboards</button>
+        <button class="tab" onclick="switchTab('search')">Search</button>
+    </div>
+
+    <div class="content">
+        <!-- Home Tab -->
+        <div id="home" class="tab-content active">
+            <div class="home-content">
+                <h1>Discover Players</h1>
+                <p>Search for players, view leaderboards, compare stats, and make new friends!</p>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Search Players</h3>
+                        <p>Find any player by their username and view their detailed stats</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🏆</div>
+                        <h3>Leaderboards</h3>
+                        <p>See who's at the top of the typing world</p>
+                        <span class="coming-soon">Coming Soon!</span>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Compare Stats</h3>
+                        <p>Check out WPM records, test counts, and PvP wins</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">👥</div>
+                        <h3>Make Friends</h3>
+                        <p>Connect with other typing enthusiasts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboards Tab -->
+        <div id="leaderboards" class="tab-content">
+            <div class="leaderboards-content">
+                <h2>Leaderboards</h2>
+                <div class="leaderboard-placeholder">
+                    🏆 Leaderboards coming soon! 🏆
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Tab -->
+        <div id="search" class="tab-content">
+            <div class="search-section">
+                <h2>Search Users</h2>
+                <div class="search-container">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Enter username...">
+                    <button id="searchButton" class="search-button">Search</button>
+                </div>
+            </div>
+            <div id="searchResults"></div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const searchResults = document.getElementById('searchResults');
+
+        // Search on Enter key
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchUser();
+            }
+        });
+
+        // Search on button click
+        searchButton.addEventListener('click', searchUser);
+
+        // Prevent spaces in search input
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                e.preventDefault();
+            }
+        });
+
+        function searchUser() {
+            const searchTerm = searchInput.value.trim();
+            if (searchTerm.length === 0) {
+                searchResults.innerHTML = '<p class="search-message">Enter a username to search</p>';
+                return;
+            }
+
+            searchResults.innerHTML = '<p class="search-loading">Searching...</p>';
+
+            fetch(`/api/userprofile/${searchTerm}`)
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('User not found');
+                        } else {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                    }
+                    return response.json();
+                })
+                .then(userData => {
+                    searchResults.innerHTML = `
+                        <div class="user-result" onclick="window.location.href='/profile/${userData.username}'">
+                            <div class="user-result-content">
+                                <img src="/proxy-image?url=${encodeURIComponent(userData.profilePicture)}" alt="Profile" class="user-result-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
+                                <div class="user-result-info">
+                                    <h3 class="user-result-name">${userData.username}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    console.error('Error searching user:', error);
+                    searchResults.innerHTML = '<p class="search-error">User not found</p>';
+                });
+        }
+    </script>
+</body>
+</html>

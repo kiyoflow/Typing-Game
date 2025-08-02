@@ -65,7 +65,7 @@ const pvpPlayerContainer = document.getElementById('pvp-player-container');
 const pvpOpponentContainer = document.getElementById('pvp-opponent-container');
 const privatePlayerContainer = document.getElementById('private-player-container');
 
-function showProfilePopup() {
+function showMyProfilePopup() {
     const profilePopupOverlay = document.getElementById('profilePopupOverlay');
     profilePopupOverlay.style.display = 'flex';
     
@@ -74,7 +74,7 @@ function showProfilePopup() {
         profilePopupOverlay.classList.add('show');
     }, 10);
 
-    fetch('/api/profileDashboard')
+    fetch('/api/userprofile')
         .then(response => response.json())
         .then(data => {
             const playerUsername = document.getElementById('playerUsername');
@@ -103,26 +103,26 @@ function showProfilePopup() {
             playerProfilePicture.appendChild(profileImg);
             aboutMe.textContent = `About me`;
             
-            // Format and display total typing time
-            function formatTime(totalSeconds) {
-                let hours = Math.floor(totalSeconds / 3600);
-                let minutes = Math.floor((totalSeconds % 3600) / 60);
-                let seconds = totalSeconds % 60;
-                
-                // Add leading zeros
-                hours = hours.toString().padStart(2, '0');
-                minutes = minutes.toString().padStart(2, '0');
-                seconds = seconds.toString().padStart(2, '0');
-                
-                return `${hours}:${minutes}:${seconds}`;
-            }
-            
             totalTypingTime.textContent = `Total Typing Time: ${formatTime(data.totalTypingTime || 0)}`;
         })
         .catch(error => {
             console.error('Error loading profile data:', error);
         });
 }
+
+function formatTime(totalSeconds) {
+    let hours = Math.floor(totalSeconds / 3600);
+    let minutes = Math.floor((totalSeconds % 3600) / 60);
+    let seconds = totalSeconds % 60;
+    
+    // Add leading zeros
+    hours = hours.toString().padStart(2, '0');
+    minutes = minutes.toString().padStart(2, '0');
+    seconds = seconds.toString().padStart(2, '0');
+    
+    return `${hours}:${minutes}:${seconds}`;
+}
+
 
 const userSearch = document.getElementById('searchInput');
 
@@ -146,7 +146,7 @@ if (userSearch) {
     console.log('Search input NOT found!');
 }
 
-function hideProfilePopup() {
+function hideMyProfilePopup() {
     const profilePopupOverlay = document.getElementById('profilePopupOverlay');
     profilePopupOverlay.classList.remove('show');
     
@@ -159,7 +159,7 @@ function hideProfilePopup() {
 const profile = document.getElementById('profile');
 if (profile) {
     profile.addEventListener('click', () => {
-        showProfilePopup();
+        showMyProfilePopup();
     });
 }
 
@@ -167,7 +167,7 @@ if (profile) {
 const profileCloseBtn = document.getElementById('profileCloseBtn');
 if (profileCloseBtn) {
     profileCloseBtn.addEventListener('click', () => {
-        hideProfilePopup();
+        hideMyProfilePopup();
     });
 }
 
@@ -207,8 +207,211 @@ const profilePopupOverlay = document.getElementById('profilePopupOverlay');
 if (profilePopupOverlay) {
     profilePopupOverlay.addEventListener('click', (e) => {
         if (e.target === profilePopupOverlay) {
-            hideProfilePopup();
+            hideMyProfilePopup();
         }
+    });
+}
+
+// Function to show a profile popup for a specific user
+function showProfilePopup(username) {
+    const profilePopupOverlay = document.getElementById('profilePopupOverlay');
+    const playerUsername = document.getElementById('playerUsername');
+    const creationDate = document.getElementById('creationDate');
+    const playerProfilePicture = document.getElementById('playerProfilePicture');
+    const aboutMe = document.getElementById('aboutMe');
+    const totalTypingTime = document.getElementById('totalTypingTime');
+
+    // Show the popup first
+    profilePopupOverlay.style.display = 'flex';
+    setTimeout(() => {
+        profilePopupOverlay.classList.add('show');
+    }, 10);
+
+    fetch(`/api/userprofile/${username}`)
+        .then(response => response.json())
+        .then(data => {
+            playerUsername.textContent = data.username;
+            creationDate.textContent = `JOINED ${new Date(data.creationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`.toUpperCase();
+            // Use the proxy route for the profile picture to avoid CORS issues
+            const profileImg = document.createElement('img');
+            profileImg.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            profileImg.alt = 'Profile Picture';
+            profileImg.onerror = function() {
+                // Fallback: try loading the original URL directly if proxy fails
+                this.src = data.profilePicture;
+                this.onerror = function() {
+                    // If both fail, hide the image container or show a placeholder
+                    console.warn('Failed to load profile picture');
+                    this.style.display = 'none';
+                };
+            };
+            playerProfilePicture.innerHTML = '';
+            playerProfilePicture.appendChild(profileImg);
+            aboutMe.textContent = `About me`;
+            totalTypingTime.textContent = `Total Typing Time: ${formatTime(data.totalTypingTime || 0)}`;
+        })
+        .catch(error => {
+            console.error('Error loading profile data:', error);
+        });
+}
+
+function sendFriendRequest(username) {
+    fetch('/api/sendFriendRequest', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ toUsername: username })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || 'Failed to send friend request');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Friend request sent:', data.message);
+        
+        // Visual feedback - update the button
+        const button = document.querySelector(`.friend-add-btn[onclick*="${username}"]`);
+        if (button) {
+            button.textContent = 'Request Sent!';
+            button.style.backgroundColor = '#27ae60'; // Green
+            button.disabled = true;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error.message);
+        
+        // Visual feedback for error
+        const button = document.querySelector(`.friend-add-btn[onclick*="${username}"]`);
+        if (button) {
+            button.textContent = 'Failed';
+            button.style.backgroundColor = '#e74c3c'; // Red
+            setTimeout(() => {
+                button.textContent = 'Send Friend Request';
+                button.style.backgroundColor = '#3498db'; // Back to blue
+                button.disabled = false;
+            }, 2000);
+        }
+        
+        // Show error message to user
+        alert(error.message);
+    });
+}
+
+// Load friend requests
+function loadFriendRequests() {
+    fetch('/api/getFriendRequests')
+    .then(response => response.json())
+    .then(data => {
+        console.log('Friend requests:', data);
+        
+        const friendRequestsList = document.getElementById('friendRequestsList');
+        
+        if (data.requests && data.requests.length > 0) {
+            // Show the friend requests
+            let requestsHTML = '';
+            data.requests.forEach(request => {
+                requestsHTML += `
+                    <div class="friend-request-item">
+                        <div class="friend-request-info">
+                            <img src="/proxy-image?url=${encodeURIComponent(request.pfpUrl)}" alt="Profile" class="friend-request-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
+                            <div class="friend-request-details">
+                                <div class="friend-request-name">${request.fromUser}</div>
+                                <div class="friend-request-date">${new Date(request.dateSent).toLocaleDateString()}</div>
+                            </div>
+                        </div>
+                        <div class="friend-request-buttons">
+                            <button class="accept-friend-btn" onclick="respondToFriendRequest(${request.id}, 'accept')">Accept</button>
+                            <button class="reject-friend-btn" onclick="respondToFriendRequest(${request.id}, 'reject')">Reject</button>
+                        </div>
+                    </div>
+                `;
+            });
+            friendRequestsList.innerHTML = requestsHTML;
+        } else {
+            // Show "no requests" message
+            friendRequestsList.innerHTML = '<div class="no-friends">No friend requests</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Error loading friend requests:', error);
+        const friendRequestsList = document.getElementById('friendRequestsList');
+        friendRequestsList.innerHTML = '<div class="no-friends">Error loading friend requests</div>';
+    });
+}
+
+// Global variable to track current friends
+let currentFriendsList = [];
+let friendsRefreshInterval = null;
+
+// Load friends list
+function loadFriendsList() {
+    fetch('/api/listFriends')
+    .then(response => response.json())
+    .then(data => {
+        console.log('Friends:', data);
+        currentFriendsList = data.friends || [];
+        
+        const friendsList = document.getElementById('friendsList');
+        
+        if (data.friends && data.friends.length > 0) {
+            // Show the friends
+            let friendsHTML = '';
+            data.friends.forEach(friend => {
+                friendsHTML += `
+                    <div class="friend-item" onclick="showProfilePopup('${friend.friendUsername}')">
+                        <img src="/proxy-image?url=${encodeURIComponent(friend.pfpUrl || 'default-pic-url')}" alt="Profile" class="friend-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
+                        <div class="friend-details">
+                            <div class="friend-name">${friend.friendUsername}</div>
+                            <div class="friend-stats">Friend since ${new Date(friend.dateAdded).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            friendsList.innerHTML = friendsHTML;
+        } else {
+            // Show "no friends" message
+            friendsList.innerHTML = '<div class="no-friends">No friends yet</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Error loading friends list:', error);
+        const friendsList = document.getElementById('friendsList');
+        friendsList.innerHTML = '<div class="no-friends">Error loading friends</div>';
+    });
+}
+
+// Respond to friend request
+function respondToFriendRequest(requestId, action) {
+    fetch('/api/respondToFriendRequest', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ requestId, action })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || 'Failed to respond to friend request');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Friend request response:', data.message);
+        
+        // Reload both friend requests and friends list
+        loadFriendRequests();
+        loadFriendsList();
+    })
+    .catch(error => {
+        console.error('Error responding to friend request:', error);
+        alert(error.message);
     });
 }
 
@@ -990,6 +1193,145 @@ if (communityButton && communityButton.tagName === 'BUTTON') {
         console.log('Community button clicked!');
         window.location.href = '/community';
     });
+}
+
+// Friends panel handlers
+const friendsButton = document.getElementById('friends');
+const friendsPanel = document.getElementById('friendsPanel');
+const closeFriendsButton = document.getElementById('closeFriends');
+
+if (friendsButton) {
+    friendsButton.addEventListener('click', function() {
+    friendsPanel.classList.add('open');
+    loadFriendRequests();
+    loadFriendsList();
+    
+    // No more auto-refresh - just load once when panel opens
+});
+}
+
+// Friends tab functionality
+const friendsTabs = document.querySelectorAll('.friends-tab');
+friendsTabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+        const targetTab = this.getAttribute('data-tab');
+        
+        // Remove active class from all tabs and content
+        document.querySelectorAll('.friends-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.friends-tab-content').forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked tab and corresponding content
+        this.classList.add('active');
+        document.getElementById(targetTab + 'Tab').classList.add('active');
+    });
+});
+
+if (closeFriendsButton) {
+    closeFriendsButton.addEventListener('click', function() {
+    friendsPanel.classList.remove('open');
+    
+    // No more auto-refresh to stop
+});
+}
+
+// Friends search functionality
+const friendsSearchInput = document.getElementById('friendsSearchInput');
+const friendsSearchBtn = document.getElementById('friendsSearchBtn');
+const friendsSearchResults = document.getElementById('friendsSearchResults');
+
+if (friendsSearchInput) {
+    friendsSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            searchFriends();
+        }
+    });
+}
+
+if (friendsSearchBtn) {
+    friendsSearchBtn.addEventListener('click', searchFriends);
+}
+
+// Prevent spaces in search input
+if (friendsSearchInput) {
+    friendsSearchInput.addEventListener('keydown', (e) => {
+        if (e.key === ' ') {
+            e.preventDefault();
+        }
+    });
+}
+
+function searchFriends() {
+    const searchTerm = friendsSearchInput.value.trim();
+    
+    if (!searchTerm) {
+        friendsSearchResults.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-style: italic;">Enter a username to search</p>';
+        return;
+    }
+
+    friendsSearchResults.innerHTML = '<p style="text-align: center; color: #2c3e50;">Searching...</p>';
+
+    fetch(`/api/userprofile/${searchTerm}`)
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('User not found');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+            return response.json();
+        })
+        .then(userData => {
+            showFriendSearchResult(userData);
+            // Clear the search input after successful search
+            friendsSearchInput.value = '';
+        })
+        .catch(error => {
+            console.error('Error searching user:', error);
+            friendsSearchResults.innerHTML = '<p style="text-align: center; color: #e74c3c;">User not found</p>';
+        });
+}
+
+function showFriendSearchResult(userData) {
+    // Check if this is the current user
+    fetch('/api/userprofile')
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Not logged in');
+            }
+        })
+        .then(currentUserData => {
+            const isCurrentUser = currentUserData.username === userData.username;
+            const isAlreadyFriend = currentFriendsList.some(friend => friend.friendUsername === userData.username);
+            
+            friendsSearchResults.innerHTML = `
+                <div class="friend-search-result">
+                    <div class="friend-search-content" onclick="showProfilePopup('${userData.username}')">
+                        <img src="/proxy-image?url=${encodeURIComponent(userData.profilePicture)}" alt="Profile" class="friend-search-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
+                        <div class="friend-search-info">
+                            <div class="friend-search-name">${userData.username}</div>
+                        </div>
+                    </div>
+                    ${isCurrentUser || isAlreadyFriend ? '' : `<button class="friend-add-btn" onclick="sendFriendRequest('${userData.username}')">Send Friend Request</button>`}
+                </div>
+            `;
+        })
+        .catch(error => {
+            // If not logged in, show the button anyway
+            friendsSearchResults.innerHTML = `
+                <div class="friend-search-result">
+                    <div class="friend-search-content" onclick="showProfilePopup('${userData.username}')">
+                        <img src="/proxy-image?url=${encodeURIComponent(userData.profilePicture)}" alt="Profile" class="friend-search-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
+                        <div class="friend-search-info">
+                            <div class="friend-search-name">${userData.username}</div>
+                        </div>
+                    </div>
+                    <button class="friend-add-btn" onclick="addFriend('${userData.username}')">Add Friend</button>
+                </div>
+            `;
+        });
 }
 
 socket.on('privateRoomCreated', (privateRoomId) => {

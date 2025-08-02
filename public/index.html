@@ -50,10 +50,56 @@
 
     <div id="menu" style="display:none;">
         <div id="menu-content">
+            <button id="friends">👥</button>
             <button id="practice" class="modes">PRACTICE</button>
             <button id="pvp" class="modes">PVP</button>
             <button id="privateMatch" class="modes">PRIVATE MATCH</button>
             <button id="community" class="modes">COMMUNITY</button>
+        </div>
+    </div>
+
+    <!-- Friends Panel -->
+    <div id="friendsPanel">
+        <div id="friendsPanelContent">
+            <div class="friends-header">
+                <h2>Friends</h2>
+                <button id="closeFriends">✕</button>
+            </div>
+            
+            <!-- Friends Tabs -->
+            <div class="friends-tabs">
+                <button class="friends-tab active" data-tab="friends">Friends</button>
+                <button class="friends-tab" data-tab="addFriends">Add Friends</button>
+                <button class="friends-tab" data-tab="requests">Requests</button>
+            </div>
+            
+            <!-- Friends Tab Content -->
+            <div class="friends-tab-content active" id="friendsTab">
+                <div id="friendsList">
+                    <div class="no-friends">No friends yet</div>
+                </div>
+            </div>
+            
+            <!-- Add Friends Tab Content -->
+            <div class="friends-tab-content" id="addFriendsTab">
+                <!-- Search Section -->
+                <div class="friends-search-section">
+                    <input type="text" id="friendsSearchInput" placeholder="Search for users to add...">
+                    <button id="friendsSearchBtn">Search</button>
+                </div>
+                
+                <!-- Search Results Section -->
+                <div id="friendsSearchResults">
+                    <p style="text-align: center; color: #7f8c8d; font-style: italic; margin: 20px;">Enter a username above to search for users</p>
+                </div>
+            </div>
+            
+            <!-- Requests Tab Content -->
+            <div class="friends-tab-content" id="requestsTab">
+                <div id="friendRequestsList">
+                    <div class="no-friends">No friend requests</div>
+                </div>
+            </div>
         </div>
     </div>
     

@@ -129,33 +129,7 @@ async function(accessToken, refreshToken, profile, done) {
     return done(null, profile);
 }));
 
-app.get('/api/profileDashboard', async function loadProfile(req, res) {
-  if (req.isAuthenticated()) {
-    try {
-      const email = req.user.emails[0].value;
-      const profilePicture = req.user.photos[0].value;
 
-      // get user data based on their email
-      const dataRequest = new sql.Request();
-      dataRequest.input('email', sql.NVarChar, email);
-      const dataResult = await dataRequest.query(`SELECT * FROM Users WHERE Email = @email`);
-      const userData = dataResult.recordset[0];
-
-      res.json({
-        username: userData.Username,
-        creationDate: userData.Creation_Date,
-        profilePicture: userData.pfpUrl,
-        totalTypingTime: userData.total_seconds_typed || 0,
-        practiceTestsCompleted: userData.practiceTestsCompleted || '-'
-      });
-    } catch (error) {
-      console.error('Error getting profile data:', error);
-      res.status(500).json({ error: 'Error getting profile data' });
-    }
-  } else {
-    res.status(401).json({ error: 'Not logged in' });
-  }
-});
 
 
 
@@ -262,7 +236,12 @@ app.get('/auth/status', async (req, res) => {
 
 // Profile route with username in URL
 app.get('/profile/:username', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'fullProfile.html'));
+        res.sendFile(path.join(__dirname, 'public', 'fullProfile.html'));
+});
+
+// Community route
+app.get('/community', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'community.html'));
 });
 
 // Protected route for private match page
@@ -336,24 +315,24 @@ app.get(`/api/userprofile/:username?`, async (req, res) => {
       return;
     }
     
-    const email = req.user.emails[0].value;
-    let profilePicture = req.user.photos[0].value;
+  const email = req.user.emails[0].value;
+  let profilePicture = req.user.photos[0].value;
 
-    // Modify the URL to request a larger image size (e.g., 512px)
-    if (profilePicture.includes('googleusercontent.com')) {
-      profilePicture = profilePicture.replace(/=s\d+.*$/, '=s512');
-    }
+  // Modify the URL to request a larger image size (e.g., 512px)
+  if (profilePicture.includes('googleusercontent.com')) {
+    profilePicture = profilePicture.replace(/=s\d+.*$/, '=s512');
+  }
 
-    const usersRequest = new sql.Request();
-    usersRequest.input('email', sql.NVarChar, email);
-    const usersResult = await usersRequest.query(`SELECT * FROM Users WHERE Email = @email`);
-      
-    if (usersResult.recordset.length === 0) {
-      res.status(404).json({ error: 'User not found' });
-      return;
-    }
+  const usersRequest = new sql.Request();
+  usersRequest.input('email', sql.NVarChar, email);
+  const usersResult = await usersRequest.query(`SELECT * FROM Users WHERE Email = @email`);
     
-    const userData = usersResult.recordset[0];
+  if (usersResult.recordset.length === 0) {
+    res.status(404).json({ error: 'User not found' });
+      return;
+   }
+  
+  const userData = usersResult.recordset[0];
     
     // Save the profile picture URL to database
     const updatePfpRequest = new sql.Request();
@@ -361,24 +340,239 @@ app.get(`/api/userprofile/:username?`, async (req, res) => {
     updatePfpRequest.input('pfpUrl', sql.NVarChar, profilePicture);
     await updatePfpRequest.query('UPDATE Users SET pfpUrl = @pfpUrl WHERE Email = @email');
     
-    res.json({
-      username: userData.Username,
+  res.json({
+    username: userData.Username,
       email: userData.Email,
-      profilePicture: profilePicture,
-      creationDate: userData.Creation_Date,
+    profilePicture: profilePicture,
+    creationDate: userData.Creation_Date,
       totalTypingTime: userData.total_seconds_typed || 0,
-      practiceTestsCompleted: userData.practiceTestsCompleted || 0,
-      pvpWins: userData.pvp_wins || 0,
-      best5WordWpm: userData['5_words_wpm'] || '-',
-      best10WordWpm: userData['10_words_wpm'] || '-',
-      best25WordWpm: userData['25_words_wpm'] || '-',
-      best50WordWpm: userData['50_words_wpm'] || '-',
-      bestPvpWpm: userData['pvp_best_wpm'] || '-'
-    });
+    practiceTestsCompleted: userData.practiceTestsCompleted || 0,
+    pvpWins: userData.pvp_wins || 0,
+    best5WordWpm: userData['5_words_wpm'] || '-',
+    best10WordWpm: userData['10_words_wpm'] || '-',
+    best25WordWpm: userData['25_words_wpm'] || '-',
+    best50WordWpm: userData['50_words_wpm'] || '-',
+    bestPvpWpm: userData['pvp_best_wpm'] || '-'
+  });
   }
 })
 
+app.post('/api/sendFriendRequest', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: 'Not logged in' });
+    return;
+  }
+  try {
+    const email = req.user.emails[0].value;
+    const { toUsername } = req.body;
+    
+    // Get the current user's username from database
+    const getCurrentUserRequest = new sql.Request();
+    getCurrentUserRequest.input('email', sql.NVarChar, email);
+    console.log('Looking for user with email:', email);
+    const getCurrentUserResult = await getCurrentUserRequest.query(`SELECT Username FROM Users WHERE Email = @email`);
+    console.log('Current user result:', getCurrentUserResult.recordset);
+    
+    if (getCurrentUserResult.recordset.length === 0) {
+      console.log('No user found with email:', email);
+      res.status(404).json({ error: 'Current user not found' });
+      return;
+    }
+    
+    const fromUsername = getCurrentUserResult.recordset[0].Username;
+    console.log('Found username:', fromUsername);
 
+    // Check if the toUsername exists
+    const checkTargetRequest = new sql.Request();
+    checkTargetRequest.input('toUsername', sql.NVarChar, toUsername);
+    const checkTargetResult = await checkTargetRequest.query(`SELECT * FROM Users WHERE Username = @toUsername`);
+
+    if (checkTargetResult.recordset.length === 0) {
+      res.status(404).json({ error: 'Target user not found' });
+      return;
+    }
+
+    const existingFriendCheckRequest = new sql.Request();
+    existingFriendCheckRequest.input('user1', sql.NVarChar, fromUsername);
+    existingFriendCheckRequest.input('user2', sql.NVarChar, toUsername);
+    const existingFriendCheckResult = await existingFriendCheckRequest.query(`SELECT * FROM Friends WHERE (user1 = @user1 AND user2 = @user2) OR (user1 = @user2 AND user2 = @user1)`);
+
+    if (existingFriendCheckResult.recordset.length > 0) {
+      return res.status(400).json({ error: 'Already friends' });
+    }
+
+    const existingRequestRequest = new sql.Request();
+    existingRequestRequest.input('fromUsername', sql.NVarChar, fromUsername);
+    existingRequestRequest.input('toUsername', sql.NVarChar, toUsername);
+    const existingRequestResult = await existingRequestRequest.query(`SELECT * FROM FriendRequests WHERE ((fromUser = @fromUsername AND toUser = @toUsername) OR (fromUser = @toUsername AND toUser = @fromUsername)) AND status = 'pending'`);
+
+    if (existingRequestResult.recordset.length > 0) {
+      return res.status(400).json({ error: 'Friend request already sent' });
+    }
+
+    // send friend request
+    const sendFriendRequest = new sql.Request();
+    sendFriendRequest.input('fromUsername', sql.NVarChar, fromUsername);
+    sendFriendRequest.input('toUsername', sql.NVarChar, toUsername);
+    await sendFriendRequest.query(`INSERT INTO FriendRequests (fromUser, toUser, status, dateSent) VALUES (@fromUsername, @toUsername, 'pending', GETDATE())`);
+
+    res.json({ success: true, message: 'Friend request sent' });
+  } catch (error) {
+    console.error('Error sending friend request:', error);
+    res.status(500).json({ error: 'Error sending friend request', details: error.message });
+  }
+})
+
+app.get('/api/getFriendRequests', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: 'Not logged in' });
+    return;
+  }
+  try {
+    // Get the current user's username from database
+    const getCurrentUserRequest = new sql.Request();
+    getCurrentUserRequest.input('email', sql.NVarChar, req.user.emails[0].value);
+    const getCurrentUserResult = await getCurrentUserRequest.query(`SELECT Username FROM Users WHERE Email = @email`);
+    
+    if (getCurrentUserResult.recordset.length === 0) {
+      res.status(404).json({ error: 'Current user not found' });
+      return;
+    }
+    
+    const currentUsername = getCurrentUserResult.recordset[0].Username;
+    
+    const friendRequests = new sql.Request();
+    friendRequests.input('toUsername', sql.NVarChar, currentUsername);
+    const friendRequestsResult = await friendRequests.query(`
+      SELECT 
+        FriendRequests.id, 
+        FriendRequests.fromUser, 
+        FriendRequests.toUser, 
+        FriendRequests.dateSent, 
+        Users.pfpUrl 
+        FROM FriendRequests 
+        INNER JOIN Users ON FriendRequests.fromUser = Users.Username 
+        WHERE FriendRequests.toUser = @toUsername AND FriendRequests.status = 'pending'`);
+    res.json({ requests: friendRequestsResult.recordset });
+  } catch (error) {
+    console.error('Error getting friend requests:', error);
+    res.status(500).json({ error: 'Error getting friend requests', details: error.message });
+  }
+});
+
+app.get('/api/listFriends', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: 'Not logged in' });
+    return;
+  }
+  try {
+    // Get the current user's username from database
+    const getCurrentUserRequest = new sql.Request();
+    getCurrentUserRequest.input('email', sql.NVarChar, req.user.emails[0].value);
+    const getCurrentUserResult = await getCurrentUserRequest.query(`SELECT Username FROM Users WHERE Email = @email`);
+    
+    if (getCurrentUserResult.recordset.length === 0) {
+      res.status(404).json({ error: 'Current user not found' });
+      return;
+    }
+    
+    const currentUsername = getCurrentUserResult.recordset[0].Username;
+    
+    const getFriends = new sql.Request();
+    getFriends.input('username', sql.NVarChar, currentUsername);
+    const getFriendsResult = await getFriends.query(`
+        SELECT 
+            CASE 
+                WHEN f.user1 = @username THEN f.user2 
+                ELSE f.user1 
+            END as friendUsername,
+            f.dateAdded,
+            u.pfpUrl
+        FROM Friends f
+        JOIN Users u ON (
+            CASE 
+                WHEN f.user1 = @username THEN f.user2 
+                ELSE f.user1 
+            END = u.Username
+        )
+        WHERE (f.user1 = @username OR f.user2 = @username)
+    `);
+    res.json({ friends: getFriendsResult.recordset });
+  } catch (error) {
+    console.error('Error listing friends:', error);
+    res.status(500).json({ error: 'Error listing friends', details: error.message });
+  }
+});
+
+app.post('/api/respondToFriendRequest', async (req, res) => {
+  if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+      console.log('respondToFriendRequest - Request body:', req.body);
+      const { requestId, action } = req.body;
+      console.log('requestId:', requestId, 'action:', action);
+      
+      // Get the current user's username from database
+      const getCurrentUserRequest = new sql.Request();
+      getCurrentUserRequest.input('email', sql.NVarChar, req.user.emails[0].value);
+      const getCurrentUserResult = await getCurrentUserRequest.query(`SELECT Username FROM Users WHERE Email = @email`);
+      
+      if (getCurrentUserResult.recordset.length === 0) {
+          res.status(404).json({ error: 'Current user not found' });
+          return;
+      }
+      
+              const currentUsername = getCurrentUserResult.recordset[0].Username;
+
+      if (!requestId || !action || !['accept', 'reject'].includes(action)) {
+          return res.status(400).json({ error: 'Invalid request' });
+      }
+
+      // Get the friend request
+      const getRequestRequest = new sql.Request();
+      getRequestRequest.input('requestId', sql.Int, requestId);
+      getRequestRequest.input('toUsername', sql.NVarChar, currentUsername);
+      const getRequestResult = await getRequestRequest.query(`
+          SELECT * FROM FriendRequests 
+          WHERE id = @requestId AND toUser = @toUsername AND status = 'pending'
+      `);
+
+      if (getRequestResult.recordset.length === 0) {
+          return res.status(404).json({ error: 'Friend request not found' });
+      }
+
+      const friendRequest = getRequestResult.recordset[0];
+
+      if (action === 'accept') {
+          // Add to friends table
+          const addFriendRequest = new sql.Request();
+          addFriendRequest.input('user1', sql.NVarChar, friendRequest.fromUser);
+          addFriendRequest.input('user2', sql.NVarChar, friendRequest.toUser);
+          await addFriendRequest.query(`
+              INSERT INTO Friends (user1, user2, dateAdded) 
+              VALUES (@user1, @user2, GETDATE())
+          `);
+      }
+
+      // Update friend request status and dateResponded
+      const updateRequestRequest = new sql.Request();
+      updateRequestRequest.input('requestId', sql.Int, requestId);
+      updateRequestRequest.input('status', sql.NVarChar, action === 'accept' ? 'accepted' : 'rejected');
+      updateRequestRequest.input('dateResponded', sql.DateTime, new Date());
+      await updateRequestRequest.query(`
+          UPDATE FriendRequests 
+          SET status = @status, dateResponded = @dateResponded
+          WHERE id = @requestId
+      `);
+
+      res.json({ success: true, message: `Friend request ${action}ed successfully` });
+  } catch (error) {
+      console.error('Error responding to friend request:', error);
+      res.status(500).json({ error: 'Failed to respond to friend request' });
+  }
+});
 
 app.post('/api/incrementPracticeTestsCompleted', async (req, res) => {
   if (!req.isAuthenticated()) {
@@ -1004,11 +1198,7 @@ io.on('connection', (socket) => {
 
 });
 
-
-
-  
-
-
+// Friends API endpoints - TODO: Implement friend functionalit
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 }).on('error', (err) => {
