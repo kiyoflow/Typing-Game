@@ -58,6 +58,7 @@ let correctChars = 0;
 let totalChars = 0;
 let testComplete = false; // Flag to track if the test is complete
 let pvpRaceComplete = false; // Flag to track if the PvP race is complete
+window.countdownActive = false; // Flag to track if countdown is active
 let currentWordCount = 25;
 let privateMatchProgressInterval = null; // Timer for sending progress updates
 
@@ -519,6 +520,7 @@ function resetTypingVariables() {
     totalChars = 0;
     testComplete = false; // Reset the test complete flag
     pvpRaceComplete = false; // Reset the PvP race complete flag
+    window.countdownActive = false; // Reset the countdown active flag
     
     // Clear any existing progress interval
     if (privateMatchProgressInterval) {
@@ -879,6 +881,7 @@ function backToMenu() {
     // Reset test state
     testComplete = false;
     pvpRaceComplete = false;
+    window.countdownActive = false;
     
     menu(); // Go back to main menu
 }
