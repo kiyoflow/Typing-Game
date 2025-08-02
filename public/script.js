@@ -1220,6 +1220,13 @@ if (queueBackBtn) {
         
         pvpmenu.style.display = 'none';
         if(queueBackBtn) queueBackBtn.classList.remove('active');
+        
+        // Hide queue counter immediately when going back
+        const queueCounter = document.getElementById('queue-counter');
+        if (queueCounter) {
+            queueCounter.style.display = 'none';
+        }
+        
         if (profileDiv) {
             profileDiv.style.display = 'flex';
         }
