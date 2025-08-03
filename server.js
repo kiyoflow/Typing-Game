@@ -1148,12 +1148,8 @@ io.on('connection', async (socket) => {
       
       // If player is already finished, don't recalculate WPM (it would go down as time increases)
       if (currentStats.finished) {
-        // Only update progress if they're still typing (shouldn't happen but just in case)
-        room.matchData.playerStats[username] = {
-          ...currentStats,
-          progress: data.progress,
-          totalChars: data.totalChars
-        };
+        // Don't update anything for finished players - keep their final stats
+        // But continue to the leaderboard update section below
       } else {
       // Calculate elapsed time since match started
       const elapsed = new Date() - room.matchData.startTime;

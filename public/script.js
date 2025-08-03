@@ -1650,11 +1650,8 @@ document.addEventListener('keydown', function(event) {
                     finalAccuracy: accuracy // Send final accuracy
                 });
 
-                // Stop the progress interval immediately
-                if (privateMatchProgressInterval) {
-                    clearInterval(privateMatchProgressInterval);
-                    privateMatchProgressInterval = null;
-                }
+                // Don't stop the progress interval - let it continue until all players finish
+                // The server will handle ending the match when all players are done
             } else {
                 // This handles practice mode or a finished PvP match
                 if (isPvPMode) {
