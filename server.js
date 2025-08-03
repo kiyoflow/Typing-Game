@@ -1197,14 +1197,17 @@ io.on('connection', async (socket) => {
           console.log(`All players finished in room ${privateRoomId}. Emitting matchEnded event.`);
         }
         
+        // Send one final leaderboard update with the completed stats before ending
+        io.to(privateRoomId).emit('leaderboardUpdate', {
+            playerStats: room.matchData.playerStats
+        });
+        
         room.matchData.isOver = true; // Prevent this from firing multiple times
         io.to(privateRoomId).emit('privateMatchEnded', {
           finalRankings: room.matchData.playerStats
         });
-      }
-      
-      // If the match is still ongoing, send a leaderboard update.
-      if (!room.matchData.isOver) {
+      } else if (!room.matchData.isOver) {
+          // If the match is still ongoing, send a leaderboard update.
           io.to(privateRoomId).emit('leaderboardUpdate', {
               playerStats: room.matchData.playerStats
           });
