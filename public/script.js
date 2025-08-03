@@ -535,6 +535,8 @@ function startPrivateMatchProgressTimer() {
         if (privatePlayerContainer && activeContainer === privatePlayerContainer && startTime) {
             socket.emit('privateMatchProgress', {
                 progress: correctChars,
+                finalWpm: typingSpeed,
+                finalAccuracy: accuracy,
                 totalChars: keysPressed,
                 finished: false
             });

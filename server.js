@@ -1167,7 +1167,7 @@ io.on('connection', async (socket) => {
       let wpm = 0;
       let accuracy = 0;
       
-      if (data.finished) {
+      /* if (data.finished) {
         // For finished players, use the final WPM and accuracy sent from client
         console.log(`Player ${username} finished with finalWpm: ${data.finalWpm}, finalAccuracy: ${data.finalAccuracy}`);
         wpm = data.finalWpm || 0;
@@ -1176,7 +1176,10 @@ io.on('connection', async (socket) => {
         // For active players, calculate based on current elapsed time
         wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
         accuracy = data.totalChars > 1 ? Math.min(Math.round((data.progress / (data.totalChars - 1)) * 100), 100) : 0;
-      }
+      } */
+
+      wpm = data.finalWpm || 0;
+      accuracy = data.finalAccuracy || 0;
       
       // Update player stats
       room.matchData.playerStats[username] = {
