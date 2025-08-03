@@ -1151,8 +1151,10 @@ io.on('connection', async (socket) => {
         // Don't update anything for finished players - keep their final stats
         // But continue to the leaderboard update section below
       } else {
-      // Calculate elapsed time since match started
-      const elapsed = new Date() - room.matchData.startTime;
+      // Calculate elapsed time since typing started (not match start)
+      const playerStats = room.matchData.playerStats[username];
+      const startTime = playerStats.typingStartTime || room.matchData.startTime; // Fallback to match start time if typing start time not set
+      const elapsed = new Date() - startTime;
       const elapsedMinutes = elapsed / 60000;
       
       // Calculate WPM and accuracy
@@ -1359,7 +1361,8 @@ io.on('connection', async (socket) => {
           finished: false,
           finishTime: null,
           finalWpm: 0,
-          finalAccuracy: 0
+          finalAccuracy: 0,
+          typingStartTime: null // Track when each player actually starts typing
         };
       });
       
@@ -1382,6 +1385,18 @@ io.on('connection', async (socket) => {
       io.to(privateRoomId).emit('leaderboardUpdate', {
         playerStats: room.matchData.playerStats
       });
+    }
+  });
+
+  socket.on('typingStarted', (data) => {
+    const privateRoomId = socket.roomId;
+    const room = privateRooms[privateRoomId];
+    const username = socket.user.username || socket.user.displayName;
+    
+    if (room && room.matchData && room.matchData.playerStats[username]) {
+      // Set the actual typing start time for this player
+      room.matchData.playerStats[username].typingStartTime = new Date(data.startTime);
+      console.log(`Player ${username} started typing at ${new Date(data.startTime)}`);
     }
   });
 

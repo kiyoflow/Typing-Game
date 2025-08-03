@@ -412,6 +412,11 @@
                     if (timer) {
                         timer.startTimer();
                     }
+                    
+                    // Send the actual typing start time to the server
+                    socket.emit('typingStarted', {
+                        startTime: Date.now()
+                    });
                 });
             });
         });
