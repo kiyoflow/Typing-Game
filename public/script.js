@@ -198,25 +198,17 @@ console.log('viewFullProfileBtn found:', viewFullProfileBtn);
 if (viewFullProfileBtn) {
     viewFullProfileBtn.addEventListener('click', () => {
         console.log('View full profile button clicked!');
-        // Get the username from the profile data and redirect to the new URL format
-        console.log('About to fetch /api/userprofile');
-        fetch('/api/userprofile')
-            .then(response => {
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Got user data:', data);
-                window.location.href = `/profile/${data.username}`;
-            })
-            .catch(error => {
-                console.error('Error getting username for profile URL:', error);
-                // Fallback to old URL if there's an error
-                window.location.href = 'fullProfile.html';
-            });
+        // Get the username from the currently displayed profile
+        const playerUsername = document.getElementById('playerUsername');
+        if (playerUsername && playerUsername.textContent) {
+            const username = playerUsername.textContent;
+            console.log('Redirecting to profile for username:', username);
+            window.location.href = `/profile/${username}`;
+        } else {
+            console.error('No username found in profile popup');
+            // Fallback to old URL if there's an error
+            window.location.href = 'fullProfile.html';
+        }
     });
     console.log('Event listener added to viewFullProfileBtn');
 } else {
@@ -239,7 +231,7 @@ function showProfilePopup(username) {
     const playerUsername = document.getElementById('playerUsername');
     const creationDate = document.getElementById('creationDate');
     const playerProfilePicture = document.getElementById('playerProfilePicture');
-    const aboutMe = document.getElementById('aboutMe');
+    const aboutMeContent = document.getElementById('aboutMeContent');
     const totalTypingTime = document.getElementById('totalTypingTime');
 
     // Show the popup first
@@ -274,7 +266,7 @@ function showProfilePopup(username) {
             };
             playerProfilePicture.innerHTML = '';
             playerProfilePicture.appendChild(profileImg);
-            aboutMe.textContent = `About me`;
+            aboutMeContent.textContent = data.aboutMe || 'No about me text yet.';
             totalTypingTime.textContent = `Total Typing Time: ${formatTime(data.totalTypingTime || 0)}`;
         })
         .catch(error => {

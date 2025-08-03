@@ -139,13 +139,19 @@
             document.getElementById('creationDate').textContent = `JOINED ${new Date(data.creationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`.toUpperCase();
             
             // Display about me text
+            console.log('About me data from API:', data.aboutMe);
             const aboutContent = document.querySelector('.about-content');
+            console.log('About content element found:', aboutContent);
             if (aboutContent) {
                 if (data.aboutMe && data.aboutMe.trim() !== '') {
+                    console.log('Setting about me text to:', data.aboutMe);
                     aboutContent.textContent = data.aboutMe;
                 } else {
+                    console.log('Setting default about me text');
                     aboutContent.textContent = 'No about me text yet.';
                 }
+            } else {
+                console.error('About content element not found!');
             }
             
             document.getElementById('timeTyping').textContent = formatTime(data.totalTypingTime || 0);
@@ -174,6 +180,7 @@
             document.body.classList.add('loaded');
         });
     </script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/script.js"></script>
 </body>
 </html>
