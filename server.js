@@ -1151,48 +1151,20 @@ io.on('connection', async (socket) => {
     if (room && room.matchData && room.matchData.playerStats[username]) {
       const currentStats = room.matchData.playerStats[username];
       
-      // If player is already finished, don't recalculate WPM (it would go down as time increases)
-      if (currentStats.finished) {
-        // Don't update anything for finished players - keep their final stats
-        // But continue to the leaderboard update section below
-      } else {
-      // Calculate elapsed time since typing started (not match start)
-      const playerStats = room.matchData.playerStats[username];
-      const startTime = playerStats.typingStartTime || room.matchData.startTime; // Fallback to match start time if typing start time not set
-      const elapsed = new Date() - startTime;
-      const elapsedMinutes = elapsed / 60000;
+      if (data.finished) {
+        // For finished players, log the final WPM and accuracy sent from client
+        console.log(`Player ${username} finished with finalWpm: ${data.finalWpm || 0}, finalAccuracy: ${data.finalAccuracy || 0}`);
+      }
       
-      // Calculate WPM and accuracy
-      const wordsTyped = data.progress / 5; // Standard: 5 chars = 1 word
-      let wpm = 0;
-      let accuracy = 0;
-      
-      /* if (data.finished) {
-        // For finished players, use the final WPM and accuracy sent from client
-        console.log(`Player ${username} finished with finalWpm: ${data.finalWpm}, finalAccuracy: ${data.finalAccuracy}`);
-        wpm = data.finalWpm || 0;
-        accuracy = data.finalAccuracy || 0;
-      } else {
-        // For active players, calculate based on current elapsed time
-        wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
-        accuracy = data.totalChars > 1 ? Math.min(Math.round((data.progress / (data.totalChars - 1)) * 100), 100) : 0;
-      } */
-
-      wpm = data.finalWpm || 0;
-      accuracy = data.finalAccuracy || 0;
-      
-      // Update player stats
+      // Update player stats (for both active and finished players)
       room.matchData.playerStats[username] = {
         progress: data.progress,
         totalChars: data.totalChars,
-        wpm: wpm,
-        accuracy: accuracy,
         finished: data.finished,
         finishTime: data.finished ? new Date() : null,
-        finalWpm: data.finalWpm || 0, // Always use client's finalWpm, never fallback to calculated wpm
-        finalAccuracy: data.finalAccuracy || 0 // Always use client's finalAccuracy, never fallback to calculated accuracy
+        finalWpm: data.finalWpm || 0, // Current/final WPM from client
+        finalAccuracy: data.finalAccuracy || 0 // Current/final accuracy from client
       };
-      }
       
       // Check if all players have finished or if time has run out for one player
       const allPlayers = Object.keys(room.matchData.playerStats);
@@ -1369,8 +1341,6 @@ io.on('connection', async (socket) => {
         room.matchData.playerStats[player.username] = {
           progress: 0,
           totalChars: 0,
-          wpm: 0,
-          accuracy: 0,
           finished: false,
           finishTime: null,
           finalWpm: 0,

@@ -533,10 +533,16 @@ function startPrivateMatchProgressTimer() {
         const activeContainer = getActiveTypingContainer();
         // Only send if we're in private match mode and match has started
         if (privatePlayerContainer && activeContainer === privatePlayerContainer && startTime) {
+            // Calculate current WPM and accuracy for real-time updates
+            const currentTime = new Date();
+            const elapsedTime = currentTime - startTime;
+            const currentWpm = elapsedTime > 0 ? Math.floor((correctWords / elapsedTime) * 60000) : 0;
+            const currentAccuracy = keysPressed > 0 ? Math.floor((correctChars / keysPressed) * 100) : 0;
+            
             socket.emit('privateMatchProgress', {
                 progress: correctChars,
-                finalWpm: typingSpeed,
-                finalAccuracy: accuracy,
+                finalWpm: currentWpm,
+                finalAccuracy: currentAccuracy,
                 totalChars: keysPressed,
                 finished: false
             });
@@ -1789,9 +1795,9 @@ function updateLeaderboard(playerStats) {
     sortedPlayers.forEach((player, index) => {
         const playerName = player[0];
         const currentRanking = index + 1;
-        // Use final values for finished players, current values for active players
-        const playerWpm = player[1].finished ? (player[1].finalWpm || player[1].wpm) : player[1].wpm;
-        const playerAccuracy = player[1].finished ? (player[1].finalAccuracy || player[1].accuracy) : player[1].accuracy;
+        // Use finalWpm and finalAccuracy for all players (both current and final values)
+        const playerWpm = player[1].finalWpm || 0;
+        const playerAccuracy = player[1].finalAccuracy || 0;
         const previousRanking = previousRankings[playerName] || currentRanking;
 
         const playerElement = document.createElement('div');
@@ -1849,13 +1855,13 @@ function showFinalLeaderboard(playerStats, privateRoomId) {
 
     // Sort players by WPM (highest first), then accuracy
     const sortedPlayers = Object.entries(playerStats).sort((a, b) => {
-        const wpmA = a[1].finalWpm || a[1].wpm || 0;
-        const wpmB = b[1].finalWpm || b[1].wpm || 0;
+        const wpmA = a[1].finalWpm || 0;
+        const wpmB = b[1].finalWpm || 0;
         if (wpmB !== wpmA) {
             return wpmB - wpmA;
         }
-        const accA = a[1].finalAccuracy || a[1].accuracy || 0;
-        const accB = b[1].finalAccuracy || b[1].accuracy || 0;
+        const accA = a[1].finalAccuracy || 0;
+        const accB = b[1].finalAccuracy || 0;
         return accB - accA;
     });
 
@@ -1880,8 +1886,8 @@ function showFinalLeaderboard(playerStats, privateRoomId) {
         playerNameDiv.className = 'player-name-final';
 
         const playerStatsDiv = document.createElement('div');
-        const wpm = stats.finalWpm || stats.wpm || 0;
-        const accuracy = stats.finalAccuracy || stats.accuracy || 0;
+        const wpm = stats.finalWpm || 0;
+        const accuracy = stats.finalAccuracy || 0;
         playerStatsDiv.textContent = `${wpm} WPM | ${accuracy}% Accuracy`;
         playerStatsDiv.className = 'player-stats-final';
 
