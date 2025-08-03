@@ -2178,6 +2178,29 @@ if (closeSettingsButton) {
     });
 }
 
+// Logout functionality
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', function() {
+        // Log the logout action to the database and then logout
+        fetch('/api/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            // Log the logout and then redirect to login page
+            window.location.href = '/login';
+        })
+        .catch(error => {
+            console.error('Error during logout:', error);
+            // Still logout even if logging fails
+            window.location.href = '/login';
+        });
+    });
+}
+
 // Character counter for about me
 const aboutMeInput = document.getElementById('aboutMeInput');
 const charCount = document.querySelector('.char-count');

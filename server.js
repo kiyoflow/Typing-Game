@@ -201,8 +201,48 @@ app.get('/auth/google/callback',
 
 app.get('/auth/logout', (req, res) => {
     req.logout(() => {
-        res.redirect('/');
+        res.redirect('/login');
     });
+});
+
+app.post('/api/logout', async (req, res) => {
+    if (req.isAuthenticated()) {
+        try {
+            const email = req.user.emails[0].value;
+            
+            // Get the username from the database
+            const usernameRequest = new sql.Request();
+            usernameRequest.input('email', sql.NVarChar, email);
+            const usernameResult = await usernameRequest.query(`SELECT Username FROM Users WHERE Email = @email`);
+            const username = usernameResult.recordset[0].Username;
+            
+            // Log the logout action
+            console.log(`User ${username} (${email}) is logging out`);
+            const logRequest = new sql.Request();
+            logRequest.input('username', sql.NVarChar, username);
+            logRequest.input('email', sql.NVarChar, email);
+            logRequest.input('timestamp', sql.DateTime, new Date());
+            logRequest.input('action', sql.NVarChar, 'logout');
+            await logRequest.query(`
+                INSERT INTO logs (username, email, timestamp, action) VALUES (@username, @email, @timestamp, @action)
+            `);
+            console.log(`Logout logged to database for ${username}`);
+            
+            // Actually log the user out
+            req.logout(() => {
+                console.log(`Session cleared for ${username}`);
+                res.json({ success: true, message: 'Logged out successfully' });
+            });
+        } catch (error) {
+            console.error('Error logging logout:', error);
+            // Still log out even if logging fails
+            req.logout(() => {
+                res.status(500).json({ error: 'Failed to log logout but logged out successfully' });
+            });
+        }
+    } else {
+        res.status(401).json({ error: 'Not authenticated' });
+    }
 });
 
 // Check auth status
