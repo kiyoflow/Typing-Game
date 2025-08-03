@@ -1165,8 +1165,8 @@ io.on('connection', async (socket) => {
       room.matchData.playerStats[username] = {
         progress: data.progress,
         totalChars: data.totalChars,
-        wpm: wpm,
-        accuracy: accuracy,
+        wpm: data.finished ? (data.finalWpm || wpm) : wpm, // Use final WPM if finished
+        accuracy: data.finished ? (data.finalAccuracy || accuracy) : accuracy, // Use final accuracy if finished
         finished: data.finished,
         finishTime: data.finished ? new Date() : null,
         finalWpm: data.finalWpm || (data.finished ? wpm : 0),

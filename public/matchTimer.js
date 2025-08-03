@@ -111,11 +111,8 @@ class MatchTimerComponent extends HTMLElement {
             key.style.backgroundColor = '#ecdeaa';
         });
         
-        // Clear any progress timers
-        if (privateMatchProgressInterval) {
-            clearInterval(privateMatchProgressInterval);
-            privateMatchProgressInterval = null;
-        }
+        // Don't clear the progress interval - let it continue until all players finish
+        // The server will handle ending the match when all players are done
         
         // Send final progress for private match
         socket.emit('privateMatchProgress', {
