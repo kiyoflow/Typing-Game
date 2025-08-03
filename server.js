@@ -1185,8 +1185,8 @@ io.on('connection', async (socket) => {
         accuracy: accuracy,
         finished: data.finished,
         finishTime: data.finished ? new Date() : null,
-        finalWpm: data.finalWpm || (data.finished ? wpm : 0),
-        finalAccuracy: data.finalAccuracy || (data.finished ? accuracy : 0)
+        finalWpm: data.finalWpm || 0, // Always use client's finalWpm, never fallback to calculated wpm
+        finalAccuracy: data.finalAccuracy || 0 // Always use client's finalAccuracy, never fallback to calculated accuracy
       };
       }
       

@@ -1621,13 +1621,7 @@ document.addEventListener('keydown', function(event) {
         if (lastWordMatched) {
 
             if (isPrivateMode) {
-                // Stop the visual timer immediately
-                const timer = document.querySelector('match-timer-component');
-                if (timer) {
-                    timer.stopTimer();
-                }
-
-                // Mark as complete to stop typing and the timer
+                // Mark as complete to stop typing
                 testComplete = true; 
                 
                 // Stop typing time tracking
