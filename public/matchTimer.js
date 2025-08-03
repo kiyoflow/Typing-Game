@@ -111,14 +111,19 @@ class MatchTimerComponent extends HTMLElement {
             key.style.backgroundColor = '#ecdeaa';
         });
         
-        // Don't clear the progress interval - let it continue until all players finish
+        // Don't stop the progress interval - let it continue until all players finish
         // The server will handle ending the match when all players are done
+        
+        // Calculate final stats before sending
+        calculateStats();
         
         // Send final progress for private match
         socket.emit('privateMatchProgress', {
             progress: correctChars,
             totalChars: keysPressed,
             finished: true, // Mark as finished due to time limit
+            finalWpm: typingSpeed,
+            finalAccuracy: accuracy,
             reason: 'time_up'
         });
 

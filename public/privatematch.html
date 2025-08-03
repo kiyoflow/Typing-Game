@@ -421,7 +421,17 @@
             });
         });
 
+        socket.on('leaderboardUpdate', (data) => {
+            updateLeaderboard(data.playerStats);
+        });
+
         socket.on('privateMatchEnded', (data) => {
+            // Stop the progress timer since the match is over
+            if (privateMatchProgressInterval) {
+                clearInterval(privateMatchProgressInterval);
+                privateMatchProgressInterval = null;
+            }
+            
             showFinalLeaderboard(data.finalRankings, privateRoomId);
         });
 

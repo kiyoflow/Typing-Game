@@ -531,8 +531,8 @@ function startPrivateMatchProgressTimer() {
     
     privateMatchProgressInterval = setInterval(() => {
         const activeContainer = getActiveTypingContainer();
-        // Only send if we're in private match mode and match has started
-        if (privatePlayerContainer && activeContainer === privatePlayerContainer && startTime) {
+        // Only send if we're in private match mode, match has started, and player hasn't finished
+        if (privatePlayerContainer && activeContainer === privatePlayerContainer && startTime && !testComplete) {
             // Calculate current WPM and accuracy for real-time updates
             const currentTime = new Date();
             const elapsedTime = currentTime - startTime;
