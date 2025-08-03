@@ -1141,6 +1141,11 @@ io.on('connection', async (socket) => {
   socket.on('privateMatchProgress', (data) => {
     const privateRoomId = socket.roomId;
     const room = privateRooms[privateRoomId];
+    
+    if (!socket.user) {
+      return; // Skip if user not authenticated
+    }
+    
     const username = socket.user.username || socket.user.displayName;
    
     if (room && room.matchData && room.matchData.playerStats[username]) {
