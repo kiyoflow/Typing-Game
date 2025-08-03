@@ -1169,6 +1169,7 @@ io.on('connection', async (socket) => {
       
       if (data.finished) {
         // For finished players, use the final WPM and accuracy sent from client
+        console.log(`Player ${username} finished with finalWpm: ${data.finalWpm}, finalAccuracy: ${data.finalAccuracy}`);
         wpm = data.finalWpm || 0;
         accuracy = data.finalAccuracy || 0;
       } else {
@@ -1203,6 +1204,7 @@ io.on('connection', async (socket) => {
         }
         
         // Send one final leaderboard update with the completed stats before ending
+        console.log('Final leaderboard update with stats:', JSON.stringify(room.matchData.playerStats, null, 2));
         io.to(privateRoomId).emit('leaderboardUpdate', {
             playerStats: room.matchData.playerStats
         });
