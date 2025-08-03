@@ -96,8 +96,8 @@ passport.deserializeUser((user, done) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    //callbackURL: "http://localhost:3000/auth/google/callback" 
-    callbackURL: "https://typing-game.azurewebsites.net/auth/google/callback"
+    callbackURL: "http://localhost:3000/auth/google/callback" 
+    //callbackURL: "https://typing-game.azurewebsites.net/auth/google/callback"
 },
 async function(accessToken, refreshToken, profile, done) {
     // No MSSQL logic, just pass 
@@ -922,14 +922,22 @@ function handlePlayerLeavingPrivateRoom(socket, privateRoomId) {
     }
 }
 
-io.on('connection', (socket) => {
-  socket.on('userData', (userData) => {
+io.on('connection', async (socket) => {
+  socket.on('userData', async (userData) => {
     // We no longer store the full socket object, only the user's data.
     // The socket.id is the key, which is all we need.
     users[socket.id] = userData;
     socket.user = userData; // Store user data directly on socket
     console.log(`${userData.username || userData.displayName} connected`);
-    
+
+    const logRequest = new sql.Request();
+    logRequest.input('username', sql.NVarChar, userData.username);
+    logRequest.input('email', sql.NVarChar, userData.emails[0].value);
+    logRequest.input('timestamp', sql.DateTime, new Date());
+    logRequest.input('action', sql.NVarChar, 'login')
+    await logRequest.query(`
+      INSERT INTO logs (username, email, timestamp, action) VALUES (@username, @email, @timestamp, @action)
+    `);
     // No need to check queue status on connection anymore
     // Let the queueMatch handler deal with duplicates
   });
