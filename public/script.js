@@ -1793,8 +1793,9 @@ function updateLeaderboard(playerStats) {
     sortedPlayers.forEach((player, index) => {
         const playerName = player[0];
         const currentRanking = index + 1;
-        const playerWpm = player[1].wpm;
-        const playerAccuracy = player[1].accuracy;
+        // Use final values for finished players, current values for active players
+        const playerWpm = player[1].finished ? (player[1].finalWpm || player[1].wpm) : player[1].wpm;
+        const playerAccuracy = player[1].finished ? (player[1].finalAccuracy || player[1].accuracy) : player[1].accuracy;
         const previousRanking = previousRankings[playerName] || currentRanking;
 
         const playerElement = document.createElement('div');

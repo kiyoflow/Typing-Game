@@ -1157,16 +1157,25 @@ io.on('connection', async (socket) => {
       
       // Calculate WPM and accuracy
       const wordsTyped = data.progress / 5; // Standard: 5 chars = 1 word
-      const wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
-      // Fix accuracy calculation to match client-side calculation
-      const accuracy = data.totalChars > 1 ? Math.min(Math.round((data.progress / (data.totalChars - 1)) * 100), 100) : 0;
+      let wpm = 0;
+      let accuracy = 0;
+      
+      if (data.finished) {
+        // For finished players, use the final WPM and accuracy sent from client
+        wpm = data.finalWpm || 0;
+        accuracy = data.finalAccuracy || 0;
+      } else {
+        // For active players, calculate based on current elapsed time
+        wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
+        accuracy = data.totalChars > 1 ? Math.min(Math.round((data.progress / (data.totalChars - 1)) * 100), 100) : 0;
+      }
       
       // Update player stats
       room.matchData.playerStats[username] = {
         progress: data.progress,
         totalChars: data.totalChars,
-        wpm: data.finished ? (data.finalWpm || wpm) : wpm, // Use final WPM if finished
-        accuracy: data.finished ? (data.finalAccuracy || accuracy) : accuracy, // Use final accuracy if finished
+        wpm: wpm,
+        accuracy: accuracy,
         finished: data.finished,
         finishTime: data.finished ? new Date() : null,
         finalWpm: data.finalWpm || (data.finished ? wpm : 0),
