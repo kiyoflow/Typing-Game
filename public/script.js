@@ -99,7 +99,7 @@ function showMyProfilePopup() {
                 profileImg.src = data.profilePicture;
             } else {
                 // Handle URL data with proxy
-                profileImg.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            profileImg.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
             }
             profileImg.alt = 'Profile Picture';
             profileImg.onerror = function() {
@@ -260,7 +260,7 @@ function showProfilePopup(username) {
                 profileImg.src = data.profilePicture;
             } else {
                 // Handle URL data with proxy
-                profileImg.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
+            profileImg.src = `/proxy-image?url=${encodeURIComponent(data.profilePicture)}`;
             }
             profileImg.alt = 'Profile Picture';
             profileImg.onerror = function() {
@@ -393,10 +393,10 @@ function loadFriendsList() {
                     <div class="friend-item">
                         <div class="friend-content" onclick="showProfilePopup('${friend.friendUsername}')">
                             <img src="${getProfilePictureUrl(friend.pfpUrl)}" alt="Profile" class="friend-avatar" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23bdc3c7%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%237f8c8d%22>👤</text></svg>'">
-                            <div class="friend-details">
-                                <div class="friend-name">${friend.friendUsername}</div>
-                                <div class="friend-stats">Friend since ${new Date(friend.dateAdded).toLocaleDateString()}</div>
-                            </div>
+                        <div class="friend-details">
+                            <div class="friend-name">${friend.friendUsername}</div>
+                            <div class="friend-stats">Friend since ${new Date(friend.dateAdded).toLocaleDateString()}</div>
+                        </div>
                         </div>
                         <button class="remove-friend-btn" onclick="removeFriend('${friend.friendUsername}')">Remove</button>
                     </div>
@@ -845,10 +845,10 @@ function backToMenu() {
     
     // Hide match and pvpmenu
     if (match) {
-        match.style.display = 'none';
+    match.style.display = 'none';
     }
     if (pvpmenu) {
-        pvpmenu.style.display = 'none';
+    pvpmenu.style.display = 'none';
     }
 
     const queueButton = document.getElementById('queueBtn');
@@ -1200,18 +1200,18 @@ pvpButton.addEventListener('click', function() {
     }
 
     // Hide menu
-    menu.style.display = 'none';
-    menuContent.style.display = 'none';
+        menu.style.display = 'none';
+        menuContent.style.display = 'none';
     
     // Show PvP menu
-    pvpmenu.style.display = 'block';
-    if (queueBackBtn) queueBackBtn.classList.add('active');
-    
-    // Show queue counter when PvP menu is shown
-    const queueCounter = document.getElementById('queue-counter');
-    if (queueCounter) {
-        queueCounter.style.display = 'block';
-    }
+        pvpmenu.style.display = 'block';
+        if (queueBackBtn) queueBackBtn.classList.add('active');
+        
+        // Show queue counter when PvP menu is shown
+        const queueCounter = document.getElementById('queue-counter');
+        if (queueCounter) {
+            queueCounter.style.display = 'block';
+        }
 });
 }
 
@@ -2125,6 +2125,25 @@ const profilePictureInput = document.getElementById('profilePictureInput');
 
 if (settingsButton) {
     settingsButton.addEventListener('click', function() {
+        // Load current user profile data
+        fetch('/api/userprofile')
+            .then(response => response.json())
+            .then(data => {
+                const aboutMeInput = document.getElementById('aboutMeInput');
+                const charCount = document.querySelector('.char-count');
+                
+                if (aboutMeInput) {
+                    aboutMeInput.value = data.aboutMe || '';
+                }
+                
+                if (charCount) {
+                    charCount.textContent = `${(data.aboutMe || '').length}/200`;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading profile data:', error);
+            });
+        
         settingsPanel.style.display = 'block';
         setTimeout(() => {
             settingsPanel.classList.add('show');
@@ -2149,9 +2168,14 @@ if (closeSettingsButton) {
             .then(response => response.json())
             .then(data => {
                 console.log('About me saved:', data.message);
+                if (data.success) {
+                    // Show success feedback (optional)
+                    console.log('Settings updated successfully');
+                }
             })
             .catch(error => {
                 console.error('Error saving about me:', error);
+                alert('Failed to save settings. Please try again.');
             });
         }
         

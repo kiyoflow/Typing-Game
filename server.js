@@ -643,19 +643,20 @@ app.post('/api/updatePlayerSettings', async (req, res) => {
     const updateRequest = new sql.Request();
     updateRequest.input('email', sql.NVarChar, email);
     
+    let result;
     if (profilePicture && aboutMe !== undefined) {
       // Update both
-      updateRequest.input('profilePicture', sql.NText, profilePicture);
+      updateRequest.input('profilePicture', sql.NVarChar(sql.MAX), profilePicture);
       updateRequest.input('aboutMe', sql.NVarChar, aboutMe);
-      const result = await updateRequest.query(`
+      result = await updateRequest.query(`
         UPDATE Users 
         SET pfpUrl = @profilePicture, aboutMe = @aboutMe
         WHERE Email = @email
       `);
     } else if (profilePicture) {
       // Update only profile picture
-      updateRequest.input('profilePicture', sql.NText, profilePicture);
-      const result = await updateRequest.query(`
+      updateRequest.input('profilePicture', sql.NVarChar(sql.MAX), profilePicture);
+      result = await updateRequest.query(`
         UPDATE Users 
         SET pfpUrl = @profilePicture
         WHERE Email = @email
@@ -663,7 +664,7 @@ app.post('/api/updatePlayerSettings', async (req, res) => {
     } else if (aboutMe !== undefined) {
       // Update only about me
       updateRequest.input('aboutMe', sql.NVarChar, aboutMe);
-      const result = await updateRequest.query(`
+      result = await updateRequest.query(`
         UPDATE Users 
         SET aboutMe = @aboutMe
         WHERE Email = @email
