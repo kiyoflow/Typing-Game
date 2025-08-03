@@ -96,8 +96,8 @@ passport.deserializeUser((user, done) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    //callbackURL: "http://localhost:3000/auth/google/callback" 
-    callbackURL: "https://typing-game.azurewebsites.net/auth/google/callback"
+    callbackURL: "http://localhost:3000/auth/google/callback" 
+    //callbackURL: "https://typing-game.azurewebsites.net/auth/google/callback"
 },
 async function(accessToken, refreshToken, profile, done) {
     // No MSSQL logic, just pass 
@@ -219,7 +219,8 @@ app.get('/auth/status', async (req, res) => {
                 authenticated: true,
                 user: {
                     username: userData.Username,
-                    profilePicture: req.user.photos[0].value
+                    profilePicture: req.user.photos[0].value,
+                    emails: req.user.emails
                 }
             });
         } catch (error) {
@@ -1026,10 +1027,25 @@ io.on('connection', (socket) => {
 
     // --- Winner Stat Update Logic ---
     if (!match.winnerDeclared) {
-        console.log('Declaring winner and updating pvp_wins for:', socket.user.username || socket.user.displayName);
+        console.log('Declaring winner and updating pvp_wins for:', socket.user?.username || socket.user?.displayName);
+        console.log('Socket user object:', socket.user);
+        console.log('Socket user emails:', socket.user?.emails);
+        
         match.winnerDeclared = true; // Set the lock.
         try {
+            if (!socket.user) {
+                throw new Error('socket.user is undefined');
+            }
+            
+            if (!socket.user.emails || !socket.user.emails[0]) {
+                throw new Error('socket.user.emails is undefined or empty');
+            }
+            
             const email = socket.user.emails[0].value;
+            if (!email) {
+                throw new Error('Email value is undefined or empty');
+            }
+            
             console.log('Updating database for email:', email);
             const updateRequest = new sql.Request();
             updateRequest.input('email', sql.NVarChar, email);
@@ -1039,8 +1055,14 @@ io.on('connection', (socket) => {
                 WHERE Email = @email
             `);
             console.log(`Successfully incremented pvp_wins for ${socket.user.username || socket.user.displayName}. Rows affected:`, result.rowsAffected);
+            
+            if (result.rowsAffected[0] === 0) {
+                console.warn('No rows were affected by the pvp_wins update. User might not exist in database.');
+            }
         } catch (error) {
             console.error('Error updating pvp_wins:', error);
+            console.error('Error details:', error.message);
+            console.error('Error stack:', error.stack);
         }
     } else {
         console.log('Winner already declared for this match');
