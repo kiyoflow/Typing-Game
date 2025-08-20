@@ -220,7 +220,7 @@ app.post('/api/logout', async (req, res) => {
             const logRequest = new sql.Request();
             logRequest.input('username', sql.NVarChar, username);
             logRequest.input('email', sql.NVarChar, email);
-            logRequest.input('timestamp', sql.DateTime, new Date());
+            logRequest.input('timestamp', sql.DateTime, new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
             logRequest.input('action', sql.NVarChar, 'logout');
             await logRequest.query(`
                 INSERT INTO logs (username, email, timestamp, action) VALUES (@username, @email, @timestamp, @action)
@@ -972,7 +972,7 @@ io.on('connection', async (socket) => {
     const logRequest = new sql.Request();
     logRequest.input('username', sql.NVarChar, userData.username);
     logRequest.input('email', sql.NVarChar, userData.emails[0].value);
-    logRequest.input('timestamp', sql.DateTime, new Date());
+    logRequest.input('timestamp', sql.DateTime, new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
     logRequest.input('action', sql.NVarChar, 'login')
     await logRequest.query(`
       INSERT INTO logs (username, email, timestamp, action) VALUES (@username, @email, @timestamp, @action)
