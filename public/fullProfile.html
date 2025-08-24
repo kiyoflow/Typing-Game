@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Username • Something</title>
+    <title>Loading Profile • Typi</title>
     <link rel="stylesheet" href="/fullProfile.css">
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap" rel="stylesheet">
 </head>
@@ -125,7 +125,7 @@
         .then(data => {
             console.log('Profile data received:', data);
             // Update page title with username from URL
-            document.title = `${usernameFromUrl} • Typing Game`;
+            document.title = `${usernameFromUrl} • Typi`;
             document.getElementById('username').textContent = data.username;
             console.log('Setting profile picture to:', data.profilePicture);
             const profilePicture = document.getElementById('profile-picture');

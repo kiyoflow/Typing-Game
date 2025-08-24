@@ -1,10 +1,11 @@
 {
-  "name": "typing-game",
+  "name": "typi",
   "version": "1.0.0",
-  "description": "A multiplayer typing game",
+  "description": "A multiplayer typing game - Typi",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "engines": {
     "node": ">=14.0.0"
