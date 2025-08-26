@@ -830,6 +830,12 @@ body {
     background-size: 200% 100%;
 }
 
+#queueBtn.finding-match:hover {
+    background-image: linear-gradient(to right, #d4c47a 0%, #e5d590 50%, #d4c47a 100%);
+    color: #2c3e50;
+    font-weight: bold;
+}
+
 @keyframes pulsing-gradient {
     0% {
         background-position: 100% 0;
@@ -1015,6 +1021,13 @@ body {
     position: relative;
     padding: 20px;
     box-sizing: border-box;
+}
+
+#app.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 #practice-container {
@@ -1573,6 +1586,12 @@ body {
     background-image: linear-gradient(to right, #e5d590 0%, #fffde4 50%, #e5d590 100%);
     animation: pulsing-gradient 2s ease-in-out infinite;
     background-size: 200% 100%;
+}
+
+#pvpmenu #queueBtn.finding-match:hover {
+    background-image: linear-gradient(to right, #d4c47a 0%, #e5d590 50%, #d4c47a 100%);
+    color: #2c3e50;
+    font-weight: bold;
 }
 
 /* Profile Dashboard Styles */

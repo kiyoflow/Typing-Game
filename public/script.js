@@ -1,3 +1,34 @@
+// Smooth transition helper functions
+function fadeOut(element, callback, duration = 250) {
+    if (!element) return;
+    element.style.transition = `opacity ${duration}ms ease`;
+    element.style.opacity = '0';
+    setTimeout(() => {
+        element.style.display = 'none';
+        element.style.transition = '';
+        if (callback) callback();
+    }, duration);
+}
+
+function fadeIn(element, displayType = 'block', duration = 250) {
+    if (!element) return;
+    element.style.display = displayType;
+    element.style.opacity = '0';
+    element.style.transition = `opacity ${duration}ms ease`;
+    
+    // Prevent scrollbar flicker for practice mode elements
+    if (element.id === 'app' || element.id === 'practice-container') {
+        document.body.style.overflow = 'hidden';
+    }
+    
+    setTimeout(() => {
+        element.style.opacity = '1';
+    }, 10);
+    setTimeout(() => {
+        element.style.transition = '';
+    }, duration + 50);
+}
+
 function menu(){
     const menu = document.getElementById('menu');
     const menuContent = document.getElementById('menu-content');
@@ -12,26 +43,26 @@ function menu(){
     const privateMatchButton = document.getElementById('privateMatch')
     const profile = document.getElementById('profile');
     
-    if (profile) profile.style.display = 'flex';
+    // Hide other sections with smooth fade
+    if (app) app.classList.remove('active');
+    fadeOut(app);
+    fadeOut(match);
+    fadeOut(wordSettings);
+    fadeOut(practiceContainer);
+    fadeOut(keyboard);
+    fadeOut(resultsScreen);
     
-    // Hide other sections
-    if (app) app.style.display = 'none';
-    if (match) match.style.display = 'none';
-    if (wordSettings) wordSettings.style.display = 'none';
-    if (practiceContainer) practiceContainer.style.display = 'none';
-    if (keyboard) keyboard.style.display = 'none';
-    if (resultsScreen) resultsScreen.style.display = 'none';
-    
-    // Show menu
-    if (menu) menu.style.display = 'block';
-    if (menuContent) {
-        menuContent.style.display = 'flex';
-        menuContent.style.opacity = '1';
-        menuContent.style.transform = 'scale(1)';
-    }
-    if (pvpButton) pvpButton.style.display = 'block';
-    if (practiceButton) practiceButton.style.display = 'block';
-    if (privateMatchButton) privateMatchButton.style.display = 'block';
+    // Show menu and profile with smooth fade after a short delay
+    setTimeout(() => {
+        fadeIn(profile, 'flex');
+        fadeIn(menu, 'block');
+        if (menuContent) {
+            fadeIn(menuContent, 'flex');
+        }
+        if (pvpButton) fadeIn(pvpButton, 'block');
+        if (practiceButton) fadeIn(practiceButton, 'block');
+        if (privateMatchButton) fadeIn(privateMatchButton, 'block');
+    }, 100);
 }
 
 // Function to get random words for practice mode only
@@ -1194,24 +1225,22 @@ pvpButton.addEventListener('click', function() {
     const pvpmenu = document.getElementById('pvpmenu');
     const queueBackBtn = document.getElementById('queueBackBtn');
 
-    // Hide profile when entering PvP mode
-    if (profileDiv) {
-        profileDiv.style.display = 'none';
-    }
-
-    // Hide menu
-        menu.style.display = 'none';
-        menuContent.style.display = 'none';
+    // Hide menu and profile with fade
+    fadeOut(menu, null, 300);
+    fadeOut(menuContent, null, 300);
+    fadeOut(profileDiv, null, 300);
     
-    // Show PvP menu
-        pvpmenu.style.display = 'block';
+    // Show PvP menu with fade after longer delay for smoother transition
+    setTimeout(() => {
+        fadeIn(pvpmenu, 'block', 350);
         if (queueBackBtn) queueBackBtn.classList.add('active');
         
         // Show queue counter when PvP menu is shown
         const queueCounter = document.getElementById('queue-counter');
         if (queueCounter) {
-            queueCounter.style.display = 'block';
+            fadeIn(queueCounter, 'block', 350);
         }
+    }, 150);
 });
 }
 
@@ -1957,34 +1986,42 @@ window.onload = function() {
         const menuContent = document.getElementById('menu-content');
         const app = document.getElementById('app');
         
-        // Hide menu
-        menu.style.display = 'none';
-        menuContent.style.display = 'none';
+        // Hide menu with fade
+        fadeOut(menu, null, 300);
+        fadeOut(menuContent, null, 300);
+        fadeOut(document.getElementById('profile'), null, 300);
         
-        // Show app
-        app.style.display = 'block';
-        wordSettings.style.display = 'block';
-        practiceContainer.style.display = 'block';
-        keyboard.style.display = 'block';
+        // Prevent scrollbar during transition
+        document.body.style.overflow = 'hidden';
         
-        // Hide PvP keyboards
-        const playerKeyboard = document.getElementById('player-keyboard');
-        const oppKeyboard = document.getElementById('opp-keyboard');
-        if (playerKeyboard) playerKeyboard.style.display = 'none';
-        if (oppKeyboard) oppKeyboard.style.display = 'none';
-        
-        // Hide profile div in practice mode
-        const profileDiv = document.getElementById('profile');
-        if (profileDiv) profileDiv.style.display = 'none';
-        
-        // Show back button in practice mode
-        const practiceBackBtn = document.getElementById('practice-back-btn');
-        if (practiceBackBtn) practiceBackBtn.style.display = 'block';
-        
-        // Initialize the typing session
-        resetTypingVariables();
-        displayRandomWords(getPracticeWords(25));
-        trackTimeTyped();
+        // Show practice mode elements with fade after delay
+        setTimeout(() => {
+            app.classList.add('active');
+            fadeIn(app, 'block', 350);
+            fadeIn(wordSettings, 'block', 350);
+            fadeIn(practiceContainer, 'block', 350);
+            fadeIn(keyboard, 'block', 350);
+            
+            // Hide PvP keyboards
+            const playerKeyboard = document.getElementById('player-keyboard');
+            const oppKeyboard = document.getElementById('opp-keyboard');
+            if (playerKeyboard) playerKeyboard.style.display = 'none';
+            if (oppKeyboard) oppKeyboard.style.display = 'none';
+            
+            // Show back button in practice mode
+            const practiceBackBtn = document.getElementById('practice-back-btn');
+            if (practiceBackBtn) fadeIn(practiceBackBtn, 'block');
+            
+            // Initialize the typing session
+            resetTypingVariables();
+            displayRandomWords(getPracticeWords(25));
+            trackTimeTyped();
+            
+            // Ensure overflow stays hidden after transition
+            setTimeout(() => {
+                document.body.style.overflow = 'hidden';
+            }, 400);
+        }, 150);
     });
     }
     
