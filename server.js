@@ -284,7 +284,22 @@ app.get('/community', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'community.html'));
 });
 
-// Protected route for private match page
+// Dynamic route for private match rooms - shows room ID in URL
+app.get('/room/:roomId', (req, res) => {
+    if (req.isAuthenticated()) {
+        // Security: Validate room ID format (4 uppercase letters)
+        const roomId = req.params.roomId;
+        if (/^[A-Z]{4}$/.test(roomId)) {
+            res.sendFile(path.join(__dirname, 'public', 'privatematch.html'));
+        } else {
+            res.redirect('/'); // Invalid room ID format
+        }
+    } else {
+        res.redirect('/login');
+    }
+});
+
+// Keep the old route for backward compatibility
 app.get('/privatematch.html', (req, res) => {
     if (req.isAuthenticated()) {
         res.sendFile(path.join(__dirname, 'public', 'privatematch.html'));

@@ -1,8 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
 body {
     background: #f0e8ca;
     margin: 0;
     min-height: 100vh;
-    font-family: 'Ubuntu Mono', monospace;
+    font-family: 'Kanit', sans-serif;
     color: #2c3e50;
     display: flex;
     position: relative;
@@ -270,7 +272,7 @@ body {
     box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
 }
 
-/* From Uiverse.io by NlghtM4re */ 
+/* Simple typing-themed loading animation */
 .animationContainer {
     position: fixed;
     top: 50%;
@@ -279,82 +281,66 @@ body {
     width: 100vw;
     height: 100vh;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     pointer-events: none;
     z-index: 1001;
-    background-color: black;
+    background: linear-gradient(135deg, #f0e8ca 0%, #ecdda5 50%, #e5d590 100%);
     opacity: 1;
-    transition: opacity 1s ease-out;
-  }
+    transition: all 0.5s ease-out;
+}
 
-  .animationContainer.fade-out {
+.animationContainer.fade-out {
     opacity: 0;
-  }
-  
-  .item {
-    position: absolute;
-    background-color: transparent;
-    width: calc(var(--i) * 2.5vmin);
-    aspect-ratio: 1;
-    border-radius: 50%;
-    border: .9vmin solid rgb(0, 200, 255);
-    transform-style: preserve-3d;
-    transform: rotateX(70deg) translateZ(50px);
-    animation: my-move 3s ease-in-out calc(var(--i) * 0.08s) infinite;
-    box-shadow: 0px 0px 15px rgb(124, 124, 124),
-      inset 0px 0px 15px rgb(124, 124, 124);
-  }
-  
-  @keyframes my-move {
-    0%,
-    100% {
-      transform: rotateX(70deg) translateZ(50px) translateY(0px);
-      filter: hue-rotate(0deg);
-    }
-  
-    50% {
-      transform: rotateX(70deg) translateZ(50px) translateY(-50vmin);
-      filter: hue-rotate(180deg);
-    }
-  }
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.95);
+}
 
-  .loading-text {
-    position: absolute;
-    bottom: 30%;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-size: 1.5rem;
+.loading-text {
+    color: #2c3e50;
+    font-size: 2.2rem;
     font-weight: bold;
-    letter-spacing: 1px;
-    font-family: 'Ubuntu Mono', monospace;
-  }
+    letter-spacing: 3px;
+    font-family: 'Kanit', sans-serif;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(44, 62, 80, 0.1);
+    text-align: center;
+}
 
-  .dot {
+
+@keyframes cursorBlink {
+    0%, 50% { 
+        opacity: 1; 
+        background: #2c3e50;
+    }
+    51%, 100% { 
+        opacity: 0.3; 
+        background: #7f8c8d;
+    }
+}
+
+.dot {
     animation: loading-dots 1.5s infinite;
-  }
+    color: #e74c3c;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(231, 76, 60, 0.3);
+}
 
-  .dot:nth-child(1) {
-    animation-delay: 0s;
-  }
+.dot:nth-child(1) { animation-delay: 0s; }
+.dot:nth-child(2) { animation-delay: 0.3s; }
+.dot:nth-child(3) { animation-delay: 0.6s; }
 
-  .dot:nth-child(2) {
-    animation-delay: 0.3s;
-  }
-
-  .dot:nth-child(3) {
-    animation-delay: 0.6s;
-  }
-
-  @keyframes loading-dots {
-    0%, 66% {
-      opacity: 0.3;
+@keyframes loading-dots {
+    0%, 66% { 
+        opacity: 0.3; 
+        transform: scale(0.8);
     }
-    33% {
-      opacity: 1;
+    33% { 
+        opacity: 1; 
+        transform: scale(1.1);
     }
-  }
+}
 
   /* Invite Popup Styles */
   #invitePopup {
@@ -367,7 +353,7 @@ body {
     border-radius: 15px;
     padding: 0;
     z-index: 2000;
-    font-family: 'Ubuntu Mono', monospace;
+    font-family: 'Kanit', sans-serif;
     box-shadow: 0 10px 30px rgba(44, 62, 80, 0.3);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     opacity: 0;
@@ -406,7 +392,7 @@ body {
     padding: 12px 20px;
     border: 2px solid #2c3e50;
     border-radius: 8px;
-    font-family: 'Ubuntu Mono', monospace;
+    font-family: 'Kanit', sans-serif;
     font-weight: bold;
     font-size: 1rem;
     cursor: pointer;
@@ -471,7 +457,7 @@ body {
     max-width: 800px;
     height: 200px;
     padding: 30px;
-    font-family: 'Ubuntu Mono', monospace;
+    font-family: 'Kanit', sans-serif;
     font-size: 24px;
     line-height: 1.8;
     margin-bottom: 10px;
@@ -786,7 +772,7 @@ body {
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
-    font-family: 'Ubuntu Mono', monospace;
+    font-family: 'Kanit', sans-serif;
     transition: all 0.3s ease;
 }
 

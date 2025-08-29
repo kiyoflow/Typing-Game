@@ -18,7 +18,7 @@ class UsernameSetupComponent extends HTMLElement {
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    background-color: rgba(0, 0, 0, 0.7);
+                    background: #f0e8ca;
                     display: flex;
                     justify-content: center;
                     align-items: center;
@@ -26,91 +26,103 @@ class UsernameSetupComponent extends HTMLElement {
                 }
 
                 .popup {
-                    background-color: #f0e8ca;
+                    background: #ecdda5;
                     border: 3px solid #2c3e50;
-                    border-radius: 20px;
-                    padding: 30px;
+                    border-radius: 15px;
+                    padding: 40px;
                     text-align: center;
-                    max-width: 400px;
+                    max-width: 450px;
                     width: 90%;
-                    box-shadow: 0 20px 40px rgba(44, 62, 80, 0.3);
+                    box-shadow: 0 10px 30px rgba(44, 62, 80, 0.2);
                 }
 
                 .title {
-                    font-family: 'Ubuntu', Courier, monospace;
-                    font-size: 24px;
+                    font-family: 'Kanit', sans-serif;
+                    font-size: 2rem;
                     font-weight: bold;
                     color: #2c3e50;
-                    margin-bottom: 20px;
+                    margin-bottom: 15px;
+                    letter-spacing: 2px;
                 }
 
                 .description {
-                    font-family: 'Ubuntu', Courier, monospace;
-                    font-size: 16px;
+                    font-family: 'Kanit', sans-serif;
+                    font-size: 1.1rem;
                     color: #2c3e50;
-                    margin-bottom: 25px;
-                    line-height: 1.4;
+                    margin-bottom: 30px;
+                    line-height: 1.5;
                 }
 
                 .input-container {
-                    margin-bottom: 25px;
+                    margin-bottom: 30px;
                 }
 
                 .username-input {
                     width: 100%;
-                    padding: 12px 15px;
-                    font-family: 'Ubuntu', Courier, monospace;
-                    font-size: 16px;
+                    padding: 15px 20px;
+                    font-family: 'Kanit', sans-serif;
+                    font-size: 1.1rem;
+                    font-weight: bold;
                     border: 2px solid #2c3e50;
-                    border-radius: 8px;
-                    background-color: #ecdda5;
+                    border-radius: 10px;
+                    background: #f0e8ca;
                     color: #2c3e50;
                     box-sizing: border-box;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 3px 10px rgba(44, 62, 80, 0.1);
                 }
 
                 .username-input:focus {
                     outline: none;
-                    border-color: #4CAF50;
-                    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+                    background: #e5d590;
+                    transform: translateY(-2px);
+                    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
                 }
 
                 .error-message {
                     color: #e74c3c;
-                    font-size: 14px;
-                    margin-top: 8px;
-                    min-height: 20px;
-                    font-family: 'Ubuntu', Courier, monospace;
+                    font-size: 1rem;
+                    margin-top: 10px;
+                    min-height: 24px;
+                    font-family: 'Kanit', sans-serif;
+                    font-weight: bold;
                 }
 
                 .submit-btn {
-                    background-color: #4CAF50;
-                    color: white;
-                    border: none;
-                    padding: 12px 30px;
-                    font-family: 'Ubuntu', Courier, monospace;
-                    font-size: 16px;
+                    background: #f0e8ca;
+                    color: #2c3e50;
+                    border: 2px solid #2c3e50;
+                    padding: 15px 35px;
+                    font-family: 'Kanit', sans-serif;
+                    font-size: 1.1rem;
                     font-weight: bold;
-                    border-radius: 8px;
+                    border-radius: 10px;
                     cursor: pointer;
                     transition: all 0.2s ease;
+                    box-shadow: 0 3px 10px rgba(44, 62, 80, 0.1);
                 }
 
-                .submit-btn:hover {
-                    background-color: #45a049;
+                .submit-btn:hover:not(:disabled) {
+                    background: #e5d590;
                     transform: translateY(-2px);
+                    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
                 }
 
                 .submit-btn:disabled {
-                    background-color: #cccccc;
+                    background: #d3d3d3;
+                    color: #7f8c8d;
                     cursor: not-allowed;
                     transform: none;
+                    box-shadow: 0 2px 5px rgba(44, 62, 80, 0.1);
                 }
 
                 .loading {
                     display: none;
-                    margin-top: 10px;
-                    font-family: 'Ubuntu', Courier, monospace;
+                    margin-top: 15px;
+                    font-family: 'Kanit', sans-serif;
+                    font-weight: bold;
                     color: #2c3e50;
+                    font-size: 1rem;
                 }
             </style>
 

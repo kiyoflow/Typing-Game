@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Private Match Room</title>
-    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="privatematch.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/privatematch.css">
     <script>
         // --- IMMEDIATE REFRESH KICK ---
         // This runs in the <head> before the body renders to prevent any flash of content.
@@ -32,30 +32,9 @@
         </div>
     </div>
 
-    <!-- From Uiverse.io by NlghtM4re - also just a placeholder for the room creation animation for now-->     
+    <!-- Simple room creation/joining loading screen -->
     <div class="animationContainer">
-        <div class="item" style="--i:0;"></div>
-        <div class="item" style="--i:1;"></div>
-        <div class="item" style="--i:2;"></div>
-        <div class="item" style="--i:3;"></div>
-        <div class="item" style="--i:4;"></div>
-        <div class="item" style="--i:5;"></div>
-        <div class="item" style="--i:6;"></div>
-        <div class="item" style="--i:7;"></div>
-        <div class="item" style="--i:8;"></div>
-        <div class="item" style="--i:9;"></div>
-        <div class="item" style="--i:10;"></div>
-        <div class="item" style="--i:11;"></div>
-        <div class="item" style="--i:12;"></div>
-        <div class="item" style="--i:13;"></div>
-        <div class="item" style="--i:14;"></div>
-        <div class="item" style="--i:15;"></div>
-        <div class="item" style="--i:16;"></div>
-        <div class="item" style="--i:17;"></div>
-        <div class="item" style="--i:18;"></div>
-        <div class="item" style="--i:19;"></div>
-        <div class="item" style="--i:20;"></div>
-        <div class="loading-text">Creating room<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>
+        <div class="loading-text" id="loadingText">Creating room<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>
     </div>
 
     <div id="privateMatch">
@@ -135,10 +114,10 @@
     
     
     <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
-    <script src="keyboardComponent.js"></script>
-    <script src="countdownComponent.js"></script>
-    <script src="matchTimer.js"></script>
+    <script src="/script.js"></script>
+    <script src="/keyboardComponent.js"></script>
+    <script src="/countdownComponent.js"></script>
+    <script src="/matchTimer.js"></script>
     <!-- <script src="debug_private_match.js"></script> -->
     <script>
         let myUsername = null;
@@ -180,19 +159,33 @@
             }
         });
 
-        // Check URL for room ID, display it, save it to session storage, and clean the URL.
-        const urlParams = new URLSearchParams(window.location.search);
-        const privateRoomId = urlParams.get('room');
-        const isRedirected = urlParams.get('redirected') === 'true';
+        // Check URL for room ID from new route format or fallback to query params
+        let privateRoomId;
+        let isJoinedViaInvite = false;
+        
+        // Check if we're using the new /room/:roomId format
+        if (window.location.pathname.startsWith('/room/')) {
+            privateRoomId = window.location.pathname.split('/room/')[1];
+        } else {
+            // Fallback to old query param format for backward compatibility
+            const urlParams = new URLSearchParams(window.location.search);
+            privateRoomId = urlParams.get('room');
+        }
+        
+        // Check if this was a join via invite (from sessionStorage)
+        if (sessionStorage.getItem('joinedViaInvite') === 'true') {
+            isJoinedViaInvite = true;
+            sessionStorage.removeItem('joinedViaInvite'); // Clean up after use
+        }
 
         if (privateRoomId) {
             document.getElementById('roomId').textContent = 'Room ID: ' + privateRoomId;
             sessionStorage.setItem('currentRoomId', privateRoomId); // Save the room ID
         }
 
-        // Clean the URL by removing all query parameters after they've been used
-        if (window.history.replaceState) {
-            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        // Clean the URL by removing query parameters, keeping the clean /room/:roomId format
+        if (window.history.replaceState && privateRoomId) {
+            const cleanUrl = window.location.protocol + "//" + window.location.host + `/room/${privateRoomId}`;
             window.history.replaceState({path: cleanUrl}, '', cleanUrl);
         }
         
@@ -234,26 +227,35 @@
             }
 
             const animationContainer = document.querySelector('.animationContainer');
+            const loadingText = document.getElementById('loadingText');
             
             console.log('Animation container found:', animationContainer);
-            console.log('isRedirected:', isRedirected);
+            console.log('isJoinedViaInvite:', isJoinedViaInvite);
             
             if (animationContainer) {
-                if (isRedirected) {
-                    // Skip animation if redirected from accepting invite
-                    console.log('Skipping animation - redirected from invite');
-                    animationContainer.style.display = 'none';
-                } else {
-                    // Hide animation after 3 seconds with fade out (for room creators)
-                    console.log('Starting 3-second timer for animation fadeout');
+                if (isJoinedViaInvite) {
+                    // Show "Joining room..." for people accepting invites
+                    if (loadingText) {
+                        loadingText.innerHTML = 'Joining room<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+                    }
+                    console.log('Showing join animation for 1.5 seconds');
                     setTimeout(() => {
-                        console.log('Adding fade-out class');
+                        console.log('Hiding animation container for join');
                         animationContainer.classList.add('fade-out');
                         setTimeout(() => {
-                            console.log('Hiding animation container');
                             animationContainer.style.display = 'none';
-                        }, 1000); // Wait for fade transition to complete
-                    }, 3000);
+                        }, 500); // Shorter fade
+                    }, 1500); // Shorter duration for joining
+                } else {
+                    // Show "Creating room..." for room creators
+                    console.log('Starting 2.5-second timer for room creation animation');
+                    setTimeout(() => {
+                        console.log('Hiding animation container for creation');
+                        animationContainer.classList.add('fade-out');
+                        setTimeout(() => {
+                            animationContainer.style.display = 'none';
+                        }, 500); // Shorter fade
+                    }, 2500); // Shorter duration for creating
                 }
             } else {
                 console.log('Animation container not found!');

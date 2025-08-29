@@ -38,6 +38,7 @@ function menu(){
     const app = document.getElementById('app');
     const match = document.getElementById('match');
     const resultsScreen = document.getElementById('results-screen');
+    const pvpmenu = document.getElementById('pvpmenu');
     const pvpButton = document.getElementById('pvp');
     const practiceButton = document.getElementById('practice');
     const privateMatchButton = document.getElementById('privateMatch')
@@ -526,6 +527,14 @@ function displayRandomWords(words) {
     const activeContainer = getActiveTypingContainer();
     activeContainer.innerHTML = wrappedText2;
     
+    // Start cursor blinking after a brief delay
+    setTimeout(() => {
+        const cursor = activeContainer.querySelector('.cursor');
+        if (cursor) {
+            cursor.classList.add('idle');
+        }
+    }, 500);
+    
     console.log('Total characters:', i);
     totalChars = i;
 }
@@ -677,20 +686,51 @@ function restartTest() {
     const practiceResults = document.getElementById('practice-results');
     const practiceContainer = document.getElementById('practice-container');
     const keyboard = document.getElementById('keyboard');
-    
-    practiceResults.style.display = 'none';
-    practiceContainer.style.display = 'block';
-    keyboard.style.display = 'block';
-    
-    // Show back button again when restarting
+    const restartBtn = document.getElementById('restart-btn');
     const practiceBackBtn = document.getElementById('practice-back-btn');
-    if (practiceBackBtn) practiceBackBtn.style.display = 'block';
     
-    // Scroll back to top
-    practiceContainer.scrollTop = 0;
+    // Hide results screen
+    practiceResults.style.display = 'none';
     
-    resetTypingVariables();
-    displayRandomWords(getPracticeWords(currentWordCount));
+    // Simple fade out using opacity
+    practiceContainer.style.transition = 'opacity 150ms ease';
+    keyboard.style.transition = 'opacity 150ms ease';
+    if (restartBtn) restartBtn.style.transition = 'opacity 150ms ease';
+    
+    practiceContainer.style.opacity = '0';
+    keyboard.style.opacity = '0';
+    if (restartBtn) restartBtn.style.opacity = '0';
+    
+    // After fade out, reset and fade back in
+    setTimeout(() => {
+        // Scroll back to top
+        practiceContainer.scrollTop = 0;
+        
+        // Reset typing variables and display new words
+        resetTypingVariables();
+        displayRandomWords(getPracticeWords(currentWordCount));
+        
+        // Make sure elements are visible
+        practiceContainer.style.display = 'block';
+        keyboard.style.display = 'block';
+        if (restartBtn) restartBtn.style.display = 'block';
+        if (practiceBackBtn) practiceBackBtn.style.display = 'block';
+        
+        // Fade back in
+        setTimeout(() => {
+            practiceContainer.style.opacity = '1';
+            keyboard.style.opacity = '1';
+            if (restartBtn) restartBtn.style.opacity = '1';
+        }, 10);
+        
+        // Clean up transitions after animation
+        setTimeout(() => {
+            practiceContainer.style.transition = '';
+            keyboard.style.transition = '';
+            if (restartBtn) restartBtn.style.transition = '';
+        }, 200);
+        
+    }, 150); // Wait for fade out to complete
 }
 
 // PvP-specific end race function
@@ -838,6 +878,10 @@ function hideAllOverlays() {
     overlays.forEach(overlay => {
         overlay.style.display = 'none';
     });
+    
+    // Hide restart button when leaving practice mode
+    const restartBtn = document.getElementById('restart-btn');
+    if (restartBtn) restartBtn.style.display = 'none';
 }
 
 function showCountdown(callback) {
@@ -882,10 +926,7 @@ function backToMenu() {
     pvpmenu.style.display = 'none';
     }
 
-    const queueButton = document.getElementById('queueBtn');
-    if (queueButton) {
-        queueButton.removeEventListener('click', queueClickHandler);
-    }
+    // No need to remove event listeners - they don't cause problems
     
     // Only leave queue if we're actually in PvP mode
     const matchElement = document.getElementById('match');
@@ -1235,6 +1276,7 @@ pvpButton.addEventListener('click', function() {
         fadeIn(pvpmenu, 'block', 350);
         if (queueBackBtn) queueBackBtn.classList.add('active');
         
+        
         // Show queue counter when PvP menu is shown
         const queueCounter = document.getElementById('queue-counter');
         if (queueCounter) {
@@ -1441,7 +1483,7 @@ function showFriendSearchResult(userData) {
 }
 
 socket.on('privateRoomCreated', (privateRoomId) => {
-    window.location.href = `/privatematch.html?room=${privateRoomId}`;
+    window.location.href = `/room/${privateRoomId}`;
 });
 
 // Add handler for when queue is rejected due to already being in queue
@@ -1496,6 +1538,23 @@ function updateTypingTime(timeTyped) {
 // Event listener for typing and backspace handling
 document.addEventListener('keydown', function(event) {
 
+    // Handle Tab + Enter restart functionality
+    if (event.key === 'Tab' && document.getElementById('app').classList.contains('active')) {
+        event.preventDefault();
+        const restartBtn = document.getElementById('restart-btn');
+        if (restartBtn && restartBtn.style.display !== 'none') {
+            restartBtn.focus();
+        }
+        return;
+    }
+    
+    if (event.key === 'Enter' && document.activeElement && document.activeElement.id === 'restart-btn') {
+        event.preventDefault();
+        document.activeElement.blur(); // Unfocus the restart button
+        restartTest();
+        return;
+    }
+
     // Allow space key to work in input fields
     if (event.key === ' ' && event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
         event.preventDefault(); // Prevent space bar from scrolling
@@ -1540,7 +1599,22 @@ document.addEventListener('keydown', function(event) {
                 prevSpan.classList.remove("matched", "unmatched");
                 const cursor = activeContainer.querySelector('.cursor');
                 if (cursor && prevSpan.parentNode) {
-                    prevSpan.parentNode.insertBefore(cursor, prevSpan);
+                    // Add smooth movement animation for backspace
+                    cursor.classList.add('moving');
+                    cursor.style.transform = 'translateX(-10px)'; // Move backward for backspace
+                    
+                    setTimeout(() => {
+                        prevSpan.parentNode.insertBefore(cursor, prevSpan);
+                        cursor.classList.remove('moving');
+                        cursor.style.transform = ''; // Reset transform
+                    }, 40);
+                    
+                    // Stop blinking while typing
+                    cursor.classList.remove('idle');
+                    clearTimeout(window.cursorBlinkTimeout);
+                    window.cursorBlinkTimeout = setTimeout(() => {
+                        cursor.classList.add('idle');
+                    }, 1000);
                 }
             }
         }
@@ -1592,7 +1666,21 @@ document.addEventListener('keydown', function(event) {
     const nextSpan = activeContainer.querySelector(`#char-${keysPressed}`);
     const cursor = activeContainer.querySelector('.cursor');
     if (nextSpan && cursor && nextSpan.parentNode) {
-        nextSpan.parentNode.insertBefore(cursor, nextSpan);
+        // Add smooth movement animation
+        cursor.classList.add('moving');
+        
+        // Move cursor after a tiny delay to allow animation
+        setTimeout(() => {
+            nextSpan.parentNode.insertBefore(cursor, nextSpan);
+            cursor.classList.remove('moving');
+        }, 40);
+        
+        // Stop blinking while typing
+        cursor.classList.remove('idle');
+        clearTimeout(window.cursorBlinkTimeout);
+        window.cursorBlinkTimeout = setTimeout(() => {
+            cursor.classList.add('idle');
+        }, 1000); // Start blinking after 1 second of no typing
     }
 
     // Send current typing progress to opponent (only in PvP mode)
@@ -2012,6 +2100,10 @@ window.onload = function() {
             const practiceBackBtn = document.getElementById('practice-back-btn');
             if (practiceBackBtn) fadeIn(practiceBackBtn, 'block');
             
+            // Show restart button in practice mode
+            const restartBtn = document.getElementById('restart-btn');
+            if (restartBtn) fadeIn(restartBtn, 'block');
+            
             // Initialize the typing session
             resetTypingVariables();
             displayRandomWords(getPracticeWords(25));
@@ -2139,7 +2231,9 @@ window.onload = function() {
 // Handle redirect to private room after accepting invite
 socket.on('redirectToRoom', (roomId) => {
     console.log('Received redirectToRoom event for room:', roomId);
-    window.location.href = `/privatematch.html?room=${roomId}&redirected=true`;
+    // Store that this is a join (not create) in sessionStorage
+    sessionStorage.setItem('joinedViaInvite', 'true');
+    window.location.href = `/room/${roomId}`;
             
 });
 
