@@ -1126,7 +1126,7 @@ body {
 
 #word-settings {
     position: fixed;
-    top: 100px; /* Moved down more */
+    top: 80px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 18px;
@@ -1154,7 +1154,7 @@ body {
 
 .restart-btn {
     position: fixed;
-    bottom: 180px;
+    bottom: 140px;
     left: 50%;
     transform: translateX(-50%);
     background-color: rgba(236, 221, 165, 0.9);
@@ -1183,11 +1183,11 @@ body {
 #keyboard {
     display: none;
     position: fixed;
-    bottom: 300px; /* Moved up more */
+    bottom: 250px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) scale(1.2);
     width: auto;
-    padding: 20px;
+    padding: 10px;
     background-color: rgba(236, 221, 165, 0.8);
     border-radius: 15px;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
@@ -1204,17 +1204,17 @@ body {
 }
 
 .key {
-    padding: 10px 15px;
+    padding: 6px 10px;
     border: 2px solid #2c3e50;
     border-radius: 8px;
     background-color: #ecdeaa;
     color: #000000;
-    font-size: 16px;
+    font-size: 12px;
     font-family: 'Kanit', sans-serif;
     font-weight: bold;
     transition: transform 0.2s ease;
     cursor: pointer;
-    min-width: 35px;
+    min-width: 25px;
     text-align: center;
 }
 
@@ -1867,4 +1867,59 @@ body {
     background-color: #c0392b;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+}
+
+/* Fix keyboard for smaller screens */
+@media (max-width: 768px) {
+    #keyboard {
+        transform: translateX(-50%) scale(1.2) !important;
+        bottom: 100px !important;
+        padding: 10px !important;
+    }
+    
+    .key {
+        padding: 6px 10px !important;
+        font-size: 12px !important;
+    }
+    
+    .restart-btn {
+        bottom: 5px !important;
+    }
+    
+    #word-settings {
+        top: 20px !important;
+    }
+    
+    #practice-container {
+        top: 40% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #keyboard {
+        transform: translateX(-50%) scale(1.0) !important;
+        bottom: 80px !important;
+        padding: 8px !important;
+    }
+    
+    .key {
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+    }
+    
+    .restart-btn {
+        bottom: 3px !important;
+    }
+    
+    #word-settings {
+        top: 10px !important;
+    }
+    
+    #practice-container {
+        top: 35% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
 }
