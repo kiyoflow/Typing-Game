@@ -51,8 +51,8 @@
                         </div>
                         <div class="divider"></div>
                         <div class="stat">
-                            <div class="stat-label">pvp matches won</div>
-                            <div class="stat-value" id="pvpWins">--</div>
+                            <div class="stat-label">pvp win rate</div>
+                            <div class="stat-value" id="pvpWinRate">--</div>
                         </div>
                     </div>
 
@@ -157,7 +157,18 @@
             
             document.getElementById('timeTyping').textContent = formatTime(data.totalTypingTime || 0);
             document.getElementById('practiceTestsCompleted').textContent = data.practiceTestsCompleted || '-';
-            document.getElementById('pvpWins').textContent = data.pvpWins || '-';
+            // Calculate and display win percentage
+            const wins = data.pvpWins || 0;
+            const losses = data.pvpLosses || 0;
+            const totalMatches = wins + losses;
+            
+            let winRate = '--';
+            if (totalMatches > 0) {
+                const percentage = Math.round((wins / totalMatches) * 100);
+                winRate = percentage + '%';
+            }
+            
+            document.getElementById('pvpWinRate').textContent = winRate;
             
             // Update best WPM values
             document.getElementById('best5WordWpm').textContent = data.best5WordWpm || '--';

@@ -361,6 +361,7 @@ app.get(`/api/userprofile/:username?`, async (req, res) => {
       totalTypingTime: userData.total_seconds_typed || 0,
     practiceTestsCompleted: userData.practiceTestsCompleted || 0,
     pvpWins: userData.pvp_wins || 0,
+    pvpLosses: userData.pvp_losses || 0,
     best5WordWpm: userData['5_words_wpm'] || '-',
     best10WordWpm: userData['10_words_wpm'] || '-',
     best25WordWpm: userData['25_words_wpm'] || '-',
@@ -405,6 +406,7 @@ app.get(`/api/userprofile/:username?`, async (req, res) => {
       totalTypingTime: userData.total_seconds_typed || 0,
     practiceTestsCompleted: userData.practiceTestsCompleted || 0,
     pvpWins: userData.pvp_wins || 0,
+    pvpLosses: userData.pvp_losses || 0,
     best5WordWpm: userData['5_words_wpm'] || '-',
     best10WordWpm: userData['10_words_wpm'] || '-',
     best25WordWpm: userData['25_words_wpm'] || '-',
@@ -1138,6 +1140,26 @@ io.on('connection', async (socket) => {
 
     // Get winner's name
             const winnerName = users[winnerId] ? (users[winnerId].username || users[winnerId].displayName) : 'Winner';
+
+    // Update loser's stats
+    try {
+        const loserSocket = io.sockets.sockets.get(loserId);
+        if (loserSocket && loserSocket.user && loserSocket.user.emails && loserSocket.user.emails[0]) {
+            const loserEmail = loserSocket.user.emails[0].value;
+            console.log('Updating pvp_losses for loser:', loserSocket.user.username || loserSocket.user.displayName);
+            
+            const updateLoserRequest = new sql.Request();
+            updateLoserRequest.input('email', sql.NVarChar, loserEmail);
+            const loserResult = await updateLoserRequest.query(`
+                UPDATE Users 
+                SET pvp_losses = ISNULL(pvp_losses, 0) + 1 
+                WHERE Email = @email
+            `);
+            console.log(`Successfully incremented pvp_losses for ${loserSocket.user.username || loserSocket.user.displayName}. Rows affected:`, loserResult.rowsAffected);
+        }
+    } catch (error) {
+        console.error('Error updating pvp_losses:', error);
+    }
 
     // Notify both players that the race is over, and who won.
     io.to(roomId).emit('raceOver', { winnerId: winnerId, winnerName: winnerName });

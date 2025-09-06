@@ -912,6 +912,7 @@ function backToMenu() {
     const resultsScreen = document.getElementById('results-screen');
     const match = document.getElementById('match');
     const pvpmenu = document.getElementById('pvpmenu');
+    const queueBtn = document.getElementById('queueBtn');
     
     // Hide all PvP-related elements with animation
     resultsScreen.style.display = 'none';
@@ -926,7 +927,11 @@ function backToMenu() {
     pvpmenu.style.display = 'none';
     }
 
-    // No need to remove event listeners - they don't cause problems
+    // Reset queue button state
+    if (queueBtn) {
+        queueBtn.textContent = 'Find Match';
+        queueBtn.classList.remove('finding-match');
+    }
     
     // Only leave queue if we're actually in PvP mode
     const matchElement = document.getElementById('match');
@@ -1046,6 +1051,9 @@ function setupPvPSocketEvents() {
             const oppCursor = pvpOpponentContainer.querySelector('.cursor');
             
             if (oppCursor) {
+                // Just add blinking - keep it simple
+                oppCursor.classList.add('idle');
+                
                 const containerRect = pvpOpponentContainer.getBoundingClientRect();
                 const cursorRect = oppCursor.getBoundingClientRect();
                 // Calculate desired offset (1/3 from the top)
@@ -1137,14 +1145,15 @@ socket.on('matchFound', (data) => {
     if (match) {
         // Hide the queue menu and show the match container
         if (animationOverlay) animationOverlay.classList.remove('active');
-        // Hide PvP menu with animation
+        // Hide PvP menu immediately
         pvpMenu.classList.remove('show');
-        setTimeout(() => pvpMenu.style.display = 'none', 400);
+        pvpMenu.style.display = 'none';
         const queueBackBtn = document.getElementById('queueBackBtn');
         if (queueBackBtn) queueBackBtn.classList.remove('active');
         
         // Show match
         match.style.display = 'block';
+        match.style.opacity = '1';
         
         // Update opponent label with their name
         if (oppLabel) {
