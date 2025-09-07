@@ -22,10 +22,12 @@
         </div>
     </div>
 
-    <div id="profile" style="display:none;">
-        <div id="profile-picture"></div>
-        <div id="username"></div>
-    </div>
+    <!-- Main Game Container -->
+    <div id="main-game-container">
+        <div id="profile" style="display:none;">
+            <div id="profile-picture"></div>
+            <div id="username"></div>
+        </div>
 
     <!-- Username Setup Component for New Users -->
     <username-setup-component id="usernameSetup" style="display:none;"></username-setup-component>
@@ -221,6 +223,8 @@
 
         <keyboard-component></keyboard-component>
     </div>
+
+    </div> <!-- End main-game-container -->
     
 
     <script src="/socket.io/socket.io.js"></script>

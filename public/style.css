@@ -5,6 +5,8 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Kanit', sans-serif;
+    height: 100vh;
+    overflow: hidden; /* Prevent unwanted scrolling */
 }
 
 /* Profile Popup Overlay */
@@ -705,19 +707,50 @@ body {
     font-family: 'Kanit', sans-serif;
 }
 
+/* Base button size for large screens (1920px+) */
 .modes{
     background-color: #f0e8ca;
     font-family: 'Kanit', sans-serif;
-    font-size: 41px;
+    font-size: 38px;
     text-align: center;
-    width: 400px;
-    padding: 35px;
+    width: 380px;
+    padding: 30px;
     border: 2px solid #2c3e50;
     border-radius: 15px;
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
     will-change: transform, box-shadow, background-color;
+}
+
+/* Medium desktop screens (1400-1919px) */
+@media (max-width: 1919px) {
+    .modes {
+        font-size: 32px;
+        width: 320px;
+        padding: 25px;
+        border-radius: 12px;
+    }
+}
+
+/* Smaller desktop screens (1200-1399px) */
+@media (max-width: 1399px) {
+    .modes {
+        font-size: 28px;
+        width: 280px;
+        padding: 20px;
+        border-radius: 10px;
+    }
+}
+
+/* Small desktop screens (1024-1199px) */
+@media (max-width: 1199px) {
+    .modes {
+        font-size: 24px;
+        width: 240px;
+        padding: 18px;
+        border-radius: 8px;
+    }
 }
 
 .modes:hover {
@@ -1039,19 +1072,14 @@ body {
 #practice-container {
     text-align: left;
     font-family: 'Kanit', sans-serif;
-    font-size: 24px;
-    width: 90%;
-    max-width: 1000px;
     opacity: 1;
     transition: all 0.3s ease-in-out;
-    height: 220px;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 30px;
     line-height: 1.8;
     box-sizing: border-box;
     position: absolute;
-    top: 35%;
+    top: 38%;
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: rgba(255, 255, 255, 0.1);
@@ -1059,6 +1087,43 @@ body {
     border: 2px solid rgba(44, 62, 80, 0.1);
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
+    
+    /* Default for large screens */
+    font-size: 26px;
+    width: 90%;
+    max-width: 1100px;
+    height: 240px;
+    padding: 35px;
+}
+
+/* Medium desktop screens (1400-1919px) */
+@media (max-width: 1919px) {
+    #practice-container {
+        font-size: 24px;
+        max-width: 1000px;
+        height: 220px;
+        padding: 30px;
+    }
+}
+
+/* Smaller desktop screens (1200-1399px) */
+@media (max-width: 1399px) {
+    #practice-container {
+        font-size: 22px;
+        max-width: 900px;
+        height: 200px;
+        padding: 25px;
+    }
+}
+
+/* Small desktop screens (1024-1199px) */
+@media (max-width: 1199px) {
+    #practice-container {
+        font-size: 20px;
+        max-width: 800px;
+        height: 180px;
+        padding: 20px;
+    }
 }
 
 #practice-container::-webkit-scrollbar {
@@ -1154,7 +1219,7 @@ body {
 
 .restart-btn {
     position: fixed;
-    bottom: 140px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     background-color: rgba(236, 221, 165, 0.9);
@@ -1183,16 +1248,45 @@ body {
 #keyboard {
     display: none;
     position: fixed;
-    bottom: 250px;
     left: 50%;
-    transform: translateX(-50%) scale(1.2);
     width: auto;
-    padding: 10px;
     background-color: rgba(236, 221, 165, 0.8);
     border-radius: 15px;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
     z-index: 50;
     border: 2px solid rgba(44, 62, 80, 0.1);
+    
+    /* Default for large screens */
+    bottom: 120px;
+    transform: translateX(-50%) scale(1.0);
+    padding: 10px;
+}
+
+/* Medium desktop screens (1400-1919px) */
+@media (max-width: 1919px) {
+    #keyboard {
+        bottom: 100px;
+        transform: translateX(-50%) scale(0.9);
+        padding: 8px;
+    }
+}
+
+/* Smaller desktop screens (1200-1399px) */
+@media (max-width: 1399px) {
+    #keyboard {
+        bottom: 80px;
+        transform: translateX(-50%) scale(0.8);
+        padding: 6px;
+    }
+}
+
+/* Small desktop screens (1024-1199px) */
+@media (max-width: 1199px) {
+    #keyboard {
+        bottom: 60px;
+        transform: translateX(-50%) scale(0.7);
+        padding: 4px;
+    }
 }
 
 .row {
@@ -1729,6 +1823,64 @@ body {
         width: 80px;
         height: 80px;
     }
+}
+
+/* Main Game Container - CSS Grid Layout */
+#main-game-container {
+    display: grid;
+    min-height: 100vh;
+    width: 100%;
+    gap: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+    
+    /* Default layout for large screens (1920px+) */
+    grid-template-columns: 300px 1fr 300px;
+    grid-template-areas: 
+        "profile main-content sidebar"
+        "profile main-content sidebar";
+}
+
+/* Medium desktop screens (1400-1919px) */
+@media (max-width: 1919px) {
+    #main-game-container {
+        grid-template-columns: 250px 1fr 250px;
+        gap: 15px;
+        padding: 15px;
+    }
+}
+
+/* Smaller desktop screens (1200-1399px) */
+@media (max-width: 1399px) {
+    #main-game-container {
+        grid-template-columns: 1fr 2fr;
+        grid-template-areas: 
+            "profile main-content"
+            "sidebar main-content";
+        gap: 10px;
+        padding: 10px;
+    }
+}
+
+/* Small desktop screens (1024-1199px) */
+@media (max-width: 1199px) {
+    #main-game-container {
+        grid-template-columns: 1fr;
+        grid-template-areas: 
+            "profile"
+            "main-content"
+            "sidebar";
+        gap: 10px;
+    }
+}
+
+/* Grid area assignments */
+#profile {
+    grid-area: profile;
+}
+
+#app, #match, #pvpmenu, #menu {
+    grid-area: main-content;
 }
 
 /* Hide all game content by default - only show when JavaScript determines it should be visible */

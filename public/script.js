@@ -1184,15 +1184,19 @@ socket.on('matchFound', (data) => {
         showCountdown(() => {
                     // Initialize the player's typing session after countdown
         resetTypingVariables();
-        displayRandomWords(data.words);
-        trackTimeTyped();
+        
+        // Delay both player and opponent word display for synchronized appearance
+        setTimeout(() => {
+            displayRandomWords(data.words);
+            trackTimeTyped();
 
-        // Send initial words to opponent (without key data)
-        if (pvpPlayerContainer) {
-            socket.emit('typingProgress', {
-                htmlContent: pvpPlayerContainer.innerHTML
-            });
-        }
+            // Send initial words to opponent right after displaying ours
+            if (pvpPlayerContainer) {
+                socket.emit('typingProgress', {
+                    htmlContent: pvpPlayerContainer.innerHTML
+                });
+            }
+        }, 50); // Small delay to synchronize both displays
 
         });
         
