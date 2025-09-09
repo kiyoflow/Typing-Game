@@ -96,7 +96,11 @@ passport.deserializeUser((user, done) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL
+    callbackURL: (req) => {
+        const protocol = req.protocol;
+        const hostname = req.hostname;
+        return `${protocol}://${hostname}/auth/google/callback`;
+    }
 },
 async function(accessToken, refreshToken, profile, done) {
     // No MSSQL logic, just pass 
