@@ -96,7 +96,9 @@ passport.deserializeUser((user, done) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL
+    callbackURL: process.env.WEBSITE_HOSTNAME && process.env.WEBSITE_HOSTNAME.includes('azurewebsites.net')
+        ? `https://${process.env.WEBSITE_HOSTNAME}/auth/google/callback`
+        : (process.env.GOOGLE_CALLBACK_URL || 'https://typi.io/auth/google/callback')
 },
 async function(accessToken, refreshToken, profile, done) {
     // No MSSQL logic, just pass 
